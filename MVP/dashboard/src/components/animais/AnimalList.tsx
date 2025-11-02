@@ -30,7 +30,7 @@ const filters = [
             { id: 'disponivel', name: 'Disponível' },
             { id: 'adotado', name: 'Adotado' },
             { id: 'em_adocao', name: 'Em Adoção' },
-            { id: 'em_aprovacao', name: 'Em Aprovação' },
+            { id: 'em_aprovacao', name: 'Anúnciado' },
         ]}
         alwaysOn
     />,
@@ -39,9 +39,15 @@ const filters = [
 const chipTipos = {
     disponivel: { label: 'Disponível', bgCor: '#ffffff00', textCor: '#ffffff00' },
     adotado: { label: 'Adotado', bgCor: '#9c27b0', textCor: '#fff' },
-    em_adocao: { label: 'Em Adoção', bgCor: '#ffe600', textCor: '#fff' },
-    em_aprovacao: { label: 'Em Aprovação', bgCor: '#4caf50', textCor: '#fff' },
+    em_adocao: { label: 'Em Adoção', bgCor: '#425a8fff', textCor: '#fff' },
+    em_aprovacao: { label: 'Anúnciado', bgCor: '#4caf50', textCor: '#fff' },
 }
+
+const tamanhos = [
+    { id: 'pequeno', name: 'Pequeno' },
+    { id: 'medio', name: 'Médio' },
+    { id: 'grande', name: 'Grande' },
+]
 
 type Situacao = keyof typeof chipTipos;
 
@@ -55,7 +61,7 @@ const AnimalGrid = () => {
     return (
         <Grid container spacing={3} sx={{ p: 2, backgroundColor: (theme) => theme.palette.background.default }}>
             {data.map((record) => (
-                <Grid key={record.id} size={{ xs: 12, xl: 3, lg: 4, md: 6, sm: 6 }} >
+                <Grid key={record.id} size={{ xs: 12, lg: 4, md: 6, sm: 6 }} >
                     <Link
                         to={createPath({ resource: 'animais', id: record.id, type: 'edit' })}
                         style={{ textDecoration: 'none' }}
@@ -81,6 +87,19 @@ const AnimalGrid = () => {
                                     backgroundPosition: 'center',
                                 }}
                             />
+                            <Chip
+                                label={chipTipos[record.situacao as Situacao]?.label ?? 'Indefinido'}
+                                sx={{
+                                    position: 'absolute', 
+                                    top: 16,
+                                    right: 16,
+                                    zIndex: 1,
+                                    bgcolor: chipTipos[record.situacao as Situacao]?.bgCor ?? '#9e9e9e',
+                                    color: chipTipos[record.situacao as Situacao]?.textCor ?? '#333',
+                                    fontWeight: 'bold',
+                                }}
+                            />
+
                             <CardContent
                                 sx={{
                                     position: 'absolute',
@@ -98,29 +117,20 @@ const AnimalGrid = () => {
                                 }}
                             >
                                 <div>
-                                <Typography
-                                    variant="body1"
-                                    component="div"
-                                    sx={{ fontWeight: 'bold' }}
-                                >
-                                    {record.nome}
-                                </Typography>
-                                <Typography
-                                    variant="body2"
-                                    component="div"
-                                >
-                                    {formatarDiferencaData(record.data_nascimento)}
-                                </Typography>
+                                    <Typography
+                                        variant="body1"
+                                        component="div"
+                                        sx={{ fontWeight: 'bold' }}
+                                    >
+                                        {record.nome} - {tamanhos.find((tamanho) => tamanho.id === record.tamanho)?.name}
+                                    </Typography>
+                                    <Typography
+                                        variant="body2"
+                                        component="div"
+                                    >
+                                        {formatarDiferencaData(record.data_nascimento)}
+                                    </Typography>
                                 </div>
-                                <Chip
-                                    label={chipTipos[record.situacao as Situacao]?.label ?? 'Indefinido'}
-                                    sx={{
-                                        mt: 1,
-                                        bgcolor: chipTipos[record.situacao as Situacao]?.bgCor ?? '#9e9e9e',
-                                        color: chipTipos[record.situacao as Situacao]?.textCor ?? '#333',
-                                        fontWeight: 'bold',
-                                    }}
-                                />
                             </CardContent>
                         </Card>
                     </Link>
@@ -138,6 +148,7 @@ const AnimalList = () => {
         <>
             <List
                 filters={filters}
+                sort={{ field: 'created_at', order: 'DESC' }}
                 sx={{
                     '& .RaList-content': {
                         boxShadow: 'none',
@@ -150,7 +161,7 @@ const AnimalList = () => {
                             record.imagens.caminho ||
                             import.meta.env.VITE_API_URL + '/imagens/' + record.imagens[0]?.caminho
                         }
-                        primaryText={(record) => record.nome}
+                        primaryText={(record) => record.nome + ' - ' + tamanhos.find((tamanho) => tamanho.id === record.tamanho)?.name}
                         tertiaryText={(record) => chipTipos[record.situacao as Situacao]?.label ?? 'Indefinido'}
                         secondaryText={(record) => `${formatarDiferencaData(record.data_nascimento)}`}
                     />

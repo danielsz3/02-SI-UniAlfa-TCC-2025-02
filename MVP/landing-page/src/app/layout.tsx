@@ -29,11 +29,6 @@ export default function RootLayout({
           {/* Footer em todas as páginas */}
           <Footer />
 
-          {/* Se quiser um ThemeToggle global adicional, reative abaixo:
-          <div className="fixed bottom-4 right-4">
-            <ThemeToggle />
-          </div>
-          */}
         </ThemeProvider>
       </body>
     </html>

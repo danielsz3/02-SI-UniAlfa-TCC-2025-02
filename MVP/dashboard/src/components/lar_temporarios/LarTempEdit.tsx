@@ -13,6 +13,7 @@ import {
     SaveButton,
     useRedirect,
     DeleteWithConfirmButton,
+    regex,
 } from 'react-admin';
 import CustomDatePicker from '../datepicker/customDatePicker';
 import { useFormContext } from 'react-hook-form';
@@ -58,7 +59,7 @@ const CepInput = () => {
         <TextInput
             source="endereco.cep"
             label="CEP"
-            validate={required()}
+            validate={[required('O CEP é obrigatório'),regex(/^\d{8}$/, 'O CEP deve ter 8 dígitos')]}
             helperText={helpText}
         />
     );
@@ -66,8 +67,6 @@ const CepInput = () => {
 
 const LarTempToolbar = () => {
     const redirect = useRedirect();
-    const notify = useNotify();
-    const form = useFormContext();
 
     const handleBack = () => redirect('list', 'lares-temporarios');
 
@@ -76,25 +75,6 @@ const LarTempToolbar = () => {
             leftButtons={[
                 <SaveButton
                     type='button'
-                    mutationOptions={{
-                        onSuccess: () => {
-                            notify('Lar Temporário salvo com sucesso!', { type: 'success' });
-                            redirect('list', 'lares-temporarios');
-                        },
-                    }}
-                />,
-                <SaveButton
-                    type='button'
-                    sx={{ fontSize: "0.8rem" }}
-                    label='Salvar e Novo'
-                    variant='outlined'
-                    mutationOptions={{
-                        onSuccess: () => {
-                            notify('Lar Temporário salvo com sucesso! Pronto para criar outro', { type: 'info' });
-                            redirect('create', 'lares-temporarios');
-                            form.reset();
-                        },
-                    }}
                 />,
             ]}
             rightButtons={[
@@ -150,6 +130,15 @@ const LarTempEdit = (props: EditProps) => {
                         label="Data de Nascimento"
                         validate={required('A data de nascimento é obrigatória')}
                     />
+
+                    <TextInput
+                        source="Experiência"
+                        label="Experiência com animais (opcional)"
+                        multiline
+                        minRows={3}
+                        maxRows={5}
+                        placeholder="Descreva a experiência com animais"
+                    />
                 </FormTab>
 
                 <FormTab label="Endereço">
@@ -157,24 +146,25 @@ const LarTempEdit = (props: EditProps) => {
                     <TextInput
                         source="endereco.logradouro"
                         label="Logradouro"
-                        validate={required()}
+                        validate={required('O logradouro é obrigatório')}
                     />
                     <TextInput
                         source="endereco.numero"
                         label="Número"
-                        validate={required()}
+                        validate={required('O número é obrigatório')}
                     />
                     <TextInput source="endereco.complemento" label="Complemento" />
                     <TextInput
                         source="endereco.bairro"
                         label="Bairro"
+                        validate={required('O bairro é obrigatório')}
                     />
                     <TextInput
                         source="endereco.cidade"
                         label="Cidade"
-                        validate={required()}
+                        validate={required('A cidade é obrigatória')}
                     />
-                    <TextInput source="endereco.uf" label="UF" validate={required()} />
+                    <TextInput source="endereco.uf" label="UF" validate={required('A UF é obrigatória')} />
                 </FormTab>
 
                 <FormTab label="Galeria">

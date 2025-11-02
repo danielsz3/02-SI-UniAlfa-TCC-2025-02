@@ -1,9 +1,12 @@
-import { BooleanInput, Button, Create, FormDataConsumer, FormTab, ImageField, ImageInput, RadioButtonGroupInput, required, SaveButton, SelectInput, TabbedForm, TextInput, useNotify, useRedirect } from "react-admin";
+import { BooleanInput, Button, Create, DeleteWithConfirmButton, FormDataConsumer, FormTab, ImageField, ImageInput, RadioButtonGroupInput, required, SaveButton, SelectInput, TabbedForm, TextInput, useNotify, useRedirect } from "react-admin";
 import { FilePlaceholder } from "../FilePlaceHolder";
 import CustomDatePicker from "../datepicker/customDatePicker";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Dialog, DialogActions, DialogTitle } from "@mui/material";
+import { CustomToolbar } from "../CustomToolbar";
+import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
+import { useFormContext } from "react-hook-form";
 
 interface Animal {
     id: number;
@@ -20,6 +23,29 @@ interface Animal {
     vale_castracao: number;
     imagens: any[];
 }
+
+const AnimalToolbar = () => {
+    const redirect = useRedirect();
+
+    const handleBack = () => redirect('list', 'animais');
+
+    return (
+        <CustomToolbar
+            leftButtons={[
+                <SaveButton
+                    type='button'
+                />
+            ]}
+            rightButtons={[
+                <Button
+                    label="Voltar"
+                    startIcon={<ArrowBackIosNewIcon />}
+                    onClick={handleBack}
+                />
+            ]}
+        />
+    );
+};
 
 const AnimalCreate = () => {
     const [showDialog, setShowDialog] = useState(false);
@@ -101,7 +127,6 @@ Entre em contato para saber mais e fazer parte dessa história de amor e adoçã
         });
     };
 
-
     const handleCancel = () => {
         setShowDialog(false);
         navigate('/animais');
@@ -117,12 +142,13 @@ Entre em contato para saber mais e fazer parte dessa história de amor e adoçã
                 transform={data => ({
                     ...data,
                     castrado: data.castrado === true ? 1 : 0,
-                    vale_castracao: data.vale_castracao === true ? 1 : 0,
-                    status: data.status = 'disponivel'
+                    vale_castracao: data.vale_castracao === true ? 1 : 0
                 })}
                 mutationOptions={{ onSuccess: handleSuccess }}
             >
-                <TabbedForm>
+                <TabbedForm
+                    toolbar={<AnimalToolbar />}
+                >
                     <FormTab label="Informações">
 
                         <TextInput

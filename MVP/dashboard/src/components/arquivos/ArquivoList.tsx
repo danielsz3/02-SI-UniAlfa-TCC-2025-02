@@ -34,6 +34,7 @@ const fileTypeStyles = {
 // Filtros para a busca na lista
 const filters = [
     <TextInput label="Título" source="titulo" size="small" alwaysOn />,
+    <TextInput label="Categoria" source="categoria" size="small" />,
 ];
 
 /**
@@ -161,6 +162,7 @@ export const ArquivoList = () => (
     <List
         filters={filters}
         title="Documentos"
+        sort={{field: 'created_at', order: 'DESC'}}
         // Estilos para remover a sombra padrão da lista do React-Admin
         sx={{
             '& .RaList-content': {

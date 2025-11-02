@@ -12,6 +12,7 @@ import {
     useRedirect,
     SaveButton,
     Button,
+    regex,
 } from 'react-admin';
 import CustomDatePicker from '../datepicker/customDatePicker';
 import { useFormContext } from 'react-hook-form';
@@ -57,12 +58,11 @@ const CepInput = () => {
         <TextInput
             source="endereco.cep"
             label="CEP"
-            validate={required()}
+            validate={[required('O CEP é obrigatório'),regex(/^\d{8}$/, 'O CEP deve ter 8 dígitos')]}
             helperText={helpText}
         />
     );
 };
-
 
 const LarTempToolbar = () => {
     const redirect = useRedirect();
@@ -107,6 +107,7 @@ const LarTempToolbar = () => {
         />
     );
 };
+
 const LarTempCreate = (props: CreateProps) => {
     return (
         <Create
@@ -132,17 +133,26 @@ const LarTempCreate = (props: CreateProps) => {
                     <TextInput
                         source="nome"
                         label="Nome Completo"
-                        validate={required()}
+                        validate={required('O nome é obrigatório')}
                     />
                     <TextInput
                         source="telefone"
                         label="Telefone"
-                        validate={required()}
+                        validate={required('O telefone é obrigatório')}
                     />
                     <CustomDatePicker
                         source="data_nascimento"
                         label="Data de Nascimento"
-                        validate={required()}
+                        validate={required('A data de nascimento é obrigatória')}
+                    />
+
+                    <TextInput
+                        source="Experiência"
+                        label="Experiência com animais (opcional)"
+                        multiline
+                        minRows={3}
+                        maxRows={5}
+                        placeholder="Descreva a experiência com animais"
                     />
                 </FormTab>
 
@@ -153,12 +163,12 @@ const LarTempCreate = (props: CreateProps) => {
                     <TextInput
                         source="endereco.logradouro"
                         label="Logradouro"
-                        validate={required()}
+                        validate={required('O logradouro é obrigatório')}
                     />
                     <TextInput
                         source="endereco.numero"
                         label="Número"
-                        validate={required()}
+                        validate={required('O número é obrigatório')}
                     />
                     <TextInput
                         source="endereco.complemento"
@@ -167,19 +177,19 @@ const LarTempCreate = (props: CreateProps) => {
                     <TextInput
                         source="endereco.bairro"
                         label="Bairro"
-                        validate={required()}
+                        validate={required('O bairro é obrigatório')}
                     />
 
                     <TextInput
                         source="endereco.cidade"
                         label="Cidade"
-                        validate={required()}
+                        validate={required('A cidade é obrigatória')}
                     />
 
                     <TextInput
                         source="endereco.uf"
                         label="UF"
-                        validate={required()}
+                        validate={required('A UF é obrigatória')}
                     />
                 </FormTab>
 

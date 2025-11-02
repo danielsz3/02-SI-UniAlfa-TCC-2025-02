@@ -1,18 +1,23 @@
-import { SetStateAction, useState } from 'react';
+import { useState } from 'react';
 import {
+    Button,
     Create,
     ImageField,
     ImageInput,
+    SaveButton,
     SimpleForm,
     TextInput,
     required,
     useNotify,
+    useRedirect,
 } from 'react-admin';
 import { FilePlaceholder } from '../FilePlaceHolder';
 import CustomDatePicker from '../datepicker/customDatePicker';
-import { Dialog, DialogTitle, DialogActions, Button } from '@mui/material';
+import { Dialog, DialogTitle, DialogActions } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { CustomToolbar } from '../CustomToolbar';
+import { useFormContext } from 'react-hook-form';
+import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 
 interface Evento {
     id: number;
@@ -24,6 +29,82 @@ interface Evento {
     imagem: any;
     imagens: any[];
 }
+
+/**
+ * Validador para a DATA DE INÍCIO.
+ * Verifica se a data de início é anterior à data de fim.
+ */
+const validateDataInicio = (value: string | number | Date, allValues: { data_fim: string | number | Date; }) => {
+    const dataInicio = new Date(value);
+
+    if (dataInicio < new Date()) {
+        return 'A data de início deve ser futura';
+    }
+
+    if (value && allValues.data_fim) {
+        const dataFim = new Date(allValues.data_fim);
+
+        if (dataInicio >= dataFim) {
+            return 'A data de início deve ser anterior à data de encerramento';
+        }
+    }
+    return undefined;
+};
+
+/**
+ * Validador para a DATA DE FIM.
+ * Verifica se a data de fim é posterior à data de início.
+ */
+const validateDataFim = (value: string | number | Date, allValues: { data_inicio: string | number | Date; }) => {
+    if (value && allValues.data_inicio) {
+        const dataInicio = new Date(allValues.data_inicio);
+        const dataFim = new Date(value);
+
+        if (dataFim <= dataInicio) {
+            return 'A data de encerramento deve ser posterior à data de início';
+        }
+    }
+    return undefined;
+};
+
+const EventoToolbar = () => {
+    const redirect = useRedirect();
+    const notify = useNotify();
+    const form = useFormContext();
+
+    const handleBack = () => redirect('list', 'eventos');
+
+    return (
+        <CustomToolbar
+            leftButtons={[
+                <SaveButton
+                    type='button'
+                />,
+                <SaveButton
+                    type='button'
+                    sx={{fontSize: "0.8rem"}}
+                    label='Salvar e Novo'
+                    variant='outlined'
+                    mutationOptions={{
+                        onSuccess: () => {
+                            notify('Evento salvo com sucesso! Pronto para criar outro', { type: 'info' });
+                            redirect('create', 'eventos');
+                            form.reset();
+                        },
+                    }}
+                />,
+            ]}
+            rightButtons={[
+                <Button
+                    label="Voltar"
+                    startIcon={<ArrowBackIosNewIcon />}
+                    onClick={handleBack}
+                />
+            ]}
+        />
+    );
+};
+
 
 const EventoCreate = () => {
     const [showDialog, setShowDialog] = useState(false);
@@ -77,7 +158,9 @@ const EventoCreate = () => {
                 sx={{ width: '100%', maxWidth: 600, margin: '0 auto', mb: 10 }}
                 mutationOptions={{ onSuccess: handleSuccess }}
             >
-                <SimpleForm>
+                <SimpleForm
+                    toolbar={<EventoToolbar />}
+                >
                     <TextInput
                         source="titulo"
                         label="Título"
@@ -87,16 +170,16 @@ const EventoCreate = () => {
 
                     <CustomDatePicker
                         source="data_inicio"
-                        label="Data de Início"
+                        label="Data de Início *"
                         future
-                        validate={required('A data inicial é obrigatória')}
+                        validate={[required('A data inicial é obrigatória'), validateDataInicio]}
                     />
 
                     <CustomDatePicker
                         source="data_fim"
-                        label="Data de Encerramento"
+                        label="Data de Encerramento *"
                         future
-                        validate={required('A data final é obrigatória')}
+                        validate={[required('A data final é obrigatória'), validateDataFim]}
                     />
 
                     <TextInput

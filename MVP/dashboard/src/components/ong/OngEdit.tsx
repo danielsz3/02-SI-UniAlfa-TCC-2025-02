@@ -16,6 +16,7 @@ import {
     Toolbar,
     SaveButton,
     SelectInput,
+    regex,
 } from 'react-admin';
 import CustomDatePicker from '../datepicker/customDatePicker';
 import { useFormContext } from 'react-hook-form';
@@ -61,7 +62,7 @@ const CepInput = () => {
         <TextInput
             source="cep"
             label="CEP"
-            validate={required()}
+            validate={[required('O CEP é obrigatório'),regex(/^\d{8}$/, 'O CEP deve ter 8 dígitos')]}
             helperText={helpText}
         />
     );
@@ -69,6 +70,7 @@ const CepInput = () => {
 
 const OngEdit = (props: EditProps) => {
     const { id } = useParams(); // Captura o ID da URL (/ongs/edit/:id)
+    const notify = useNotify();
 
     return (
         <EditBase
@@ -76,7 +78,12 @@ const OngEdit = (props: EditProps) => {
             id={id} // garante que o EditBase use o ID correto
             resource="ongs"
             title="Editar ONG"
-            redirect="edit"
+            redirect='edit'
+            mutationOptions={{
+                onSuccess: () => {
+                    notify('O registro foi atualizado com sucesso', { type: 'success' });
+                }
+            }}
         >
             <Container>
                 <Card
@@ -138,12 +145,12 @@ const OngEdit = (props: EditProps) => {
 
                         <FormTab label="Endereço">
                             <CepInput />
-                            <TextInput source="logradouro" label="Logradouro" validate={required()} />
-                            <TextInput source="numero" label="Número" validate={required()} />
+                            <TextInput source="logradouro" label="Logradouro" validate={required('O logradouro é obrigatório')} />
+                            <TextInput source="numero" label="Número" validate={required('O número é obrigatório')} />
                             <TextInput source="complemento" label="Complemento" />
-                            <TextInput source="bairro" label="Bairro" validate={required()} />
-                            <TextInput source="cidade" label="Cidade" validate={required()} />
-                            <TextInput source="estado" label="UF" validate={required()} />
+                            <TextInput source="bairro" label="Bairro" validate={required('O bairro é obrigatório')} />
+                            <TextInput source="cidade" label="Cidade" validate={required('A cidade é obrigatória')} />
+                            <TextInput source="estado" label="UF" validate={required('A UF é obrigatória')} />
                         </FormTab>
 
                         <FormTab label="Contatos">

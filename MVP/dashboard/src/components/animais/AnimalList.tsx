@@ -40,7 +40,7 @@ const chipTipos = {
     disponivel: { label: 'Disponível', bgCor: '#ffffff00', textCor: '#ffffff00' },
     adotado: { label: 'Adotado', bgCor: '#9c27b0', textCor: '#fff' },
     em_adocao: { label: 'Em Adoção', bgCor: '#425a8fff', textCor: '#fff' },
-    em_aprovacao: { label: 'Anúnciado', bgCor: '#4caf50', textCor: '#fff' },
+    em_aprovacao: { label: 'Anúnciado', bgCor: '#296b2c', textCor: '#fff' },
 }
 
 const tamanhos = [
@@ -61,7 +61,7 @@ const AnimalGrid = () => {
     return (
         <Grid container spacing={3} sx={{ p: 2, backgroundColor: (theme) => theme.palette.background.default }}>
             {data.map((record) => (
-                <Grid key={record.id} size={{ xs: 12, lg: 4, md: 6, sm: 6 }} >
+                <Grid key={record.id} size={{ xs: 12, lg: 3, md: 6, sm: 6 }} >
                     <Link
                         to={createPath({ resource: 'animais', id: record.id, type: 'edit' })}
                         style={{ textDecoration: 'none' }}

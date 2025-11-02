@@ -82,10 +82,10 @@ const ArquivoCreate = () => (
                 source="arquivo"
                 label="Arquivo"
                 accept={{ 'application/pdf': ['.pdf'], 'application/msword': ['.doc', '.docx'], 'application/vnd.ms-excel': ['.xls', '.xlsx'], 'text/csv': ['.csv'] }}
-                maxSize={5000000}
+                maxSize={10_500_000}
                 placeholder={
                     <FilePlaceholder
-                        maxSize={5_200_000}
+                        maxSize={10_500_000}
                         accept={[".pdf", ".doc", ".docx", ".xls", ".xlsx", ".csv"]}
                     />
                 }

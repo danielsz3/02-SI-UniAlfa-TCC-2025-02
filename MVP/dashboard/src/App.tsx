@@ -45,6 +45,7 @@ import PostCreate from './components/posts/PostCreate';
 import { AdocaoList } from './components/adocoes/AdocaoList';
 import { AdocaoEdit } from './components/adocoes/AdocaoEdit';
 import OngEdit from './components/ong/OngEdit';
+import IntegracaoEdit from './components/integracoes/IntegracaoEdit';
 
 
 function App() {
@@ -135,6 +136,7 @@ function App() {
         name="integracoes"
         icon={WebhookOutlinedIcon}
         list={IntegracaoList}
+        edit={IntegracaoEdit}
       />
 
     </Admin>

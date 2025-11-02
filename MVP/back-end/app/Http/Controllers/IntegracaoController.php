@@ -35,17 +35,20 @@ class IntegracaoController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
-    {
-        
-    }
+    public function store(Request $request) {}
 
     /**
      * Display the specified resource.
      */
     public function show(string $id)
     {
-        //
+        $integracao = Integracao::find($id);
+
+        if (!$integracao) {
+            return response()->json(['error' => 'Serviço não encontrado'], 404);
+        }
+
+        return response()->json($integracao);
     }
 
     /**

@@ -1,8 +1,9 @@
-import { BooleanInput, Edit, FormTab, ImageField, ImageInput, RadioButtonGroupInput, required, SelectInput, TabbedForm, TextInput, useRecordContext } from "react-admin";
+import { BooleanInput, Button, DeleteWithConfirmButton, Edit, FormTab, ImageField, ImageInput, RadioButtonGroupInput, required, SaveButton, SelectInput, TabbedForm, TextInput, useNotify, useRecordContext, useRedirect } from "react-admin";
 import { FilePlaceholder } from "../FilePlaceHolder";
 import CustomDatePicker from "../datepicker/customDatePicker";
 import { useFormContext } from "react-hook-form";
 import { useEffect } from "react";
+import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import { CustomToolbar } from "../CustomToolbar";
 
 const CastracaoInputs = () => {
@@ -42,6 +43,52 @@ const CastracaoInputs = () => {
     );
 };
 
+const StatusInput = () => {
+    const record = useRecordContext();
+    if (!record || record.situacao !== 'em_aprovacao') {
+        return null;
+    }
+    return (
+        <SelectInput
+            source="situacao"
+            label="Situação"
+            choices={[
+                { id: 'em_aprovacao', name: 'Anúnciado' },
+                { id: 'disponivel', name: 'Disponível para Adoção' },
+            ]}
+            validate={required('O status é obrigatório')}
+            defaultValue="em_aprovacao"
+        />
+    );
+};
+
+const AnimalToolbar = () => {
+    const redirect = useRedirect();
+
+    const handleBack = () => redirect('list', 'animais');
+
+    return (
+        <CustomToolbar
+            leftButtons={[
+                <SaveButton
+                    type='button'
+                />,
+            ]}
+            rightButtons={[
+                <Button
+                    label="Voltar"
+                    startIcon={<ArrowBackIosNewIcon />}
+                    onClick={handleBack}
+                />,
+                <DeleteWithConfirmButton
+                    confirmTitle="Tem certeza?"
+                    confirmContent="Deseja realmente excluir o animal?"
+                />,
+            ]}
+        />
+    );
+};
+
 const AnimalEdit = () => (
     <Edit
         title="Editar Animal"
@@ -53,8 +100,12 @@ const AnimalEdit = () => (
             vale_castracao: data.vale_castracao === true ? 1 : 0
         })}
     >
-        <TabbedForm        >
+        <TabbedForm
+            toolbar={<AnimalToolbar />}
+        >
             <FormTab label="Informações">
+
+                <StatusInput />
 
                 <TextInput
                     source="nome"

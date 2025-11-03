@@ -1,28 +1,64 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 
 interface ImageCarouselProps {
   images: string[]
   alt?: string
+  className?: string
+  showArrows?: boolean
+  showIndicators?: boolean
+  autoPlay?: boolean
+  autoPlayInterval?: number
 }
 
-export function ImageCarousel({ images, alt = "imagem" }: ImageCarouselProps) {
+export default function ImageCarousel({
+  images,
+  alt = "Imagem",
+  className = "",
+  showArrows = true,
+  showIndicators = true,
+  autoPlay = false,
+  autoPlayInterval = 5000,
+}: ImageCarouselProps) {
   const [index, setIndex] = useState(0)
+  const touchStartX = useRef<number | null>(null)
+  const touchEndX = useRef<number | null>(null)
+  const autoPlayTimer = useRef<number | null>(null)
+  const mountedRef = useRef(true)
+  const count = images.length
+
+  const prev = useCallback(() => setIndex((i) => (i - 1 + Math.max(1, count)) % Math.max(1, count)), [count])
+  const next = useCallback(() => setIndex((i) => (i + 1) % Math.max(1, count)), [count])
+
+  // autoplay (cancela em unmount)
+  useEffect(() => {
+    if (!autoPlay || count <= 1) return
+    const tick = () => setIndex((i) => (i + 1) % count)
+    autoPlayTimer.current = window.setInterval(tick, autoPlayInterval)
+    return () => {
+      if (autoPlayTimer.current) {
+        clearInterval(autoPlayTimer.current)
+        autoPlayTimer.current = null
+      }
+    }
+  }, [autoPlay, autoPlayInterval, count])
 
   useEffect(() => {
-    if (index >= images.length) setIndex(0)
-  }, [images.length, index])
+    mountedRef.current = true
+    return () => {
+      mountedRef.current = false
+      if (autoPlayTimer.current) {
+        clearInterval(autoPlayTimer.current)
+        autoPlayTimer.current = null
+      }
+    }
+  }, [])
 
-  const prev = useCallback(() => {
-    setIndex((i) => (i - 1 + images.length) % Math.max(images.length, 1))
-  }, [images.length])
-
-  const next = useCallback(() => {
-    setIndex((i) => (i + 1) % Math.max(images.length, 1))
-  }, [images.length])
-
+  // keyboard
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "ArrowLeft") prev()
@@ -32,68 +68,100 @@ export function ImageCarousel({ images, alt = "imagem" }: ImageCarouselProps) {
     return () => window.removeEventListener("keydown", onKey)
   }, [prev, next])
 
-  if (!images || images.length === 0) {
+  // touch handlers
+  const onTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.touches[0]?.clientX ?? null }
+  const onTouchMove = (e: React.TouchEvent) => { touchEndX.current = e.touches[0]?.clientX ?? null }
+  const onTouchEnd = () => {
+    if (touchStartX.current === null || touchEndX.current === null) return
+    const dx = touchStartX.current - touchEndX.current
+    const threshold = 40
+    if (dx > threshold) next()
+    else if (dx < -threshold) prev()
+    touchStartX.current = null
+    touchEndX.current = null
+  }
+
+  if (count === 0) {
     return (
-      <div className="aspect-square bg-muted rounded-lg flex items-center justify-center text-muted-foreground">
-        Sem imagem
+      <div className={`w-full rounded-md bg-card/70 flex items-center justify-center h-56 ${className}`}>
+        <p className="text-muted-foreground">Sem imagens</p>
       </div>
     )
   }
 
   return (
-    <div className="space-y-3">
-      <div className="relative aspect-square bg-muted rounded-lg overflow-hidden">
-        {/* Imagem principal */}
-        <img
-          src={images[index]}
-          alt={`${alt} ${index + 1}`}
-          className="w-full h-full object-cover"
-        />
-
-        {/* Navegação */}
-        {images.length > 1 && (
-          <>
-            <button
-              type="button"
-              onClick={prev}
-              aria-label="Anterior"
-              className="absolute left-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center rounded-full bg-background/70 hover:bg-background p-2 shadow-md"
-            >
-              <ChevronLeft className="h-5 w-5 text-foreground" />
-            </button>
-
-            <button
-              type="button"
-              onClick={next}
-              aria-label="Próximo"
-              className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center rounded-full bg-background/70 hover:bg-background p-2 shadow-md"
-            >
-              <ChevronRight className="h-5 w-5 text-foreground" />
-            </button>
-
-            {/* indicador no canto inferior */}
-            <div className="absolute left-1/2 -translate-x-1/2 bottom-2 px-3 py-1 bg-background/60 rounded-full text-sm text-muted-foreground shadow-sm">
-              {index + 1} / {images.length}
-            </div>
-          </>
-        )}
+    <div
+      className={`relative w-full rounded-md overflow-hidden bg-card ${className}`}
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+      role="region"
+      aria-roledescription="carousel"
+      aria-label="Galeria de imagens"
+    >
+      {/* imagens com fade */}
+      <div className="w-full h-80 md:h-[28rem] relative">
+        {images.map((src, i) => (
+          <img
+            key={i}
+            src={src}
+            alt={`${alt}${count > 1 ? ` (${i + 1} de ${count})` : ""}`}
+            loading="lazy"
+            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${
+              i === index ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"
+            }`}
+          />
+        ))}
       </div>
 
-      {/* Miniaturas */}
-      {images.length > 1 && (
-        <div className="flex gap-2 overflow-x-auto">
-          {images.map((src, i) => (
+      {/* arrows */}
+      {showArrows && count > 1 && (
+        <>
+          <div className="absolute left-3 top-1/2 -translate-y-1/2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                prev()
+                if (autoPlayTimer.current) { clearInterval(autoPlayTimer.current); autoPlayTimer.current = null }
+              }}
+              aria-label="Anterior"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </Button>
+          </div>
+
+          <div className="absolute right-3 top-1/2 -translate-y-1/2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                next()
+                if (autoPlayTimer.current) { clearInterval(autoPlayTimer.current); autoPlayTimer.current = null }
+              }}
+              aria-label="Próximo"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </Button>
+          </div>
+        </>
+      )}
+
+      {/* indicators */}
+      {showIndicators && count > 1 && (
+        <div className="absolute left-1/2 -translate-x-1/2 bottom-3 flex items-center gap-2">
+          {images.map((_, i) => (
             <button
               key={i}
-              type="button"
-              onClick={() => setIndex(i)}
-              className={`flex-shrink-0 rounded-md overflow-hidden border ${
-                i === index ? "ring-2 ring-primary" : "border-border"
-              }`}
-              aria-current={i === index}
-              aria-label={`Ver imagem ${i + 1}`}
+              onClick={() => { setIndex(i); if (autoPlayTimer.current) { clearInterval(autoPlayTimer.current); autoPlayTimer.current = null } }}
+              aria-label={`Ir para o slide ${i + 1}`}
+              className="focus:outline-none"
             >
-              <img src={src} alt={`${alt} miniatura ${i + 1}`} className="w-20 h-20 object-cover" />
+              {i === index ? (
+                <Badge variant="secondary" className="px-3 py-1">{i + 1}</Badge>
+              ) : (
+                <div className="w-3 h-3 rounded-full bg-muted/60" />
+              )}
             </button>
           ))}
         </div>

@@ -114,42 +114,23 @@ export default function AdotarPageClient() {
   const [backgroundLoading, setBackgroundLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Paginação / estado incremental
-  const [hasMore, setHasMore] = useState(true)
-  const [currentPage, setCurrentPage] = useState<number | null>(1)
-  const nextUrlRef = useRef<string | null>(null)
-  const paginationModeRef = useRef<"none" | "links" | "pages">("none")
-  const perPage = 12
-  const safetyMaxPages = 500
+  // Paginação
+  const [currentPage, setCurrentPage] = useState<number>(1)
+  const [totalPages, setTotalPages] = useState<number | null>(null)
+  const perPage = 10
 
-  // filtros
+  // Se API retornar array completo, armazenamos e paginamos no client
+  const [fullItems, setFullItems] = useState<Animal[] | null>(null)
+
+  // filtros (alterar não dispara fetch automaticamente)
   const [tipoAnimal, setTipoAnimal] = useState<string>("all")
   const [sexo, setSexo] = useState<string>("all")
   const [ageRange, setAgeRange] = useState<AgeRangeKey>("any")
 
-  const sentinelRef = useRef<HTMLDivElement | null>(null)
-  const observerRef = useRef<IntersectionObserver | null>(null)
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api"
 
-  // Cancel flag para abortar background fetch se filtros mudarem / componente desmontar
-  const abortedRef = useRef(false)
-
-  const buildBaseUrl = useCallback(() => {
-    const params: Record<string, string> = {
-      situacao: "disponivel",
-      page: "1",             // garante que pedimos a página 1
-      limit: String(perPage) // garante page size consistente com perPage
-    }
-    if (tipoAnimal && tipoAnimal !== "all") params.tipo_animal = tipoAnimal
-    if (sexo && sexo !== "all") params.sexo = sexo
-    if (ageRange !== "any") {
-      const { from, to } = ageRangeToBirthdateRange(ageRange)
-      if (from) params.data_nascimento_from = from
-      if (to) params.data_nascimento_to = to
-    }
-    const q = new URLSearchParams(params).toString()
-    return `${apiUrl}/animais?${q}`
-  }, [apiUrl, tipoAnimal, sexo, ageRange, perPage])
+  const prefetchControllerRef = useRef<AbortController | null>(null)
+  const componentUnmountedRef = useRef(false)
 
   const buildPageUrl = useCallback((page: number) => {
     const params: Record<string, string> = {
@@ -175,204 +156,188 @@ export default function AdotarPageClient() {
       throw new Error(text || `HTTP ${res.status}`)
     }
     const json = await res.json()
-    // array simples = API retornou todos
     if (Array.isArray(json)) {
-      return { items: json as Animal[], mode: "none" as const, nextUrl: null, currentPage: null, lastPage: null }
+      return { items: json as Animal[], mode: "none" as const, currentPage: null, lastPage: null, total: (json as any).length ?? null }
     }
-    // paginator estilo Laravel
     if (Array.isArray(json.data)) {
       const items = json.data as Animal[]
-      const nextUrl = json.links?.next || json.meta?.next_page_url || null
       const current = json.meta?.current_page ?? null
       const last = json.meta?.last_page ?? null
-      const mode = nextUrl ? "links" as const : "pages" as const
-      return { items, mode, nextUrl, currentPage: current, lastPage: last }
+      const total = json.meta?.total ?? null
+      return { items, mode: "pages" as const, currentPage: current, lastPage: last, total }
     }
-    // fallback
     const items = Array.isArray(json.data) ? json.data : []
-    return { items: items as Animal[], mode: "none" as const, nextUrl: null, currentPage: null, lastPage: null }
+    return { items: items as Animal[], mode: "none" as const, currentPage: null, lastPage: null, total: null }
   }, [])
 
-  // Fetch inicial + background fetching das páginas restantes quando necessário
-  const loadInitial = useCallback(async () => {
-    abortedRef.current = false
+  // delay utilitário para evitar flood
+  const delay = (ms: number) => new Promise((res) => setTimeout(res, ms))
+
+  // Carrega página (invocado ao clicar "Aplicar" ou no mount). Faz prefetch das próximas páginas em background se aplicável.
+  const loadPage = useCallback(async (page: number) => {
+    // cancelar prefetch anterior se houver
+    prefetchControllerRef.current?.abort()
+    prefetchControllerRef.current = new AbortController()
+    const prefetchSignal = prefetchControllerRef.current.signal
+
     setLoading(true)
+    setError(null)
     setBackgroundLoading(false)
-    setError(null)
-    setHasMore(true)
-    nextUrlRef.current = null
-    paginationModeRef.current = "none"
-    setCurrentPage(1)
 
     try {
-      const url = buildBaseUrl()
-      const res = await fetch(url, { cache: "no-store", headers: { Accept: "application/json" } })
-      const parsed = await parseResponse(res)
-
-      // debug log para inspecionar o que a API retornou inicialmente
-      console.debug("initial parsed response:", parsed)
-
-      setAnimais(parsed.items || [])
-
-      // Atualiza refs/estados com o modo detectado
-      paginationModeRef.current = parsed.mode
-      nextUrlRef.current = parsed.nextUrl ?? null
-
-      if (parsed.mode === "links") {
-        setHasMore(!!parsed.nextUrl)
-        if (parsed.currentPage) setCurrentPage(parsed.currentPage)
-        // background fetch seguindo links.next
-        void (async () => {
-          if (abortedRef.current) return
-          setBackgroundLoading(true)
-          let pagesFetched = 0
-          try {
-            while (nextUrlRef.current && !abortedRef.current && pagesFetched < safetyMaxPages) {
-              const nxt = nextUrlRef.current as string
-              const r = await fetch(nxt, { cache: "no-store", headers: { Accept: "application/json" } })
-              const p = await parseResponse(r)
-              if (abortedRef.current) break
-              if (p.items && p.items.length > 0) {
-                setAnimais((prev) => [...prev, ...p.items])
-              }
-              // atualizar nextUrlRef a partir do p.nextUrl
-              nextUrlRef.current = p.nextUrl ?? null
-              pagesFetched += 1
-            }
-          } catch (e) {
-            console.error("Erro no background fetch (links):", e)
-          } finally {
-            if (!abortedRef.current) {
-              setBackgroundLoading(false)
-              setHasMore(false)
-            }
-          }
-        })()
-      } else if (parsed.mode === "pages") {
-        const cur = parsed.currentPage ?? 1
-        const last = parsed.lastPage ?? null
-        setCurrentPage(cur)
-        if (last && last > cur) {
-          setBackgroundLoading(true)
-          void (async () => {
-            try {
-              for (let p = cur + 1, pagesFetched = 0; p <= last && !abortedRef.current && pagesFetched < safetyMaxPages; p++, pagesFetched++) {
-                const pageUrl = buildPageUrl(p)
-                const r = await fetch(pageUrl, { cache: "no-store", headers: { Accept: "application/json" } })
-                const parsedPage = await parseResponse(r)
-                if (abortedRef.current) break
-                if (parsedPage.items && parsedPage.items.length > 0) {
-                  setAnimais((prev) => [...prev, ...parsedPage.items])
-                }
-                setCurrentPage(p)
-              }
-            } catch (e) {
-              console.error("Erro no background fetch (pages):", e)
-            } finally {
-              if (!abortedRef.current) {
-                setBackgroundLoading(false)
-                setHasMore(false)
-              }
-            }
-          })()
-        } else {
-          setHasMore(false)
-        }
-      } else {
-        // array completo
-        setHasMore(false)
-      }
-    } catch (err: any) {
-      console.error("Erro ao carregar animais:", err)
-      setError(err.message || "Erro ao carregar animais")
-      setAnimais([])
-      setHasMore(false)
-      setBackgroundLoading(false)
-    } finally {
-      setLoading(false)
-    }
-  }, [buildBaseUrl, buildPageUrl, parseResponse])
-
-  // Carregar a próxima página manual (fallback)
-  const loadNext = useCallback(async () => {
-    if (!hasMore || loading) return
-    setLoading(true)
-    setError(null)
-
-    try {
-      if (paginationModeRef.current === "links" && nextUrlRef.current) {
-        const r = await fetch(nextUrlRef.current, { cache: "no-store", headers: { Accept: "application/json" } })
-        const parsed = await parseResponse(r)
-        setAnimais((prev) => [...prev, ...(parsed.items || [])])
-        // atualiza ref/estado
-        paginationModeRef.current = parsed.mode
-        nextUrlRef.current = parsed.nextUrl ?? null
-        setHasMore(!!nextUrlRef.current)
-        if (parsed.currentPage) setCurrentPage(parsed.currentPage)
+      // Se já temos fullItems (API devolveu array completo anteriormente), paginar localmente
+      if (fullItems) {
+        const start = (page - 1) * perPage
+        const pageItems = fullItems.slice(start, start + perPage)
+        setAnimais(pageItems)
+        setCurrentPage(page)
+        setTotalPages(Math.ceil(fullItems.length / perPage))
         return
       }
 
-      // modo 'pages' ou fallback: requisitar page=current+1
-      const nextPage = (currentPage ?? 1) + 1
-      const pageUrl = buildPageUrl(nextPage)
-      const r = await fetch(pageUrl, { cache: "no-store", headers: { Accept: "application/json" } })
-      const parsed = await parseResponse(r)
-      setAnimais((prev) => [...prev, ...(parsed.items || [])])
+      const url = buildPageUrl(page)
+      const res = await fetch(url, { cache: "no-store", headers: { Accept: "application/json" }, signal: prefetchSignal })
+      const parsed = await parseResponse(res)
 
-      // atualizar modo/refs
-      paginationModeRef.current = parsed.mode
-      nextUrlRef.current = parsed.nextUrl ?? null
+      if (parsed.mode === "none") {
+        // API retornou array completo; armazenar e paginar localmente
+        setFullItems(parsed.items)
+        const start = (page - 1) * perPage
+        const pageItems = parsed.items.slice(start, start + perPage)
+        setAnimais(pageItems)
+        setTotalPages(Math.ceil(parsed.items.length / perPage))
+        setCurrentPage(page)
+        return
+      }
 
-      if (parsed.lastPage !== undefined && parsed.currentPage !== undefined) {
-        const cur = parsed.currentPage ?? nextPage
-        const last = parsed.lastPage ?? cur
-        setCurrentPage(cur)
-        setHasMore(cur < last)
-      } else {
-        setCurrentPage(nextPage)
-        setHasMore(((parsed.items || []) as Animal[]).length === perPage)
+      // server-side pages
+      setAnimais(parsed.items || [])
+      const current = parsed.currentPage ?? page
+      const last = parsed.lastPage ?? null
+      setCurrentPage(current)
+      setTotalPages(last)
+
+      // prefetch em background quando soubermos lastPage maior que current
+      if (last && last > current) {
+        // spawn background prefetch (não bloqueia o retorno)
+        setBackgroundLoading(true)
+        void (async () => {
+          try {
+            // cria novo controller local para esta sequência background (link ao prefetchControllerRef)
+            const controller = prefetchControllerRef.current
+            for (let p = current + 1; p <= last; p++) {
+              if (componentUnmountedRef.current) break
+              if (controller?.signal.aborted) break
+              // delay curto para evitar requisitar tudo de uma vez
+              await delay(200)
+              const pageUrl = buildPageUrl(p)
+              const r = await fetch(pageUrl, { cache: "no-store", headers: { Accept: "application/json" }, signal: controller?.signal })
+              const parsedPage = await parseResponse(r)
+              if (componentUnmountedRef.current) break
+              if (controller?.signal.aborted) break
+              if (parsedPage.items && parsedPage.items.length > 0) {
+                // quando prefetch é concluído com sucesso, se estivermos usando fullItems não faz sentido,
+                // mas aqui concatenamos no estado fullItems-friendly: se fullItems ainda for null, vamos acumulando no state de fullItems temporário
+                setFullItems((prev) => {
+                  if (prev) return [...prev, ...parsedPage.items]
+                  // inicializa com página atual + prefeteched pages: juntar animais já mostrados + parsedPage.items
+                  // Observação: animais contém a página atual; portanto criamos uma nova array combinando animais já carregados e parsedPage.items
+                  const aggregated = [...animais, ...parsedPage.items]
+                  return aggregated
+                })
+              }
+            }
+          } catch (e) {
+            if ((e as any)?.name === "AbortError") {
+              // cancelado — não logar como erro
+            } else {
+              console.error("Erro no prefetch:", e)
+            }
+          } finally {
+            if (!componentUnmountedRef.current) setBackgroundLoading(false)
+          }
+        })()
       }
     } catch (err: any) {
-      console.error("Erro ao carregar próxima página:", err)
-      setError(err.message || "Erro ao carregar mais animais")
-      setHasMore(false)
+      if (err?.name === "AbortError") {
+        // fetch cancelado — não setar erro visível
+      } else {
+        console.error("Erro ao carregar animais:", err)
+        setError(err.message || "Erro ao carregar animais")
+        setAnimais([])
+        setTotalPages(null)
+      }
     } finally {
-      setLoading(false)
+      if (!componentUnmountedRef.current) setLoading(false)
     }
-  }, [buildPageUrl, currentPage, hasMore, loading, parseResponse, perPage])
+  }, [buildPageUrl, parseResponse, perPage, fullItems, animais])
 
-  // chama loadInitial quando filtros mudarem; cancela background fetch anterior
+  // carregamento inicial apenas no mount (reload)
   useEffect(() => {
-    abortedRef.current = false
-    loadInitial()
+    componentUnmountedRef.current = false
+    void loadPage(1)
     return () => {
-      abortedRef.current = true
+      componentUnmountedRef.current = true
+      prefetchControllerRef.current?.abort()
     }
-  }, [tipoAnimal, sexo, ageRange, loadInitial])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
-  // IntersectionObserver para lazy-load (fallback)
-  useEffect(() => {
-    if (!sentinelRef.current) return
-    if (observerRef.current) observerRef.current.disconnect()
-
-    observerRef.current = new IntersectionObserver(
-      (entries) => {
-        const first = entries[0]
-        if (first.isIntersecting && hasMore && !loading) {
-          loadNext()
-        }
-      },
-      { root: null, rootMargin: "200px", threshold: 0.1 }
-    )
-
-    observerRef.current.observe(sentinelRef.current)
-    return () => observerRef.current?.disconnect()
-  }, [hasMore, loading, loadNext])
-
+  // reset filters apenas altera controles — NÃO dispara fetch automaticamente
   const resetFilters = () => {
     setTipoAnimal("all")
     setSexo("all")
     setAgeRange("any")
+  }
+
+  // Renderiza botões de paginação com Badges para página atual
+  function PaginationControls() {
+    if (totalPages === null) {
+      // total desconhecido -> Prev / Next simples, atual mostra como Badge
+      return (
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => loadPage(Math.max(1, currentPage - 1))} disabled={currentPage <= 1 || loading}>Anterior</Button>
+          <Badge variant="secondary">Página {currentPage}</Badge>
+          <Button variant="outline" onClick={() => loadPage(currentPage + 1)} disabled={loading}>Próxima</Button>
+        </div>
+      )
+    }
+
+    const total = totalPages
+    const current = currentPage
+    const buttons: (number | "ellipsis")[] = []
+    const windowSize = 2
+    const left = Math.max(2, current - windowSize)
+    const right = Math.min(total - 1, current + windowSize)
+
+    buttons.push(1)
+    if (left > 2) buttons.push("ellipsis")
+    for (let p = left; p <= right; p++) buttons.push(p)
+    if (right < total - 1) buttons.push("ellipsis")
+    if (total > 1) buttons.push(total)
+
+    return (
+      <div className="flex items-center gap-2 flex-wrap">
+        <Button variant="outline" onClick={() => loadPage(Math.max(1, current - 1))} disabled={current <= 1 || loading}>Anterior</Button>
+
+        {buttons.map((b, idx) =>
+          b === "ellipsis" ? (
+            <span key={`e-${idx}`} className="px-2 text-sm text-muted-foreground">…</span>
+          ) : (
+            <div key={b} className="flex">
+              {b === current ? (
+                <Badge className="px-3 py-1">{b}</Badge>
+              ) : (
+                <Button variant="ghost" onClick={() => loadPage(b)} disabled={loading}>{b}</Button>
+              )}
+            </div>
+          )
+        )}
+
+        <Button variant="outline" onClick={() => loadPage(Math.min(total, current + 1))} disabled={current >= total || loading}>Próxima</Button>
+        <span className="text-sm text-muted-foreground ml-2">Página {current} de {total}</span>
+      </div>
+    )
   }
 
   return (
@@ -432,7 +397,7 @@ export default function AdotarPageClient() {
 
             <div className="flex gap-2">
               <Button variant="outline" onClick={resetFilters}>Limpar</Button>
-              <Button onClick={() => loadInitial()}>Aplicar</Button>
+              <Button onClick={() => loadPage(1)}>Aplicar</Button>
             </div>
           </div>
 
@@ -444,24 +409,18 @@ export default function AdotarPageClient() {
             </div>
           ) : (
             <>
-              <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              <section key={`page-${currentPage}`} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {animais.map((animal) => (
                   <AnimalCard key={animal.id} animal={animal} />
                 ))}
               </section>
 
-              <div ref={sentinelRef} />
-
               <div className="mt-6 flex flex-col items-center gap-3">
                 {loading && <p className="text-sm text-muted-foreground">Carregando...</p>}
-                {backgroundLoading && <p className="text-sm text-muted-foreground">Carregando o restante em background...</p>}
+                {backgroundLoading && <p className="text-sm text-muted-foreground">Prefetching das próximas páginas em background...</p>}
                 {error && <p className="text-sm text-destructive">{error}</p>}
-                {!loading && !backgroundLoading && hasMore && (
-                  <Button onClick={() => loadNext()}>Carregar mais</Button>
-                )}
-                {!hasMore && animais.length > 0 && (
-                  <p className="text-sm text-muted-foreground">Todos os animais carregados.</p>
-                )}
+
+                <PaginationControls />
               </div>
             </>
           )}

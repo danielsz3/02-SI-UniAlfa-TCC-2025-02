@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
+use Illuminate\Http\UploadedFile;
 use Carbon\Carbon;
 
 class AnimalController extends Controller
@@ -46,35 +48,27 @@ class AnimalController extends Controller
         $validator = Validator::make($request->all(), [
             'nome' => 'required|string|max:100',
             'sexo' => 'required|in:macho,femea',
-
             'data_nascimento' => 'nullable|date|after:1900-01-01|before_or_equal:today',
-
             'castrado' => 'nullable|boolean',
             'vale_castracao' => 'nullable|boolean',
             'descricao' => 'nullable|string|max:2000',
             'tipo_animal' => 'required|in:cao,gato,outro',
-
             'nivel_energia' => 'nullable|in:baixa,moderada,alta',
             'tamanho' => 'nullable|in:pequeno,medio,grande',
             'tempo_necessario' => 'nullable|in:pouco_tempo,tempo_moderado,muito_tempo',
             'ambiente_ideal' => 'nullable|in:area_pequena,area_media,area_externa',
-
             'imagens' => 'nullable|array|max:10',
             'imagens.*' => 'image|mimes:jpeg,png,jpg,webp|max:10240',
         ], [
             'nome.required' => 'O nome do animal é obrigatório.',
             'nome.max' => 'O nome pode ter no máximo 100 caracteres.',
-
             'sexo.required' => 'O sexo é obrigatório.',
             'sexo.in' => 'O sexo deve ser "macho" ou "femea".',
-
             'data_nascimento.date' => 'A data de nascimento deve ser uma data válida.',
             'data_nascimento.after' => 'A data de nascimento deve ser posterior a 01/01/1900.',
             'data_nascimento.before_or_equal' => 'A data de nascimento não pode ser no futuro.',
-
             'tipo_animal.required' => 'O tipo do animal é obrigatório.',
             'tipo_animal.in' => 'O tipo do animal deve ser "cao", "gato" ou "outro".',
-
             'imagens.array' => 'As imagens devem ser enviadas como um array.',
             'imagens.max' => 'Você pode enviar no máximo 10 imagens.',
             'imagens.*.image' => 'Cada arquivo enviado deve ser uma imagem válida.',
@@ -104,9 +98,11 @@ class AnimalController extends Controller
                 $files = Arr::wrap($request->file('imagens', []));
 
                 foreach ($files as $file) {
-                    if ($file && $file->isValid()) {
+                    if ($file instanceof UploadedFile && $file->isValid()) {
                         $nomeOriginal = $file->getClientOriginalName();
-                        $path = $file->store('animais', 'public');
+                        $ext = $file->getClientOriginalExtension() ?: 'jpg';
+                        $filename = 'animais/' . Str::uuid() . '.' . $ext;
+                        $path = $file->storeAs('animais', basename($filename), 'public');
                         [$width, $height] = @getimagesize($file->getRealPath()) ?: [null, null];
 
                         ImagemAnimal::create([
@@ -119,10 +115,15 @@ class AnimalController extends Controller
                     }
                 }
 
-                // Limpar cache de animais
                 Cache::forget('animais_ativos');
 
-                return response()->json($animal->load('imagens'), 201);
+                $animal->load('imagens');
+                $animal->imagens->transform(function ($img) {
+                    $img->url = Storage::url($img->caminho);
+                    return $img;
+                });
+
+                return response()->json($animal, 201);
             });
         } catch (\Exception $e) {
             Log::error('Erro ao criar animal: ' . $e->getMessage(), ['exception' => $e, 'payload' => $request->except('imagens')]);
@@ -145,6 +146,11 @@ class AnimalController extends Controller
                 return response()->json(['error' => 'Animal não encontrado'], 404);
             }
 
+            $animal->imagens->transform(function ($img) {
+                $img->url = Storage::url($img->caminho);
+                return $img;
+            });
+
             return response()->json($animal, 200);
         } catch (\Exception $e) {
             Log::error('Erro ao exibir animal: ' . $e->getMessage(), ['id' => $id, 'exception' => $e]);
@@ -166,46 +172,37 @@ class AnimalController extends Controller
         $rules = [
             'nome' => 'sometimes|required|string|max:100',
             'sexo' => 'sometimes|required|in:macho,femea',
-
             'data_nascimento' => 'nullable|date|after:1900-01-01|before_or_equal:today',
-
             'castrado' => 'nullable|boolean',
             'vale_castracao' => 'nullable|boolean',
             'descricao' => 'nullable|string|max:2000',
             'tipo_animal' => 'sometimes|required|in:cao,gato,outro',
-
             'nivel_energia' => 'nullable|in:baixa,moderada,alta',
             'tamanho' => 'nullable|in:pequeno,medio,grande',
             'tempo_necessario' => 'nullable|in:pouco_tempo,tempo_moderado,muito_tempo',
             'ambiente_ideal' => 'nullable|in:area_pequena,area_media,area_externa',
-
             'imagens' => 'nullable|array|max:10',
-             'imagens.*' => 'image|mimes:jpeg,png,jpg,webp|max:10240',
+            'imagens.*' => 'image|mimes:jpeg,png,jpg,webp|max:10240',
         ];
 
-        // Só valida como file se houver arquivos enviados
+        // Só valida como file se houver arquivos enviados (mantendo webp)
         if ($request->hasFile('imagens')) {
-            $rules['imagens.*'] = 'file|image|mimes:jpeg,png,jpg|max:10240';
+            $rules['imagens.*'] = 'file|image|mimes:jpeg,png,jpg,webp|max:10240';
         }
 
         $validator = Validator::make($request->all(), $rules, [
             'nome.required' => 'O nome do animal é obrigatório.',
             'nome.max' => 'O nome pode ter no máximo 100 caracteres.',
-
             'sexo.in' => 'O sexo deve ser "macho" ou "femea".',
-
             'data_nascimento.date' => 'A data de nascimento deve ser uma data válida.',
             'data_nascimento.after' => 'A data de nascimento deve ser posterior a 01/01/1900.',
             'data_nascimento.before_or_equal' => 'A data de nascimento não pode ser no futuro.',
-
             'tipo_animal.in' => 'O tipo do animal deve ser "cao", "gato" ou "outro".',
             'imagens.array' => 'As imagens devem ser enviadas como um array.',
             'imagens.max' => 'Você pode enviar no máximo 10 imagens.',
             'imagens.*.image' => 'Cada arquivo enviado deve ser uma imagem válida.',
             'imagens.*.max' => 'Cada imagem deve ter no máximo 10MB.',
-            'imagens.*' => 'image|mimes:jpeg,png,jpg,webp|max:10240',
-
-        ]);      
+        ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
@@ -229,52 +226,66 @@ class AnimalController extends Controller
 
                 // === Tratamento de imagens ===
                 if ($request->has('imagens') || $request->hasFile('imagens')) {
-                    // 🔹 1. Capturar arquivos novos
+                    // 1) Novos arquivos enviados
                     $arquivosNovos = [];
                     if ($request->hasFile('imagens')) {
                         $arquivosNovos = Arr::wrap($request->file('imagens'));
                     }
 
-                    // 🔹 2. Processar imagens mantidas
+                    // 2) Imagens mantidas pelo front (podem vir como JSON string ou array com 'src')
                     $imagensMantidas = [];
                     $imagensInput = $request->input('imagens', []);
 
                     if (is_array($imagensInput)) {
                         foreach ($imagensInput as $item) {
-                            // Se for string JSON, decodifica
                             if (is_string($item)) {
                                 $decoded = json_decode($item, true);
                                 if ($decoded && isset($decoded['src'])) {
                                     $imagensMantidas[] = basename(parse_url($decoded['src'], PHP_URL_PATH));
+                                } else {
+                                    // pode ser apenas uma string com caminho/url
+                                    $imagensMantidas[] = basename(parse_url($item, PHP_URL_PATH));
                                 }
-                            }
-                            // Se já vier como array com 'src'
-                            elseif (is_array($item) && isset($item['src'])) {
+                            } elseif (is_array($item) && isset($item['src'])) {
                                 $imagensMantidas[] = basename(parse_url($item['src'], PHP_URL_PATH));
                             }
                         }
                     }
 
-                    // 🔹 3. Buscar imagens atuais do banco
+                    // 3) Buscar imagens atuais do banco
                     $imagensAtuais = ImagemAnimal::where('animal_id', $animal->id)->get();
 
-                    // 🔹 4. Excluir as removidas
+                    // 4) Identificar e excluir removidas
+                    $toDeleteIds = [];
                     foreach ($imagensAtuais as $imagem) {
                         $arquivoAtual = basename($imagem->caminho);
-
                         if (!in_array($arquivoAtual, $imagensMantidas)) {
-                            if (Storage::disk('public')->exists($imagem->caminho)) {
+                            // apaga arquivo se existir
+                            if ($imagem->caminho && Storage::disk('public')->exists($imagem->caminho)) {
                                 Storage::disk('public')->delete($imagem->caminho);
                             }
-                            $imagem->delete();
+                            $toDeleteIds[] = $imagem->id;
                         }
                     }
 
-                    // 🔹 5. Salvar novas imagens
+                    if (!empty($toDeleteIds)) {
+                        ImagemAnimal::whereIn('id', $toDeleteIds)->delete();
+                    }
+
+                    // 5) Verifica limite total (existentes após deleção + novos <= 10)
+                    $existingAfterDeletion = max(0, $imagensAtuais->count() - count($toDeleteIds));
+                    $newCount = count($arquivosNovos);
+                    if (($existingAfterDeletion + $newCount) > 10) {
+                        return response()->json(['errors' => ['imagens' => ['O total de imagens (existentes + novas) não pode exceder 10.']]], 422);
+                    }
+
+                    // 6) Salvar novas imagens
                     foreach ($arquivosNovos as $file) {
-                        if ($file instanceof \Illuminate\Http\UploadedFile && $file->isValid()) {
+                        if ($file instanceof UploadedFile && $file->isValid()) {
                             $nomeOriginal = $file->getClientOriginalName();
-                            $path = $file->store('animais', 'public');
+                            $ext = $file->getClientOriginalExtension() ?: 'jpg';
+                            $filename = 'animais/' . Str::uuid() . '.' . $ext;
+                            $path = $file->storeAs('animais', basename($filename), 'public');
                             [$width, $height] = @getimagesize($file->getRealPath()) ?: [null, null];
 
                             ImagemAnimal::create([
@@ -288,10 +299,15 @@ class AnimalController extends Controller
                     }
                 }
 
-                // Limpar cache de animais
                 Cache::forget('animais_ativos');
 
-                return response()->json($animal->fresh('imagens'), 200);
+                $fresh = $animal->fresh('imagens');
+                $fresh->imagens->transform(function ($img) {
+                    $img->url = Storage::url($img->caminho);
+                    return $img;
+                });
+
+                return response()->json($fresh, 200);
             });
         } catch (\Exception $e) {
             Log::error('Erro ao atualizar animal: ' . $e->getMessage(), ['id' => $id, 'exception' => $e, 'payload' => $request->except('imagens')]);
@@ -313,19 +329,20 @@ class AnimalController extends Controller
                 return response()->json(['error' => 'Animal não encontrado'], 404);
             }
 
-            // Apagar arquivos do storage
+            // Apagar arquivos do storage e soft-delete imagens em lote
+            $toDelete = [];
             foreach ($animal->imagens as $img) {
-                if ($img->caminho) {
-                    $oldPath = ltrim(str_replace('/storage/', '', $img->caminho), '/');
-                    if (Storage::disk('public')->exists($oldPath)) {
-                        Storage::disk('public')->delete($oldPath);
-                    }
+                if ($img->caminho && Storage::disk('public')->exists($img->caminho)) {
+                    Storage::disk('public')->delete($img->caminho);
                 }
+                $toDelete[] = $img->id;
+            }
+            if (!empty($toDelete)) {
+                ImagemAnimal::whereIn('id', $toDelete)->delete();
             }
 
             $animal->delete(); // soft delete
 
-            // Limpar cache de animais
             Cache::forget('animais_ativos');
 
             return response()->json(null, 204);
@@ -356,10 +373,15 @@ class AnimalController extends Controller
 
             $animal->restore();
 
-            // Limpar cache de animais
             Cache::forget('animais_ativos');
 
-            return response()->json($animal->fresh('imagens'), 200);
+            $fresh = $animal->fresh('imagens');
+            $fresh->imagens->transform(function ($img) {
+                $img->url = Storage::url($img->caminho);
+                return $img;
+            });
+
+            return response()->json($fresh, 200);
         } catch (\Exception $e) {
             Log::error('Erro ao restaurar animal: ' . $e->getMessage(), ['id' => $id, 'exception' => $e]);
             return response()->json([
@@ -386,14 +408,13 @@ class AnimalController extends Controller
                 return response()->json(['error' => 'Usuário não possui preferências definidas'], 400);
             }
 
-            // Cache dos animais por 1 hora (3600 segundos)
             $animais = Cache::remember('animais_ativos', 3600, function () {
                 return Animal::with('imagens')->get();
             });
 
             $resultados = $animais->map(function ($animal) use ($pref) {
                 $score = 0;
-                $total = 4; // número de critérios ponderados
+                $total = 4;
 
                 if (!empty($pref->tamanho_pet) && $pref->tamanho_pet === $animal->tamanho) {
                     $score += 1;

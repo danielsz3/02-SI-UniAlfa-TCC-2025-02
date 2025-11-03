@@ -71,7 +71,7 @@ class OngController extends Controller
             'complemento' => 'nullable|string|max:100',
             'bairro' => 'nullable|string|max:100',
             'cidade' => 'nullable|string|max:100',
-            'uf' => 'nullable|string|size:2',
+            'uf' => 'required|string|size:2',
             'banco' => 'nullable|string|max:100',
             'agencia' => 'nullable|string|max:10',
             'numero_conta' => 'nullable|string|max:20',

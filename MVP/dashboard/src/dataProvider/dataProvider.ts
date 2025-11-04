@@ -3,45 +3,49 @@ import simpleRestProvider from "ra-data-simple-rest";
 
 const apiUrl = "http://127.0.0.1:8000/api";
 
-// --- (NOVO) Helper para processar erros da API ---
+type FieldWithRawFile = {
+  rawFile?: File;
+};
+
+// --- Helper para processar erros da API ---
 /**
  * Esta função recebe uma resposta de erro (não-ok) e a transforma
  * no formato de erro que o React-Admin espera.
  */
 const handleError = (response: Response) => {
-    return response.json().then((errorBody) => {
-        // Caso 1: Erro de Validação (ex: 422 do Laravel)
-        if (response.status === 422 && errorBody.errors) {
-            const formattedErrors: { [key: string]: string } = {};
+  return response.json().then((errorBody) => {
+    // Caso 1: Erro de Validação (ex: 422 do Laravel)
+    if (response.status === 422 && errorBody.errors) {
+      const formattedErrors: { [key: string]: string } = {};
 
-            // Mapeia { "field": ["message1", ...] } para { "field": "message1" }
-            Object.keys(errorBody.errors).forEach(key => {
-                if (Array.isArray(errorBody.errors[key]) && errorBody.errors[key].length > 0) {
-                    formattedErrors[key] = errorBody.errors[key][0];
-                }
-            });
-
-            // Rejeita a promise com o formato que o react-admin entende
-            return Promise.reject({
-                status: response.status,
-                message: errorBody.message || "Erro de validação", // Mensagem genérica para a notificação
-                body: { errors: formattedErrors } // Erros específicos para os campos
-            });
+      // Mapeia { "field": ["message1", ...] } para { "field": "message1" }
+      Object.keys(errorBody.errors).forEach(key => {
+        if (Array.isArray(errorBody.errors[key]) && errorBody.errors[key].length > 0) {
+          formattedErrors[key] = errorBody.errors[key][0];
         }
+      });
 
-        // Caso 2: Outros erros (ex: 401, 403, 500)
-        // Rejeita com uma mensagem simples para a notificação
-        return Promise.reject({
-            status: response.status,
-            message: errorBody.message || `Erro ${response.status}`
-        });
-    }).catch(() => {
-        // Caso o corpo do erro não seja um JSON válido
-        return Promise.reject({ 
-            status: response.status, 
-            message: response.statusText || 'Erro de rede' 
-        });
+      // Rejeita a promise com o formato que o react-admin entende
+      return Promise.reject({
+        status: response.status,
+        message: errorBody.message || "Erro de validação", // Mensagem genérica para a notificação
+        body: { errors: formattedErrors } // Erros específicos para os campos
+      });
+    }
+
+    // Caso 2: Outros erros (ex: 401, 403, 500)
+    // Rejeita com uma mensagem simples para a notificação
+    return Promise.reject({
+      status: response.status,
+      message: errorBody.message || `Erro ${response.status}`
     });
+  }).catch(() => {
+    // Caso o corpo do erro não seja um JSON válido
+    return Promise.reject({
+      status: response.status,
+      message: response.statusText || 'Erro de rede'
+    });
+  });
 };
 
 // --- (ATUALIZADO) httpClient unificado ---
@@ -50,63 +54,63 @@ const handleError = (response: Response) => {
  * e usa o 'handleError' para formatar os erros.
  */
 const httpClient = (url: string, options: fetchUtils.Options = {}) => {
-    const finalHeaders = new Headers(options.headers || {});
-    options.headers = finalHeaders;
+  const finalHeaders = new Headers(options.headers || {});
+  options.headers = finalHeaders;
 
-    if (!finalHeaders.has("Accept")) {
-        finalHeaders.set("Accept", "application/json");
-    }
+  if (!finalHeaders.has("Accept")) {
+    finalHeaders.set("Accept", "application/json");
+  }
 
-    const token = localStorage.getItem("authToken");
-    if (token) {
-        finalHeaders.set("Authorization", `Bearer ${token}`);
-    }
+  const token = localStorage.getItem("authToken");
+  if (token) {
+    finalHeaders.set("Authorization", `Bearer ${token}`);
+  }
 
-    // Se o corpo for FormData, o 'fetch' define o Content-Type automaticamente
-    if (options.body instanceof FormData) {
-        finalHeaders.delete("Content-Type"); 
-    }
+  // Se o corpo for FormData, o 'fetch' define o Content-Type automaticamente
+  if (options.body instanceof FormData) {
+    finalHeaders.delete("Content-Type");
+  }
 
-    return fetch(url, options as RequestInit)
-        .then((response) => {
-            // Se a resposta não for OK (ex: 4xx, 5xx), usamos nosso helper
-            if (!response.ok) {
-                return handleError(response);
-            }
-            
-            // Trata respostas sem corpo (ex: DELETE 204)
-            if (response.status === 204 || response.status === 205) {
-                return {
-                    status: response.status,
-                    headers: response.headers,
-                    body: "",
-                    json: null, // ra-data-simple-rest espera a propriedade 'json'
-                };
-            }
+  return fetch(url, options as RequestInit)
+    .then((response) => {
+      // Se a resposta não for OK (ex: 4xx, 5xx), usamos nosso helper
+      if (!response.ok) {
+        return handleError(response);
+      }
 
-            // Resposta OK com corpo
-            return response.json().then((json) => ({
-                status: response.status,
-                headers: response.headers,
-                body: "", // 'body' não é mais usado, 'json' é o principal
-                json: json, // ra-data-simple-rest usa 'json'
-            }));
-        })
-        .catch((error) => {
-            // Pega erros de rede (ex: 'fetch' falhou, DNS, CORS)
-            
-            // Se já for um erro formatado por nós, apenas repassa
-            if (error.status) {
-                return Promise.reject(error);
-            }
-            
-            // Se for um erro de rede (ex: TypeError: Failed to fetch)
-            console.error("Erro de rede no httpClient:", error);
-            return Promise.reject({
-                status: 0, // 0 para erros de rede
-                message: error.message || "Não foi possível conectar à API"
-            });
-        });
+      // Trata respostas sem corpo (ex: DELETE 204)
+      if (response.status === 204 || response.status === 205) {
+        return {
+          status: response.status,
+          headers: response.headers,
+          body: "",
+          json: null, // ra-data-simple-rest espera a propriedade 'json'
+        };
+      }
+
+      // Resposta OK com corpo
+      return response.json().then((json) => ({
+        status: response.status,
+        headers: response.headers,
+        body: "", // 'body' não é mais usado, 'json' é o principal
+        json: json, // ra-data-simple-rest usa 'json'
+      }));
+    })
+    .catch((error) => {
+      // Pega erros de rede (ex: 'fetch' falhou, DNS, CORS)
+
+      // Se já for um erro formatado por nós, apenas repassa
+      if (error.status) {
+        return Promise.reject(error);
+      }
+
+      // Se for um erro de rede (ex: TypeError: Failed to fetch)
+      console.error("Erro de rede no httpClient:", error);
+      return Promise.reject({
+        status: 0, // 0 para erros de rede
+        message: error.message || "Não foi possível conectar à API"
+      });
+    });
 };
 
 // --- O RESTO DO SEU CÓDIGO PERMANECE IGUAL ---
@@ -123,7 +127,7 @@ const convertDataRequestToHTTP = (
     Object.keys(requestData).forEach((key) => {
       const field = requestData[key];
       if (
-        (key === "arquivo" || key === "imagem") &&
+        (key === "arquivo" || key === "imagem" || key === "imagens") &&
         field &&
         typeof field === "object" &&
         !field.rawFile
@@ -137,8 +141,8 @@ const convertDataRequestToHTTP = (
     const field = requestData[key];
     return Array.isArray(field)
       ? field.some(
-          (item) => item && typeof item === "object" && item.rawFile instanceof File
-        )
+        (item) => item && typeof item === "object" && item.rawFile instanceof File
+      )
       : field && typeof field === "object" && field.rawFile instanceof File;
   });
 
@@ -156,50 +160,39 @@ const convertDataRequestToHTTP = (
     formData.append("_method", "PUT");
   }
 
-  const isIsoDateString = (value: string) => {
-    if (typeof value !== "string") return false;
-    return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$/.test(
-      value.replace(/"/g, "")
-    );
-  };
+  Object.entries(requestData).forEach(([key, field]) => {
 
-  Object.keys(requestData).forEach((key) => {
-    const field = requestData[key];
+  if (field instanceof File) {
+    formData.append(key, field, field.name);
 
-    if (field && typeof field === "object" && field.rawFile instanceof File) {
-      formData.append(key, field.rawFile, field.title || field.rawFile.name);
-    } else if (Array.isArray(field)) {
-      const hasFileInArray = field.some(
-        (item) => item && typeof item === "object" && item.rawFile instanceof File
-      );
-
-      if (hasFileInArray) {
-        field.forEach((item) => {
-          if (item && typeof item === "object" && item.rawFile instanceof File) {
-            formData.append(`${key}[]`, item.rawFile, item.title || item.rawFile.name);
-          } else if (item !== null && item !== undefined) {
-            formData.append(`${key}[]`, JSON.stringify(item));
-          }
-        });
-      } else {
-        formData.append(key, JSON.stringify(field));
+  } else if (Array.isArray(field)) {
+    field.forEach((item) => {
+      
+      if (item && typeof item === 'object' && 'rawFile' in item && item.rawFile instanceof File) {
+        formData.append(`${key}[]`, item.rawFile, item.rawFile.name);
+      
+      } else if (item instanceof File) {
+        formData.append(`${key}[]`, item, item.name);
+      
       }
-    } else if (field && typeof field === "object" && field !== null) {
-      let valueToAppend;
-      if (field instanceof Date) {
-        valueToAppend = field.toISOString();
-      } else if (key.startsWith("data_") || isIsoDateString(field)) {
-        valueToAppend = String(field).replace(/^"|"$/g, "");
-      } else {
-        valueToAppend = JSON.stringify(field);
-      }
+    });
+
+  } else if (typeof field === "object" && field !== null) {
+
+    if (field && 'rawFile' in field && field.rawFile instanceof File) {
+      formData.append(key, field.rawFile, field.rawFile.name);
+    
+    } else {
+      const valueToAppend = field instanceof Date ? field.toISOString() : JSON.stringify(field);
       if (valueToAppend !== undefined) {
         formData.append(key, valueToAppend);
       }
-    } else if (field !== null && field !== undefined && field !== "") {
-      formData.append(key, String(field));
     }
-  });
+
+  } else if (field !== null && field !== undefined && field !== "") {
+    formData.append(key, String(field));
+  }
+});
 
   return {
     data: formData,

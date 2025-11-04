@@ -34,7 +34,7 @@ function calcularIdade(dataNascimento?: string): string {
 }
 
 function AnimalCard({ animal }: { animal: Animal }) {
-  const storageUrl = process.env.NEXT_PUBLIC_STORAGE_URL || "http://127.0.0.1:8000/storage"
+  const storageUrl = process.env.NEXT_PUBLIC_API_URL + "/imagens" || "http://127.0.0.1:8000/api/imagens/"
   const imagemUrl = animal.imagens?.[0]?.caminho ? `${storageUrl}/${animal.imagens[0].caminho}` : null
 
   return (
@@ -117,7 +117,7 @@ export default function AdotarPageClient() {
   // Paginação
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [totalPages, setTotalPages] = useState<number | null>(null)
-  const perPage = 10
+  const perPage = 50
 
   // Se API retornar array completo, armazenamos e paginamos no client
   const [fullItems, setFullItems] = useState<Animal[] | null>(null)
@@ -132,22 +132,47 @@ export default function AdotarPageClient() {
   const prefetchControllerRef = useRef<AbortController | null>(null)
   const componentUnmountedRef = useRef(false)
 
+  /**
+   * Constrói a URL da API com base no estado atual dos filtros e da página.
+   * Envia 'filter', 'sort' e 'range' como strings JSON, conforme esperado pelo Trait PHP.
+   */
   const buildPageUrl = useCallback((page: number) => {
-    const params: Record<string, string> = {
+    const start = (page - 1) * perPage
+    const end = page * perPage - 1
+
+    // 1. Objeto de Filtros
+    const filterObj: Record<string, string> = {
       situacao: "disponivel",
-      page: String(page),
-      limit: String(perPage),
     }
-    if (tipoAnimal && tipoAnimal !== "all") params.tipo_animal = tipoAnimal
-    if (sexo && sexo !== "all") params.sexo = sexo
+    if (tipoAnimal && tipoAnimal !== "all") {
+      filterObj.tipo_animal = tipoAnimal
+    }
+    if (sexo && sexo !== "all") {
+      filterObj.sexo = sexo
+    }
     if (ageRange !== "any") {
+      // Supondo que ageRangeToBirthdateRange exista e retorne { from: string, to: string }
       const { from, to } = ageRangeToBirthdateRange(ageRange)
-      if (from) params.data_nascimento_from = from
-      if (to) params.data_nascimento_to = to
+      if (from) {
+        filterObj.data_nascimento_from = from // Corresponde a 'data_nascimento_from$' no PHP
+      }
+      if (to) {
+        filterObj.data_nascimento_to = to // Corresponde a 'data_nascimento_to$' no PHP
+      }
     }
-    const q = new URLSearchParams(params).toString()
-    return `${apiUrl}/animais?${q}`
+
+    // 2. Parâmetros da URL
+    const params = new URLSearchParams()
+    // 'range' é uma string literal '[start,end]'
+    params.set('range', `[${start},${end}]`)
+    // 'filter' é uma string JSON
+    params.set('filter', JSON.stringify(filterObj))
+    // 'sort' é uma string JSON
+    params.set('sort', JSON.stringify(['id', 'ASC'])) // Exemplo de ordenação
+
+    return `${apiUrl}/animais?${params.toString()}`
   }, [apiUrl, tipoAnimal, sexo, ageRange, perPage])
+
 
   // parseResponse é puro: retorna items + meta info, sem side-effects
   const parseResponse = useCallback(async (res: Response) => {

@@ -45,7 +45,7 @@ export default async function AnimalDetalhesPage({ params }: { params: { id: str
 
   // monta array de URLs completas das imagens
   const imagens: string[] = (animal.imagens || [])
-    .map((img: any) => (img?.caminho ? `${process.env.NEXT_PUBLIC_STORAGE_URL}/${img.caminho}` : ""))
+    .map((img: any) => (img?.caminho ? `${process.env.NEXT_PUBLIC_API_URL}/imagens/${img.caminho}` : ""))
     .filter(Boolean)
 
   return (

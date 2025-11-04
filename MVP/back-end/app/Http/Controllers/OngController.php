@@ -12,13 +12,14 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class OngController extends Controller
 {
     use SearchIndex;
 
     /**
-     * Lista usando SearchIndex trait (mantive como você já tinha)
+     * Lista usando SearchIndex trait
      */
     public function index(Request $request): JsonResponse
     {
@@ -64,7 +65,6 @@ class OngController extends Controller
             'cnpj' => 'nullable|string|size:14|regex:/^[0-9]+$/',
             'razao_social' => 'required|string|min:3|max:255',
             'descricao' => 'nullable|string|max:1000',
-            // endereço e bancários...
             'cep' => 'nullable|string|size:8|regex:/^[0-9]+$/',
             'logradouro' => 'nullable|string|max:255',
             'numero' => 'nullable|string|max:10',
@@ -89,7 +89,7 @@ class OngController extends Controller
 
         // imagem: se vier como arquivo via FormData valida como imagem, senão permite URL
         if ($request->hasFile('imagem')) {
-            $rules['imagem'] = 'file|image|mimes:jpeg,png,jpg,gif,webp|max:5120'; // 5MB
+            $rules['imagem'] = 'file|image|mimes:jpeg,png,jpg,gif,webp|max:5120';
         } else {
             $rules['imagem'] = 'nullable|url';
         }
@@ -198,7 +198,6 @@ class OngController extends Controller
             'cnpj' => 'nullable|string|size:14|regex:/^[0-9]+$/',
             'razao_social' => 'sometimes|required|string|min:3|max:255',
             'descricao' => 'nullable|string|max:1000',
-            // endereço e bancários...
             'cep' => 'nullable|string|size:8|regex:/^[0-9]+$/',
             'logradouro' => 'nullable|string|max:255',
             'numero' => 'nullable|string|max:10',
@@ -213,20 +212,36 @@ class OngController extends Controller
             'chave_pix' => 'nullable|string|max:255',
 
             'contatos' => 'nullable|array',
-            'contatos.*.id' => 'sometimes|integer|exists:contatos_ongs,id',
             'contatos.*.tipo' => 'required_with:contatos|in:telefone,email,whatsapp,instagram,facebook,site,outro,redesocial',
             'contatos.*.contato' => 'required_with:contatos|string|max:255',
             'contatos.*.link' => 'nullable|url',
             'contatos.*.descricao' => 'nullable|string|max:255',
         ];
 
+        // validação de id de contato: deve pertencer à ONG e estar ativo
+        $rules['contatos.*.id'] = [
+            'sometimes',
+            'integer',
+            Rule::exists('contatos_ongs', 'id')->where(function ($query) use ($id) {
+                $query->where('ong_id', $id)->whereNull('deleted_at');
+            }),
+        ];
+
+        // imagem: arquivo ou URL no update
         if ($request->hasFile('imagem')) {
             $rules['imagem'] = 'file|image|mimes:jpeg,png,jpg,gif,webp|max:5120';
         } else {
-            $rules['imagem'] = 'nullable|url';
+            $rules['imagem'] = 'sometimes|nullable|url';
         }
 
-        $validator = Validator::make($request->all(), $rules);
+        $messages = [
+            'contatos.*.id.exists' => 'O contato informado não pertence a esta ONG ou foi removido.',
+            'imagem.image' => 'A imagem deve ser um arquivo de imagem válido.',
+            'imagem.mimes' => 'Tipos permitidos: jpeg, png, jpg, gif, webp.',
+            'imagem.max' => 'A imagem deve ter no máximo 5MB.',
+        ];
+
+        $validator = Validator::make($request->all(), $rules, $messages);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
@@ -330,7 +345,7 @@ class OngController extends Controller
      */
     private function syncContacts(Ong $ong, array $contatos): void
     {
-        $existing = $ong->contatos()->get()->keyBy('id'); // coleção por id
+        $existing = $ong->contatos()->get()->keyBy('id');
         $incomingIds = [];
 
         foreach ($contatos as $c) {
@@ -359,7 +374,8 @@ class OngController extends Controller
         // soft-delete os contatos existentes que não vieram no payload
         $toDelete = $existing->keys()->diff($incomingIds);
         if ($toDelete->isNotEmpty()) {
-            ContatoOng::whereIn('id', $toDelete->values()->all())->delete();
+            // dispara model events ao deletar
+            ContatoOng::whereIn('id', $toDelete->values()->all())->get()->each->delete();
         }
     }
 

@@ -28,6 +28,6 @@ class ImagemOng extends Model
      */
     public function ong()
     {
-        return $this->belongsTo(Ong::class, 'id_ong', 'id_ong');
+        return $this->belongsTo(Ong::class, 'id_ong', 'id');
     }
 }

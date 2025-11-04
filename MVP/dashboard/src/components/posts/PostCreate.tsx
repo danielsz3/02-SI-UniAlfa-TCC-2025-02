@@ -215,16 +215,6 @@ const PostCreate = () => {
         setImagens(imagens.filter((img) => img.id !== id));
     };
 
-    const onDragEnd = (result: DropResult) => {
-        if (!result.destination) return;
-
-        const items = Array.from(imagens);
-        const [reorderedItem] = items.splice(result.source.index, 1);
-        items.splice(result.destination.index, 0, reorderedItem);
-
-        setImagens(items);
-    };
-
     // --- Submissão ---
     const handleSubmit = () => {
         if (legenda.trim() === '') {
@@ -344,7 +334,7 @@ const PostCreate = () => {
 
                         <DraggableImageGrid
                             images={imagens}
-                            onDragEnd={onDragEnd}
+                            setImages={setImagens}
                             onRemoveImage={removeImage}
                         />
 

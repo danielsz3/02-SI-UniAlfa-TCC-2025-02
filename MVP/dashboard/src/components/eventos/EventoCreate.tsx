@@ -127,7 +127,7 @@ const EventoCreate = () => {
         setIsNavigating(true);
 
         const createImagePromise = async (imgData: any) => {
-            const path = imgData.caminho;
+            const path = imgData.caminho || imgData;
             if (!path) return null;
 
             const url = `${import.meta.env.VITE_API_URL}/imagens/${path}`;
@@ -147,7 +147,6 @@ const EventoCreate = () => {
         const promises: Promise<unknown>[] = [];
 
         if (eventoCriado.imagem) {
-            // A capa pode ter uma estrutura diferente, ex: 'eventoCriado.imagem.caminho'
             promises.push(createImagePromise(eventoCriado.imagem));
         }
 

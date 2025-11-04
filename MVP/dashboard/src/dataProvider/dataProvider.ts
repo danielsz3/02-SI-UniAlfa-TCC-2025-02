@@ -3,10 +3,6 @@ import simpleRestProvider from "ra-data-simple-rest";
 
 const apiUrl = "http://127.0.0.1:8000/api";
 
-type FieldWithRawFile = {
-  rawFile?: File;
-};
-
 // --- Helper para processar erros da API ---
 /**
  * Esta função recebe uma resposta de erro (não-ok) e a transforma
@@ -18,29 +14,50 @@ const handleError = (response: Response) => {
     if (response.status === 422 && errorBody.errors) {
       const formattedErrors: { [key: string]: string } = {};
 
-      // Mapeia { "field": ["message1", ...] } para { "field": "message1" }
+      // Itera sobre todas as chaves de erro (ex: "tipo", "valor", etc.)
       Object.keys(errorBody.errors).forEach(key => {
-        if (Array.isArray(errorBody.errors[key]) && errorBody.errors[key].length > 0) {
-          formattedErrors[key] = errorBody.errors[key][0];
+        const errorValue = errorBody.errors[key];
+        let errorMessage = 'Erro de validação'; // Mensagem de fallback padrão
+
+        if (Array.isArray(errorValue)) {
+          // Cenário 1: É um array, como ["msg1", "msg2"]
+          if (errorValue.length > 0) {
+            const firstError = errorValue[0];
+            if (typeof firstError === 'string') {
+              // ["msg1"]
+              errorMessage = firstError;
+            } else if (typeof firstError === 'object' && firstError !== null && typeof firstError.message === 'string') {
+              // [{ message: "msg1" }]
+              errorMessage = firstError.message;
+            }
+          }
+          // Se for um array vazio [], usa a msg de fallback
+        } else if (typeof errorValue === 'string') {
+          // Cenário 2: É uma string direta, como { "tipo": "msg1" }
+          errorMessage = errorValue;
         }
+
+        // Garante que o erro para este campo é SEMPRE uma string
+        formattedErrors[key] = errorMessage;
       });
 
       // Rejeita a promise com o formato que o react-admin entende
       return Promise.reject({
         status: response.status,
-        message: errorBody.message || "Erro de validação", // Mensagem genérica para a notificação
-        body: { errors: formattedErrors } // Erros específicos para os campos
+        // Usa a mensagem genérica da API para o "toast"
+        message: errorBody.message || "Erro de validação",
+        // Usa os erros formatados para os campos
+        body: { errors: formattedErrors }
       });
     }
 
     // Caso 2: Outros erros (ex: 401, 403, 500)
-    // Rejeita com uma mensagem simples para a notificação
     return Promise.reject({
       status: response.status,
       message: errorBody.message || `Erro ${response.status}`
     });
   }).catch(() => {
-    // Caso o corpo do erro não seja um JSON válido
+    // Caso o corpo do erro não seja um JSON válido (ex: 500 retornando HTML)
     return Promise.reject({
       status: response.status,
       message: response.statusText || 'Erro de rede'
@@ -48,7 +65,7 @@ const handleError = (response: Response) => {
   });
 };
 
-// --- (ATUALIZADO) httpClient unificado ---
+// --- httpClient unificado ---
 /**
  * Este httpClient agora trata TODAS as requisições (JSON e FormData)
  * e usa o 'handleError' para formatar os erros.

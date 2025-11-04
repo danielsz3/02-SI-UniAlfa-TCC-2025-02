@@ -21,7 +21,7 @@ interface Animal {
     sexo: string;
     castrado: number;
     vale_castracao: number;
-    imagens: any[];
+    imagens: ImageData[];
 }
 
 const AnimalToolbar = () => {
@@ -147,7 +147,7 @@ Entre em contato para saber mais e fazer parte dessa história de amor e adoçã
             state: {
                 defaultValues: {
                     legenda: legenda.trim(),
-                    validImages,
+                    imagens:validImages,
                 },
             },
         });

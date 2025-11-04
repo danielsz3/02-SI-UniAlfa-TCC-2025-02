@@ -1,67 +1,84 @@
 import { Grid } from '@mui/material';
 import {
-  DragDropContext,
-  Droppable,
-  Draggable,
-  DropResult,
-} from '@hello-pangea/dnd';
-import { ImagePreviewCard } from './ImagePreviewCard';
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+  rectIntersection,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  rectSortingStrategy,
+} from '@dnd-kit/sortable';
+import { Dispatch, SetStateAction } from 'react'; // <-- Já inclui a correção de tipo
+
 import { ImageData } from './types';
+import { SortableImageItem } from './SortableImageItem';
 
 interface DraggableImageGridProps {
   images: ImageData[];
-  onDragEnd: (result: DropResult) => void;
+  setImages: Dispatch<SetStateAction<ImageData[]>>; // <-- Tipo correto
   onRemoveImage: (id: string) => void;
 }
 
 export const DraggableImageGrid = ({
   images,
-  onDragEnd,
+  setImages,
   onRemoveImage,
 }: DraggableImageGridProps) => {
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor)
+  );
+
   if (images.length === 0) {
     return null;
   }
 
+  // Função chamada ao soltar o item
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setImages((currentImages) => {
+        const oldIndex = currentImages.findIndex((img) => img.id === active.id);
+        const newIndex = currentImages.findIndex((img) => img.id === over.id);
+
+        if (oldIndex === -1 || newIndex === -1) {
+          return currentImages;
+        }
+
+        const newArray = arrayMove(currentImages, oldIndex, newIndex);
+
+        return newArray;
+      });
+    }
+  }
+
   return (
-    <DragDropContext onDragEnd={onDragEnd}>
-      <Droppable droppableId="image-list" direction='horizontal'>
-        {(provided) => (
-          <Grid
-            container
-            spacing={2}
-            sx={{ mt: 1 }}
-            {...provided.droppableProps}
-            ref={provided.innerRef}
-          >
-            {images.map((img, index) => (
-              <Draggable key={img.id} draggableId={img.id} index={index}>
-                {(provided, snapshot) => (
-                  <Grid
-                    size={{ xs: 6, sm: 6, md: 4 }}
-                    ref={provided.innerRef}
-                    {...provided.draggableProps}
-                    {...provided.dragHandleProps}
-                    sx={{
-                      opacity: snapshot.isDragging ? 0.8 : 1,
-                      transition: 'opacity 0.2s',
-                      zIndex: snapshot.isDragging ? 9999 : 'auto',
-                    }}
-                  >
-                    <ImagePreviewCard
-                      image={img}
-                      index={index}
-                      onRemove={onRemoveImage}
-                      isDragging={snapshot.isDragging}
-                    />
-                  </Grid>
-                )}
-              </Draggable>
-            ))}
-            {provided.placeholder}
-          </Grid>
-        )}
-      </Droppable>
-    </DragDropContext>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={rectIntersection}
+      onDragEnd={handleDragEnd}
+    >
+      <SortableContext
+        items={images.map((img) => img.id)}
+        strategy={rectSortingStrategy}
+      >
+        <Grid container spacing={2} sx={{ mt: 1 }}>
+          {images.map((img) => (
+            <SortableImageItem
+              key={img.id}
+              image={img}
+              onRemove={onRemoveImage}
+            />
+          ))}
+        </Grid>
+      </SortableContext>
+    </DndContext>
   );
 };

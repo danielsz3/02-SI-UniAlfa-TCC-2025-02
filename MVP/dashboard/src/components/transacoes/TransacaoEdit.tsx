@@ -1,42 +1,31 @@
-import { Button, DeleteWithConfirmButton, Edit, NumberInput, RadioButtonGroupInput, SaveButton, SelectInput, SimpleForm, TextInput, minValue, required, useNotify, useRedirect } from 'react-admin';
+import { Button, DeleteWithConfirmButton, Edit, NumberInput, SaveButton, SelectInput, SimpleForm, TextInput, required, useRedirect } from 'react-admin';
 import CustomDateTimePicker from '../datepicker/customDateTimePicker';
 import Grid from '@mui/material/Grid';
 import { CustomToolbar } from '../CustomToolbar';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
-import { useFormContext } from 'react-hook-form';
+
+const validateValor = (value: number) => {
+    if (!value) {
+        return 'O valor é obrigatório';
+    }
+    if (value <= 0) {
+        return 'O valor deve ser maior que zero';
+    }
+    return undefined;
+};
 
 const TransacaoToolbar = () => {
     const redirect = useRedirect();
-    const notify = useNotify();
-    const form = useFormContext();
 
     const handleBack = () => redirect('list', 'transacoes');
 
     return (
         <CustomToolbar
+            key={"record"}
             leftButtons={[
                 <SaveButton
                     type='button'
-                    mutationOptions={{
-                        onSuccess: () => {
-                            notify('Transação salva com sucesso!', { type: 'success' });
-                            redirect('list', 'transacoes');
-                        },
-                    }}
-                />,
-                <SaveButton
-                    type='button'
-                    sx={{ fontSize: "0.8rem" }}
-                    label='Salvar e Novo'
-                    variant='outlined'
-                    mutationOptions={{
-                        onSuccess: () => {
-                            notify('Transação salva com sucesso! Pronto para criar outra', { type: 'info' });
-                            redirect('create', 'transacoes');
-                            form.reset();
-                        },
-                    }}
-                />,
+                />
             ]}
             rightButtons={[
                 <Button
@@ -62,9 +51,9 @@ const TransacaoEdit = () => (
         <SimpleForm
             toolbar={<TransacaoToolbar />}
         >
-            <Grid container spacing={2} columns={2}>
+            <Grid container spacing={1} columns={2}>
                 <Grid size={{ xs: 1 }}>
-                    <RadioButtonGroupInput
+                    <SelectInput
                         label="Tipo"
                         source="tipo"
                         choices={[
@@ -78,10 +67,7 @@ const TransacaoEdit = () => (
                     <NumberInput
                         source="valor"
                         label="Valor R$"
-                        validate={[
-                            required('O valor é obrigatório'),
-                            minValue('O valor deve ser maior que zero', 0)
-                        ]}
+                        validate={[validateValor]}
                     />
                 </Grid>
                 <Grid size={{ xs: 1 }}>

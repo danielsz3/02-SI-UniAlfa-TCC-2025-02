@@ -130,7 +130,7 @@ class AdocaoController extends Controller
 
                 $animal = $adocao->animal;
                 if ($animal && $animal->situacao === 'disponivel') {
-                    $animal->situacao = 'em_processo';
+                    $animal->situacao = 'em_adocao';
                     $animal->save();
                 }
 

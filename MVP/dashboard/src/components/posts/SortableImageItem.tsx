@@ -7,9 +7,10 @@ import { ImageData } from './types';
 interface SortableImageItemProps {
   image: ImageData;
   onRemove: (id: string) => void;
+  index: number;
 }
 
-export const SortableImageItem = ({ image, onRemove }: SortableImageItemProps) => {
+export const SortableImageItem = ({ image, onRemove, index }: SortableImageItemProps) => {
   const {
     attributes,
     listeners,
@@ -38,6 +39,7 @@ export const SortableImageItem = ({ image, onRemove }: SortableImageItemProps) =
         onRemove={onRemove}
         isDragging={isDragging}
         dragHandleProps={{ ...attributes, ...listeners }}
+        index={index}
       />
     </Grid>
   );

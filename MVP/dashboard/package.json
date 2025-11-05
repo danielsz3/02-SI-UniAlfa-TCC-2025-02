@@ -16,7 +16,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
-    "@hello-pangea/dnd": "^18.0.1",
+    "@mui/lab": "^7.0.1-beta.19",
     "@mui/material": "^7.1.0",
     "@mui/x-date-pickers": "^8.4.0",
     "date-fns": "^4.1.0",

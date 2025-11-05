@@ -10,13 +10,13 @@ import {
 } from '@mui/material';
 import { Clear } from '@mui/icons-material';
 import { useLocation } from 'react-router-dom';
-import { DropResult } from '@hello-pangea/dnd';
 import { CreateBase, Title, useNotify, useCreate } from 'react-admin';
 import { ImageData } from './types';
 import { validateAndLoadImage, isValidFeedAspect } from './utils/imageUtils';
 import { ImageCropModal } from './ImageCropModal';
 import { ImageDropzone } from './ImageDropzone';
 import { DraggableImageGrid } from './DraggableImageGrid';
+import LoadingButton from '@mui/lab/LoadingButton'
 
 type DefaultValues = {
     legenda?: string;
@@ -39,6 +39,7 @@ const PostCreate = () => {
     const [initialDefaultValues] = useState<DefaultValues>(
         () => location.state?.defaultValues || null
     );
+
     const [hasProcessedDefaults, setHasProcessedDefaults] = useState(false);
 
     useEffect(() => {
@@ -128,7 +129,6 @@ const PostCreate = () => {
                 if (imageData.isValid) {
                     newValidImages.push(imageData);
                 } else {
-                    // Em vez de rejeitar, adiciona à fila de corte
                     newImagesToCrop.push(imageData);
                 }
             } catch (err) {
@@ -160,15 +160,11 @@ const PostCreate = () => {
     };
 
     const handleNextCrop = () => {
-        // Esta lógica está correta
-        const [, ...remaining] = pendingCrop; // Pega todos, menos o primeiro
+        const [, ...remaining] = pendingCrop;
         setPendingCrop(remaining);
-        setCurrentCrop(remaining[0] || null); // Define o próximo ou fecha o modal
+        setCurrentCrop(remaining[0] || null);
     };
 
-    /**
-     * Chamado quando o usuário salva uma imagem cortada.
-     */
     const handleCropSave = async (croppedFile: File) => {
         setLoading(true);
         try {
@@ -215,8 +211,17 @@ const PostCreate = () => {
         setImagens(imagens.filter((img) => img.id !== id));
     };
 
+    const handleClear = () => {
+        setLegenda('');
+        setImagens([]);
+        setInvalidHelper(null);
+        setPendingCrop([]);
+        setCurrentCrop(null);
+    };
+
     // --- Submissão ---
     const handleSubmit = () => {
+        setLoading(true);
         if (legenda.trim() === '') {
             notify('A legenda é obrigatória', { type: 'warning' });
             return;
@@ -247,22 +252,17 @@ const PostCreate = () => {
             { data: postData },
             {
                 onSuccess: () => {
-                    notify('Post criado com sucesso!', { type: 'success' });
+                    notify('Post criado com sucesso!', { type: 'info' });
                     handleClear();
+                    setLoading(false);
                 },
                 onError: () => {
                     notify('Erro ao criar post', { type: 'error' });
+                    setLoading(false);
                 },
             }
         );
-    };
 
-    const handleClear = () => {
-        setLegenda('');
-        setImagens([]);
-        setInvalidHelper(null);
-        setPendingCrop([]);
-        setCurrentCrop(null);
     };
 
     const isSubmitting = loading || !!currentCrop;
@@ -287,6 +287,13 @@ const PostCreate = () => {
                             placeholder="Digite a legenda do post..."
                             variant="outlined"
                             required
+                            slotProps={
+                                {
+                                    htmlInput: { maxLength: 2000 },
+                                    formHelperText: { sx: { textAlign: 'right' } }
+                                }
+                            }
+                            helperText={`${legenda.length}/2000`}
                         />
 
                         <Box>
@@ -313,7 +320,7 @@ const PostCreate = () => {
                                 </Typography>
                             </Box>
 
-                            {(loading || !!currentCrop) && (
+                            {(!!currentCrop) && (
                                 <Box
                                     sx={{
                                         display: 'flex',
@@ -349,15 +356,16 @@ const PostCreate = () => {
                         )}
 
                         <Box sx={{ display: 'flex', gap: 1 }}>
-                            <Button
+                            <LoadingButton
                                 variant="contained"
                                 fullWidth
                                 onClick={handleSubmit}
-                                disabled={isSubmitting || imagens.length === 0}
+                                loading={loading}
+                                disabled={isSubmitting || imagens.length === 0 || legenda.trim() === ''}
                                 size="large"
                             >
                                 Criar Post
-                            </Button>
+                            </LoadingButton>
                             <Button
                                 variant="outlined"
                                 onClick={handleClear}

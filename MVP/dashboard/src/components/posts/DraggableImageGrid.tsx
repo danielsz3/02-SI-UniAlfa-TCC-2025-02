@@ -70,11 +70,12 @@ export const DraggableImageGrid = ({
         strategy={rectSortingStrategy}
       >
         <Grid container spacing={2} sx={{ mt: 1 }}>
-          {images.map((img) => (
+          {images.map((img, index) => (
             <SortableImageItem
               key={img.id}
               image={img}
               onRemove={onRemoveImage}
+              index={index}
             />
           ))}
         </Grid>

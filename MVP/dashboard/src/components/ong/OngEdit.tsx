@@ -69,31 +69,24 @@ const CepInput = () => {
 };
 
 const OngEdit = (props: EditProps) => {
-    const { id } = useParams(); // Captura o ID da URL (/ongs/edit/:id)
-    const notify = useNotify();
 
     return (
         <EditBase
             {...props}
-            id={id} // garante que o EditBase use o ID correto
             resource="ongs"
             title="Editar ONG"
             redirect='edit'
-            mutationOptions={{
-                onSuccess: () => {
-                    notify('O registro foi atualizado com sucesso', { type: 'success' });
-                }
-            }}
         >
             <Container>
                 <Card
                     sx={{ width: '100%', maxWidth: 600, margin: '0 auto', mt: 2 }}
-
                 >
                     <TabbedForm
                         toolbar={
                             <Toolbar>
-                                <SaveButton alwaysEnable />
+                                <SaveButton alwaysEnable 
+                                    label='Atualizar'
+                                />
                             </Toolbar>
                         }
                     >

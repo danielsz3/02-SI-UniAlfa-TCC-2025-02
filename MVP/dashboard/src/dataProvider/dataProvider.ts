@@ -1,75 +1,88 @@
 import { fetchUtils, DataProvider } from "react-admin";
 import simpleRestProvider from "ra-data-simple-rest";
 
-const apiUrl = "http://127.0.0.1:8000/api";
+const apiUrl = import.meta.env.VITE_API_URL;
 
-// --- Helper para processar erros da API ---
-/**
- * Esta função recebe uma resposta de erro (não-ok) e a transforma
- * no formato de erro que o React-Admin espera.
- */
 const handleError = (response: Response) => {
-  return response.json().then((errorBody) => {
-    // Caso 1: Erro de Validação (ex: 422 do Laravel)
-    if (response.status === 422 && errorBody.errors) {
-      const formattedErrors: { [key: string]: string } = {};
 
-      // Itera sobre todas as chaves de erro (ex: "tipo", "valor", etc.)
-      Object.keys(errorBody.errors).forEach(key => {
+  return response.json().then((errorBody) => {
+
+    if (response.status === 422 && errorBody.errors) {
+
+      console.log('[handleError] Processando Erro 422. "errors" encontrado:', errorBody.errors);
+
+      const formattedErrors: { [key: string]: string } = {};
+      const allErrorMessages: string[] = [];
+
+      // Adicionando mais logs para ter certeza sobre a formatação
+      const errorKeys = Object.keys(errorBody.errors);
+      console.log('[handleError] Chaves de erro encontradas:', errorKeys); // DEBUG 2.1
+
+      errorKeys.forEach(key => {
+        console.log(`[handleError] Processando chave: "${key}"`); // DEBUG 2.2
         const errorValue = errorBody.errors[key];
-        let errorMessage = 'Erro de validação'; // Mensagem de fallback padrão
 
         if (Array.isArray(errorValue)) {
-          // Cenário 1: É um array, como ["msg1", "msg2"]
-          if (errorValue.length > 0) {
-            const firstError = errorValue[0];
-            if (typeof firstError === 'string') {
-              // ["msg1"]
-              errorMessage = firstError;
-            } else if (typeof firstError === 'object' && firstError !== null && typeof firstError.message === 'string') {
-              // [{ message: "msg1" }]
-              errorMessage = firstError.message;
+          console.log(`[handleError] Chave "${key}" é um array:`, errorValue); // DEBUG 2.3
+          errorValue.forEach((errorItem, index) => {
+            let errorMessage = 'Erro de validação';
+
+            if (typeof errorItem === 'string') {
+              errorMessage = errorItem;
+            } else if (typeof errorItem === 'object' && errorItem !== null && typeof errorItem.message === 'string') {
+              errorMessage = errorItem.message;
             }
-          }
-          // Se for um array vazio [], usa a msg de fallback
+
+            allErrorMessages.push(errorMessage);
+
+            if (index === 0) {
+              console.log(`[handleError] Definindo erro para o campo "${key}":`, errorMessage); // DEBUG 2.4
+              formattedErrors[key] = errorMessage;
+            }
+          });
         } else if (typeof errorValue === 'string') {
-          // Cenário 2: É uma string direta, como { "tipo": "msg1" }
-          errorMessage = errorValue;
+          console.log(`[handleError] Chave "${key}" é uma string:`, errorValue); // DEBUG 2.5
+          allErrorMessages.push(errorValue);
+          formattedErrors[key] = errorValue;
         }
-
-        // Garante que o erro para este campo é SEMPRE uma string
-        formattedErrors[key] = errorMessage;
       });
 
-      // Rejeita a promise com o formato que o react-admin entende
-      return Promise.reject({
+      const mainErrorMessage = allErrorMessages.length > 0
+        ? allErrorMessages.join('. ')
+        : (errorBody.message || "Erro de validação");
+
+      const rejectionPayload = {
         status: response.status,
-        // Usa a mensagem genérica da API para o "toast"
-        message: errorBody.message || "Erro de validação",
-        // Usa os erros formatados para os campos
+        message: mainErrorMessage,
         body: { errors: formattedErrors }
-      });
+      };
+
+      console.log('--- [handleError] Rejeitando para React-Admin (422) ---', rejectionPayload);
+
+      // Esta rejeição será pega pelo .catch() abaixo
+      return Promise.reject(rejectionPayload);
     }
 
-    // Caso 2: Outros erros (ex: 401, 403, 500)
-    return Promise.reject({
+    const rejectionPayload = {
       status: response.status,
       message: errorBody.message || `Erro ${response.status}`
-    });
-  }).catch(() => {
-    // Caso o corpo do erro não seja um JSON válido (ex: 500 retornando HTML)
+    };
+
+    return Promise.reject(rejectionPayload);
+
+  }).catch((error) => {
+
+    if (error && error.status && (error.message || error.body)) {
+      return Promise.reject(error);
+    }
+
     return Promise.reject({
       status: response.status,
-      message: response.statusText || 'Erro de rede'
+      message: response.statusText || 'Erro de rede (corpo não-JSON)'
     });
   });
 };
 
-// --- httpClient unificado ---
-/**
- * Este httpClient agora trata TODAS as requisições (JSON e FormData)
- * e usa o 'handleError' para formatar os erros.
- */
 const httpClient = (url: string, options: fetchUtils.Options = {}) => {
   const finalHeaders = new Headers(options.headers || {});
   options.headers = finalHeaders;
@@ -83,25 +96,23 @@ const httpClient = (url: string, options: fetchUtils.Options = {}) => {
     finalHeaders.set("Authorization", `Bearer ${token}`);
   }
 
-  // Se o corpo for FormData, o 'fetch' define o Content-Type automaticamente
   if (options.body instanceof FormData) {
     finalHeaders.delete("Content-Type");
   }
 
   return fetch(url, options as RequestInit)
     .then((response) => {
-      // Se a resposta não for OK (ex: 4xx, 5xx), usamos nosso helper
+
       if (!response.ok) {
         return handleError(response);
       }
 
-      // Trata respostas sem corpo (ex: DELETE 204)
       if (response.status === 204 || response.status === 205) {
         return {
           status: response.status,
           headers: response.headers,
           body: "",
-          json: null, // ra-data-simple-rest espera a propriedade 'json'
+          json: null,
         };
       }
 
@@ -109,28 +120,24 @@ const httpClient = (url: string, options: fetchUtils.Options = {}) => {
       return response.json().then((json) => ({
         status: response.status,
         headers: response.headers,
-        body: "", // 'body' não é mais usado, 'json' é o principal
-        json: json, // ra-data-simple-rest usa 'json'
+        body: "",
+        json: json, 
       }));
     })
     .catch((error) => {
-      // Pega erros de rede (ex: 'fetch' falhou, DNS, CORS)
 
-      // Se já for um erro formatado por nós, apenas repassa
       if (error.status) {
         return Promise.reject(error);
       }
 
-      // Se for um erro de rede (ex: TypeError: Failed to fetch)
-      console.error("Erro de rede no httpClient:", error);
+      console.error("Erro de rede:", error);
+
       return Promise.reject({
-        status: 0, // 0 para erros de rede
+        status: 0,
         message: error.message || "Não foi possível conectar à API"
       });
     });
 };
-
-// --- O RESTO DO SEU CÓDIGO PERMANECE IGUAL ---
 
 const baseDataProvider = simpleRestProvider(apiUrl, httpClient);
 
@@ -179,37 +186,37 @@ const convertDataRequestToHTTP = (
 
   Object.entries(requestData).forEach(([key, field]) => {
 
-  if (field instanceof File) {
-    formData.append(key, field, field.name);
+    if (field instanceof File) {
+      formData.append(key, field, field.name);
 
-  } else if (Array.isArray(field)) {
-    field.forEach((item) => {
-      
-      if (item && typeof item === 'object' && 'rawFile' in item && item.rawFile instanceof File) {
-        formData.append(`${key}[]`, item.rawFile, item.rawFile.name);
-      
-      } else if (item instanceof File) {
-        formData.append(`${key}[]`, item, item.name);
-      
+    } else if (Array.isArray(field)) {
+      field.forEach((item) => {
+
+        if (item && typeof item === 'object' && 'rawFile' in item && item.rawFile instanceof File) {
+          formData.append(`${key}[]`, item.rawFile, item.rawFile.name);
+
+        } else if (item instanceof File) {
+          formData.append(`${key}[]`, item, item.name);
+
+        }
+      });
+
+    } else if (typeof field === "object" && field !== null) {
+
+      if (field && 'rawFile' in field && field.rawFile instanceof File) {
+        formData.append(key, field.rawFile, field.rawFile.name);
+
+      } else {
+        const valueToAppend = field instanceof Date ? field.toISOString() : JSON.stringify(field);
+        if (valueToAppend !== undefined) {
+          formData.append(key, valueToAppend);
+        }
       }
-    });
 
-  } else if (typeof field === "object" && field !== null) {
-
-    if (field && 'rawFile' in field && field.rawFile instanceof File) {
-      formData.append(key, field.rawFile, field.rawFile.name);
-    
-    } else {
-      const valueToAppend = field instanceof Date ? field.toISOString() : JSON.stringify(field);
-      if (valueToAppend !== undefined) {
-        formData.append(key, valueToAppend);
-      }
+    } else if (field !== null && field !== undefined && field !== "") {
+      formData.append(key, String(field));
     }
-
-  } else if (field !== null && field !== undefined && field !== "") {
-    formData.append(key, String(field));
-  }
-});
+  });
 
   return {
     data: formData,
@@ -218,11 +225,9 @@ const convertDataRequestToHTTP = (
   };
 };
 
-// Data Provider principal
 export const dataProvider: DataProvider = {
   ...baseDataProvider,
 
-  // CREATE
   create: async (resource: string, params: any) => {
     const { data: body, headers } = convertDataRequestToHTTP(params.data, false);
     const response = await httpClient(`${apiUrl}/${resource}`, {
@@ -237,7 +242,6 @@ export const dataProvider: DataProvider = {
     };
   },
 
-  // UPDATE (com suporte a upload via POST + _method=PUT)
   update: async (resource: string, params: any) => {
     const { data: body, headers, hasFile } = convertDataRequestToHTTP(params.data, true);
 
@@ -253,7 +257,6 @@ export const dataProvider: DataProvider = {
     };
   },
 
-  // DELETEMANY
   deleteMany: (resource, params) => {
     const idsToDelete = params.ids.filter((id) => id);
     if (idsToDelete.length === 0) {
@@ -274,7 +277,6 @@ export const dataProvider: DataProvider = {
     });
   },
 
-  // GETONE (normaliza campos de arquivos e imagens)
   getOne: async (resource: string, params: any) => {
     const response = await httpClient(`${apiUrl}/${resource}/${params.id}`, {
       method: "GET",

@@ -23,6 +23,7 @@ class PostController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        // 🔹 Validação
         $validator = Validator::make($request->all(), [
             'legenda' => 'nullable|string|max:1000',
             'imagens' => 'nullable|array',
@@ -38,18 +39,22 @@ class PostController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
+        // 🔸 Transação
         return DB::transaction(function () use ($request) {
+            // Cria o post
             $post = Post::create($request->only('legenda'));
 
             $imagens = [];
 
+            // 🔹 Armazena imagens (se existirem)
             if ($request->hasFile('imagens')) {
                 foreach ($request->file('imagens') as $file) {
                     [$width, $height] = getimagesize($file->getRealPath()) ?: [null, null];
+
                     $nomeOriginal = $file->getClientOriginalName();
                     $path = $file->store('posts', 'public');
 
-                    $imagem = ImagemPost::create([
+                    ImagemPost::create([
                         'post_id' => $post->id,
                         'caminho' => $path,
                         'nome_original' => $nomeOriginal,
@@ -58,14 +63,13 @@ class PostController extends Controller
                     ]);
 
                     $imagens[] = [
-                        'path' => $path,
                         'file' => $file,
                         'nome_original' => $nomeOriginal,
                     ];
                 }
             }
 
-            // 🔹 Busca integração para o serviço "instagram"
+            // 🔹 Busca integração com Instagram
             $integracao = Integracao::where('service', 'instagram')->first();
 
             if (!$integracao) {
@@ -74,7 +78,7 @@ class PostController extends Controller
                 ], 500);
             }
 
-            // 🔹 Montar requisição multipart
+            // 🔹 Monta corpo multipart
             $multipart = [
                 [
                     'name' => 'legenda',
@@ -82,7 +86,6 @@ class PostController extends Controller
                 ],
             ];
 
-            // Envia em ordem ASC (primeiras imagens primeiro)
             foreach ($imagens as $index => $img) {
                 $multipart[] = [
                     'name' => "imagens[$index]",
@@ -91,7 +94,6 @@ class PostController extends Controller
                 ];
             }
 
-            // Adiciona atributos da integração
             foreach ($integracao->getAttributes() as $key => $value) {
                 $multipart[] = [
                     'name' => "integracao[$key]",
@@ -99,24 +101,25 @@ class PostController extends Controller
                 ];
             }
 
-            // 🔸 Envia para o n8n
+            // 🔸 Envia para o n8n (sem verificação SSL)
             try {
-                $caBundlePath = storage_path('app/cacert.pem');
-
                 $response = Http::withOptions([
-                    'verify' => $caBundlePath, // Aponta para o bundle de CAs
+                    'verify' => false, // Desativa a verificação do certificado SSL
                 ])
                     ->asMultipart()
                     ->timeout(30)
                     ->post('https://n8n.chatfacil.cloud/webhook-test/postar-instagram', $multipart);
+
                 if (!$response->successful()) {
                     throw new \Exception("Erro ao enviar para n8n: " . $response->body());
                 }
+
+                Log::info('Post enviado para n8n com sucesso.', ['resposta' => $response->json()]);
             } catch (\Throwable $e) {
-                // Logar erro, mas não quebrar transação
                 Log::error('Erro ao enviar post para n8n: ' . $e->getMessage());
             }
 
+            // 🔹 Retorna o post com imagens
             return response()->json($post->load('imagens'), 201);
         });
     }

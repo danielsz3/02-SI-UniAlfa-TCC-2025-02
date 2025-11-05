@@ -34,7 +34,8 @@ function calcularIdade(dataNascimento?: string): string {
 }
 
 function AnimalCard({ animal }: { animal: Animal }) {
-  const storageUrl = process.env.NEXT_PUBLIC_API_URL + "/imagens" || "http://127.0.0.1:8000/api/imagens/"
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000/api"
+  const storageUrl = `${apiBase}/imagens`
   const imagemUrl = animal.imagens?.[0]?.caminho ? `${storageUrl}/${animal.imagens[0].caminho}` : null
 
   return (
@@ -117,7 +118,8 @@ export default function AdotarPageClient() {
   // Paginação
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [totalPages, setTotalPages] = useState<number | null>(null)
-  const perPage = 50
+  const [perPage, setPerPage] = useState<number>(50)
+  const pageSizeOptions = [5, 10, 25, 50]
 
   // Se API retornar array completo, armazenamos e paginamos no client
   const [fullItems, setFullItems] = useState<Animal[] | null>(null)
@@ -134,11 +136,13 @@ export default function AdotarPageClient() {
 
   /**
    * Constrói a URL da API com base no estado atual dos filtros e da página.
-   * Envia 'filter', 'sort' e 'range' como strings JSON, conforme esperado pelo Trait PHP.
+   * Usa 'range' = "[start,end]" conforme solicitado e ordena por id DESC (mais recente).
+   * Aceita perArg opcional para gerar range imediatamente quando perPage está sendo alterado.
    */
-  const buildPageUrl = useCallback((page: number) => {
-    const start = (page - 1) * perPage
-    const end = page * perPage - 1
+  const buildPageUrl = useCallback((page: number, perArg?: number) => {
+    const effectivePer = perArg ?? perPage
+    const start = (page - 1) * effectivePer
+    const end = page * effectivePer - 1
 
     // 1. Objeto de Filtros
     const filterObj: Record<string, string> = {
@@ -151,13 +155,12 @@ export default function AdotarPageClient() {
       filterObj.sexo = sexo
     }
     if (ageRange !== "any") {
-      // Supondo que ageRangeToBirthdateRange exista e retorne { from: string, to: string }
       const { from, to } = ageRangeToBirthdateRange(ageRange)
       if (from) {
-        filterObj.data_nascimento_from = from // Corresponde a 'data_nascimento_from$' no PHP
+        filterObj.data_nascimento_from = from
       }
       if (to) {
-        filterObj.data_nascimento_to = to // Corresponde a 'data_nascimento_to$' no PHP
+        filterObj.data_nascimento_to = to
       }
     }
 
@@ -167,12 +170,11 @@ export default function AdotarPageClient() {
     params.set('range', `[${start},${end}]`)
     // 'filter' é uma string JSON
     params.set('filter', JSON.stringify(filterObj))
-    // 'sort' é uma string JSON
-    params.set('sort', JSON.stringify(['id', 'ASC'])) // Exemplo de ordenação
+    // ordenação padrão: mais recente primeiro
+    params.set('sort', JSON.stringify(['id', 'DESC']))
 
     return `${apiUrl}/animais?${params.toString()}`
   }, [apiUrl, tipoAnimal, sexo, ageRange, perPage])
-
 
   // parseResponse é puro: retorna items + meta info, sem side-effects
   const parseResponse = useCallback(async (res: Response) => {
@@ -198,104 +200,115 @@ export default function AdotarPageClient() {
   // delay utilitário para evitar flood
   const delay = (ms: number) => new Promise((res) => setTimeout(res, ms))
 
-  // Carrega página (invocado ao clicar "Aplicar" ou no mount). Faz prefetch das próximas páginas em background se aplicável.
-  const loadPage = useCallback(async (page: number) => {
-    // cancelar prefetch anterior se houver
+  /**
+   * Carrega página. Aceita perArg opcional para forçar uso imediato de nova page size.
+   * Lê também headers 'X-Total-Count' e 'Content-Range' para calcular totalPages quando API não retorna meta.
+   */
+  const loadPage = useCallback(async (page: number, perArg?: number) => {
+    // cancelar prefetch anterior
     prefetchControllerRef.current?.abort()
     prefetchControllerRef.current = new AbortController()
-    const prefetchSignal = prefetchControllerRef.current.signal
+    const signal = prefetchControllerRef.current.signal
 
     setLoading(true)
     setError(null)
     setBackgroundLoading(false)
 
+    const effectivePer = perArg ?? perPage
+
     try {
-      // Se já temos fullItems (API devolveu array completo anteriormente), paginar localmente
+      // Se já temos fullItems, paginar localmente usando effectivePer
       if (fullItems) {
-        const start = (page - 1) * perPage
-        const pageItems = fullItems.slice(start, start + perPage)
-        setAnimais(pageItems)
-        setCurrentPage(page)
-        setTotalPages(Math.ceil(fullItems.length / perPage))
+        const pages = Math.max(1, Math.ceil(fullItems.length / effectivePer))
+        const safePage = Math.min(Math.max(1, page), pages)
+        const start = (safePage - 1) * effectivePer
+        setAnimais(fullItems.slice(start, start + effectivePer))
+        setCurrentPage(safePage)
+        setTotalPages(pages)
         return
       }
 
-      const url = buildPageUrl(page)
-      const res = await fetch(url, { cache: "no-store", headers: { Accept: "application/json" }, signal: prefetchSignal })
+      const url = buildPageUrl(page, perArg)
+      const res = await fetch(url, { cache: "no-store", headers: { Accept: "application/json" }, signal })
+
+      // 1) tentar extrair total dos headers (X-Total-Count ou Content-Range)
+      const totalFromHeader = (() => {
+        const xTotal = res.headers.get("X-Total-Count")
+        if (xTotal) {
+          const n = Number(xTotal)
+          return Number.isFinite(n) ? n : null
+        }
+        const contentRange = res.headers.get("Content-Range") // ex: "items 0-9/42"
+        if (contentRange) {
+          const m = contentRange.match(/\/(\d+)\s*$/)
+          if (m) {
+            const n = Number(m[1])
+            return Number.isFinite(n) ? n : null
+          }
+        }
+        return null
+      })()
+
+      // 2) parse do body como antes
       const parsed = await parseResponse(res)
 
+      // 3) comportamento combinado:
+      // - se parseResponse trouxe meta (modo "pages"), use meta
+      // - senão, se header trouxe total, calcule totalPages
+      // - se nada, continuar com fallback fullItems / array completo
       if (parsed.mode === "none") {
-        // API retornou array completo; armazenar e paginar localmente
-        setFullItems(parsed.items)
-        const start = (page - 1) * perPage
-        const pageItems = parsed.items.slice(start, start + perPage)
-        setAnimais(pageItems)
-        setTotalPages(Math.ceil(parsed.items.length / perPage))
-        setCurrentPage(page)
+        // API devolveu array de itens (slice ou full). Se header trouxe total, use-o
+        const items = parsed.items ?? []
+        if (totalFromHeader !== null) {
+          const pages = Math.max(1, Math.ceil(totalFromHeader / effectivePer))
+          const safePage = Math.min(Math.max(1, page), pages)
+          // API provavelmente já devolveu a fatia [start..end]; usar o que veio
+          setAnimais(items)
+          setCurrentPage(safePage)
+          setTotalPages(pages)
+          return
+        }
+
+        // se não tem header com total: assumimos array completo (fallback)
+        setFullItems(items)
+        const total = parsed.total ?? items.length
+        const pages = Math.max(1, Math.ceil((total || 0) / effectivePer))
+        const safePage = Math.min(Math.max(1, page), pages)
+        const start = (safePage - 1) * effectivePer
+        setAnimais(items.slice(start, start + effectivePer))
+        setCurrentPage(safePage)
+        setTotalPages(pages)
         return
       }
 
-      // server-side pages
+      // server-side pagination (data + meta)
       setAnimais(parsed.items || [])
       const current = parsed.currentPage ?? page
       const last = parsed.lastPage ?? null
-      setCurrentPage(current)
-      setTotalPages(last)
 
-      // prefetch em background quando soubermos lastPage maior que current
-      if (last && last > current) {
-        // spawn background prefetch (não bloqueia o retorno)
-        setBackgroundLoading(true)
-        void (async () => {
-          try {
-            // cria novo controller local para esta sequência background (link ao prefetchControllerRef)
-            const controller = prefetchControllerRef.current
-            for (let p = current + 1; p <= last; p++) {
-              if (componentUnmountedRef.current) break
-              if (controller?.signal.aborted) break
-              // delay curto para evitar requisitar tudo de uma vez
-              await delay(200)
-              const pageUrl = buildPageUrl(p)
-              const r = await fetch(pageUrl, { cache: "no-store", headers: { Accept: "application/json" }, signal: controller?.signal })
-              const parsedPage = await parseResponse(r)
-              if (componentUnmountedRef.current) break
-              if (controller?.signal.aborted) break
-              if (parsedPage.items && parsedPage.items.length > 0) {
-                // quando prefetch é concluído com sucesso, se estivermos usando fullItems não faz sentido,
-                // mas aqui concatenamos no estado fullItems-friendly: se fullItems ainda for null, vamos acumulando no state de fullItems temporário
-                setFullItems((prev) => {
-                  if (prev) return [...prev, ...parsedPage.items]
-                  // inicializa com página atual + prefeteched pages: juntar animais já mostrados + parsedPage.items
-                  // Observação: animais contém a página atual; portanto criamos uma nova array combinando animais já carregados e parsedPage.items
-                  const aggregated = [...animais, ...parsedPage.items]
-                  return aggregated
-                })
-              }
-            }
-          } catch (e) {
-            if ((e as any)?.name === "AbortError") {
-              // cancelado — não logar como erro
-            } else {
-              console.error("Erro no prefetch:", e)
-            }
-          } finally {
-            if (!componentUnmountedRef.current) setBackgroundLoading(false)
-          }
-        })()
+      // se meta.last_page não existir, mas totalFromHeader existir -> calcular last
+      if (last === null && totalFromHeader !== null) {
+        const pages = Math.max(1, Math.ceil(totalFromHeader / effectivePer))
+        setCurrentPage(current)
+        setTotalPages(pages)
+      } else {
+        setCurrentPage(current)
+        setTotalPages(last)
       }
     } catch (err: any) {
       if (err?.name === "AbortError") {
-        // fetch cancelado — não setar erro visível
+        // silencioso
       } else {
         console.error("Erro ao carregar animais:", err)
         setError(err.message || "Erro ao carregar animais")
         setAnimais([])
         setTotalPages(null)
+        setFullItems(null)
       }
     } finally {
       if (!componentUnmountedRef.current) setLoading(false)
     }
-  }, [buildPageUrl, parseResponse, perPage, fullItems, animais])
+  }, [buildPageUrl, parseResponse, perPage, fullItems])
 
   // carregamento inicial apenas no mount (reload)
   useEffect(() => {
@@ -308,30 +321,69 @@ export default function AdotarPageClient() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // reset filters apenas altera controles — NÃO dispara fetch automaticamente
+  // reset filters apenas altera controles — dispara fetch e reseta paginação
   const resetFilters = () => {
     setTipoAnimal("all")
     setSexo("all")
     setAgeRange("any")
+    setFullItems(null)
+    setTotalPages(null)
+    setCurrentPage(1)
+    void loadPage(1)
   }
 
-  // Renderiza botões de paginação com Badges para página atual
+  // PageSizeSelect usando shadcn Select — altera perPage e recarrega pagina 1 (aplicando filtros)
+  function PageSizeSelect() {
+    return (
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-muted-foreground">Linhas por página:</span>
+
+        <Select value={String(perPage)} onValueChange={(v) => {
+          const newPer = Number(v)
+          setPerPage(newPer)
+          setFullItems(null) // força recarregar do servidor / re-paginar
+          setTotalPages(null)
+          setCurrentPage(1)
+          // chama loadPage passando perArg para garantir uso imediato do novo perPage
+          void loadPage(1, newPer)
+        }}>
+          <SelectTrigger className="w-28">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="max-h-60 overflow-auto">
+            {pageSizeOptions.map((opt) => (
+              <SelectItem key={opt} value={String(opt)}>{opt}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    )
+  }
+
+  // Renderiza botões de paginação com Badges para página atual, responsivo e com jump-to
   function PaginationControls() {
+    // quando total desconhecido -> versão compacta + PageSizeSelect
     if (totalPages === null) {
-      // total desconhecido -> Prev / Next simples, atual mostra como Badge
       return (
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => loadPage(Math.max(1, currentPage - 1))} disabled={currentPage <= 1 || loading}>Anterior</Button>
-          <Badge variant="secondary">Página {currentPage}</Badge>
-          <Button variant="outline" onClick={() => loadPage(currentPage + 1)} disabled={loading}>Próxima</Button>
+        <div className="w-full flex items-center gap-4 flex-wrap">
+          <div className="flex items-center gap-3">
+            <PageSizeSelect />
+          </div>
+
+          <div className="ml-auto flex items-center gap-2">
+            <Button variant="outline" onClick={() => { setCurrentPage(1); void loadPage(1) }} disabled={currentPage <= 1 || loading}>Primeira</Button>
+            <Button variant="outline" onClick={() => { const p = Math.max(1, currentPage - 1); setCurrentPage(p); void loadPage(p) }} disabled={currentPage <= 1 || loading}>Anterior</Button>
+            <Badge variant="secondary">Página {currentPage}</Badge>
+            <Button variant="outline" onClick={() => { const p = currentPage + 1; setCurrentPage(p); void loadPage(p) }} disabled={loading}>Próxima</Button>
+          </div>
         </div>
       )
     }
 
     const total = totalPages
     const current = currentPage
-    const buttons: (number | "ellipsis")[] = []
     const windowSize = 2
+    const buttons: (number | "ellipsis")[] = []
     const left = Math.max(2, current - windowSize)
     const right = Math.min(total - 1, current + windowSize)
 
@@ -341,26 +393,84 @@ export default function AdotarPageClient() {
     if (right < total - 1) buttons.push("ellipsis")
     if (total > 1) buttons.push(total)
 
+    // limite para não gerar milhares de options no select
+    const JUMP_SELECT_LIMIT = 500
+
     return (
-      <div className="flex items-center gap-2 flex-wrap">
-        <Button variant="outline" onClick={() => loadPage(Math.max(1, current - 1))} disabled={current <= 1 || loading}>Anterior</Button>
+      <div className="w-full flex flex-col sm:flex-row items-center gap-3">
+        {/* esquerda: seletor de tamanho */}
+        <div className="flex items-center gap-3">
+          <PageSizeSelect />
+        </div>
 
-        {buttons.map((b, idx) =>
-          b === "ellipsis" ? (
-            <span key={`e-${idx}`} className="px-2 text-sm text-muted-foreground">…</span>
-          ) : (
-            <div key={b} className="flex">
-              {b === current ? (
-                <Badge className="px-3 py-1">{b}</Badge>
+        {/* centro: paginação (full em sm+, compact em xs) */}
+        <div className="flex-1 flex justify-center">
+          {/* full pagination para telas sm+ */}
+          <div className="hidden sm:flex items-center gap-2 flex-wrap">
+            <Button variant="outline" onClick={() => { setCurrentPage(1); void loadPage(1) }} disabled={current <= 1 || loading}>Primeira</Button>
+            <Button variant="outline" onClick={() => { const p = Math.max(1, current - 1); setCurrentPage(p); void loadPage(p) }} disabled={current <= 1 || loading}>Anterior</Button>
+
+            {buttons.map((b, idx) =>
+              b === "ellipsis" ? (
+                <span key={`e-${idx}`} className="px-2 text-sm text-muted-foreground">…</span>
               ) : (
-                <Button variant="ghost" onClick={() => loadPage(b)} disabled={loading}>{b}</Button>
-              )}
-            </div>
-          )
-        )}
+                <div key={b} className="flex">
+                  {b === current ? (
+                    <Badge className="px-3 py-1">{b}</Badge>
+                  ) : (
+                    <Button variant="ghost" onClick={() => { setCurrentPage(Number(b)); void loadPage(Number(b)) }} disabled={loading}>{b}</Button>
+                  )}
+                </div>
+              )
+            )}
 
-        <Button variant="outline" onClick={() => loadPage(Math.min(total, current + 1))} disabled={current >= total || loading}>Próxima</Button>
-        <span className="text-sm text-muted-foreground ml-2">Página {current} de {total}</span>
+            <Button variant="outline" onClick={() => { const p = Math.min(total, current + 1); setCurrentPage(p); void loadPage(p) }} disabled={current >= total || loading}>Próxima</Button>
+            <Button variant="outline" onClick={() => { setCurrentPage(total); void loadPage(total) }} disabled={current >= total || loading}>Última</Button>
+          </div>
+
+          {/* compact pagination para xs */}
+          <div className="flex sm:hidden items-center gap-2">
+            <Button variant="outline" onClick={() => { const p = Math.max(1, current - 1); setCurrentPage(p); void loadPage(p) }} disabled={current <= 1 || loading}>Anterior</Button>
+            <Badge variant="secondary">Página {current} de {total}</Badge>
+            <Button variant="outline" onClick={() => { const p = Math.min(total, current + 1); setCurrentPage(p); void loadPage(p) }} disabled={current >= total || loading}>Próxima</Button>
+          </div>
+        </div>
+
+        {/* direita: jump-to select (sm+) com fallback para input quando muitas páginas */}
+        <div className="hidden sm:flex items-center gap-2">
+          <label className="text-sm text-muted-foreground">Ir para</label>
+
+          {total <= JUMP_SELECT_LIMIT ? (
+            <Select value={String(current)} onValueChange={(v) => { const p = Number(v); setCurrentPage(p); void loadPage(p) }}>
+              <SelectTrigger className="w-24">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="max-h-60 overflow-auto">
+                {Array.from({ length: total }, (_, i) => i + 1).map((p) => (
+                  <SelectItem key={p} value={String(p)}>{p}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min={1}
+                max={total}
+                value={current}
+                onChange={(e) => {
+                  const v = Number(e.target.value) || 1
+                  const target = Math.min(Math.max(1, Math.floor(v)), total)
+                  setCurrentPage(target)
+                }}
+                className="w-20 px-2 py-1 border rounded"
+              />
+              <Button variant="ghost" onClick={() => { void loadPage(current) }}>Ir</Button>
+            </div>
+          )}
+
+          <span className="text-sm text-muted-foreground">de {total}</span>
+        </div>
       </div>
     )
   }
@@ -422,7 +532,7 @@ export default function AdotarPageClient() {
 
             <div className="flex gap-2">
               <Button variant="outline" onClick={resetFilters}>Limpar</Button>
-              <Button onClick={() => loadPage(1)}>Aplicar</Button>
+              <Button onClick={() => { setFullItems(null); setTotalPages(null); setCurrentPage(1); void loadPage(1) }}>Aplicar</Button>
             </div>
           </div>
 

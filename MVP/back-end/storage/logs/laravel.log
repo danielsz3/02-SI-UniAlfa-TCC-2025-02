@@ -21890,3 +21890,7 @@ Did you mean one of these?
 #46 C:\\Users\\joaox\\OneDrive\\Área de Trabalho\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\artisan(16): Illuminate\\Foundation\\Application->handleCommand(Object(Symfony\\Component\\Console\\Input\\ArgvInput))
 #47 {main}
 "} 
+[2025-11-04 22:37:07] local.ERROR: Maximum execution time of 30 seconds exceeded {"exception":"[object] (Symfony\\Component\\ErrorHandler\\Error\\FatalError(code: 0): Maximum execution time of 30 seconds exceeded at C:\\Users\\danie\\Documents\\6º Semestre\\TCC\\petaffinity\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\composer\\ClassLoader.php:429)
+[stacktrace]
+#0 {main}
+"} 

@@ -34,40 +34,6 @@ class PostController extends Controller
             'legenda.max' => 'A legenda deve ter no máximo 1000 caracteres.',
         ]);
 
-        // 🔸 Validação customizada
-        $validator->after(function ($validator) use ($request) {
-            if (empty($request->legenda) && !$request->hasFile('imagens')) {
-                $validator->errors()->add('legenda', 'Você deve enviar uma legenda ou pelo menos uma imagem.');
-                $validator->errors()->add('imagens', 'Você deve enviar uma legenda ou pelo menos uma imagem.');
-            }
-
-            if ($request->hasFile('imagens')) {
-                foreach ($request->file('imagens') as $index => $file) {
-                    [$width, $height] = getimagesize($file->getRealPath()) ?: [null, null];
-                    if (!$width || !$height) {
-                        $validator->errors()->add("imagens.$index", "Não foi possível ler as dimensões da imagem.");
-                        continue;
-                    }
-
-                    $ratio = $width / $height;
-                    $ratioRounded = round($ratio, 2);
-                    $portraitRatio = 4 / 5; // 0.8
-                    $landscapeRatio = 1.91 / 1; // 1.91
-                    $tolerance = 0.02;
-
-                    $isPortrait = abs($ratio - $portraitRatio) <= $tolerance;
-                    $isLandscape = abs($ratio - $landscapeRatio) <= $tolerance;
-
-                    if (!$isPortrait && !$isLandscape) {
-                        $validator->errors()->add(
-                            "imagens.$index",
-                            "A imagem {$file->getClientOriginalName()} tem proporção inválida ({$ratioRounded}:1). Use 4:5 (retrato) ou 1.91:1 (paisagem)."
-                        );
-                    }
-                }
-            }
-        });
-
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
@@ -100,7 +66,7 @@ class PostController extends Controller
             }
 
             // 🔹 Busca integração para o serviço "instagram"
-            $integracao = Integracao::where('servico', 'instagram')->first();
+            $integracao = Integracao::where('service', 'instagram')->first();
 
             if (!$integracao) {
                 return response()->json([
@@ -135,10 +101,14 @@ class PostController extends Controller
 
             // 🔸 Envia para o n8n
             try {
-                $response = Http::asMultipart()
+                $caBundlePath = storage_path('app/cacert.pem');
+
+                $response = Http::withOptions([
+                    'verify' => $caBundlePath, // Aponta para o bundle de CAs
+                ])
+                    ->asMultipart()
                     ->timeout(30)
                     ->post('https://n8n.chatfacil.cloud/webhook-test/postar-instagram', $multipart);
-
                 if (!$response->successful()) {
                     throw new \Exception("Erro ao enviar para n8n: " . $response->body());
                 }

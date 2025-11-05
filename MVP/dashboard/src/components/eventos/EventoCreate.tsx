@@ -18,6 +18,8 @@ import { useNavigate } from 'react-router-dom';
 import { CustomToolbar } from '../CustomToolbar';
 import { useFormContext } from 'react-hook-form';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
+import { ImageData } from '../posts/types';
+import { urlToFile } from '../../utils/ImgDownloader';
 
 interface Evento {
     id: number;
@@ -26,8 +28,8 @@ interface Evento {
     data_inicio: string;
     data_fim: string;
     local: string;
-    imagem: any;
-    imagens: any[];
+    imagem: ImageData;
+    imagens: ImageData[];
 }
 
 /**
@@ -82,7 +84,7 @@ const EventoToolbar = () => {
                 />,
                 <SaveButton
                     type='button'
-                    sx={{fontSize: "0.8rem"}}
+                    sx={{ fontSize: "0.8rem" }}
                     label='Salvar e Novo'
                     variant='outlined'
                     mutationOptions={{
@@ -105,12 +107,13 @@ const EventoToolbar = () => {
     );
 };
 
-
 const EventoCreate = () => {
     const [showDialog, setShowDialog] = useState(false);
     const [eventoCriado, setEventoCriado] = useState<Evento | null>(null);
     const navigate = useNavigate();
+    const [isNavigating, setIsNavigating] = useState(false);
     const notify = useNotify();
+
 
     const handleSuccess = (data: Evento) => {
         setEventoCriado(data);
@@ -118,29 +121,51 @@ const EventoCreate = () => {
         notify('Evento criado com sucesso!');
     };
 
-    const handleConfirmPost = () => {
+    const handleConfirmPost = async () => {
+        if (!eventoCriado || isNavigating) return;
 
-        if (!eventoCriado) return; // segurança extra
+        setIsNavigating(true);
 
-        const imagens = [
-            // adiciona a capa primeiro, se existir
-            ...(eventoCriado.imagem ? [{
-                ...eventoCriado.imagem,
-                src: import.meta.env.VITE_API_URL + '/imagens/' + eventoCriado.imagem || eventoCriado.imagem
-            }] : []),
-            // depois adiciona as demais imagens
-            ...(eventoCriado.imagens || []).map(img => ({
-                ...img,
-                src: import.meta.env.VITE_API_URL + '/imagens/' + img.caminho
-            }))
-        ];
+        const createImagePromise = async (imgData: any) => {
+            const path = imgData.caminho || imgData;
+            if (!path) return null;
+
+            const url = `${import.meta.env.VITE_API_URL}/imagens/${path}`;
+            const title = imgData.title || path;
+
+            const file = await urlToFile(url, title);
+
+            if (file) {
+                return {
+                    file: file,
+                    title: title,
+                };
+            }
+            return null;
+        };
+
+        const promises: Promise<unknown>[] = [];
+
+        if (eventoCriado.imagem) {
+            promises.push(createImagePromise(eventoCriado.imagem));
+        }
+
+        if (eventoCriado.imagens) {
+            eventoCriado.imagens.forEach(img => {
+                promises.push(createImagePromise(img));
+            });
+        }
+
+        const resolvedImages = await Promise.all(promises);
+
+        const validImages = resolvedImages.filter(img => !!img);
 
         setShowDialog(false);
         navigate('/posts/create', {
             state: {
                 defaultValues: {
                     legenda: `Participe do evento "${eventoCriado.titulo}"!\n📅 ${eventoCriado.data_inicio} - ${eventoCriado.data_fim}\n📍 ${eventoCriado.local}\n\n${eventoCriado.descricao}`,
-                    imagens: imagens,
+                    imagens: validImages,
                 },
             },
         });

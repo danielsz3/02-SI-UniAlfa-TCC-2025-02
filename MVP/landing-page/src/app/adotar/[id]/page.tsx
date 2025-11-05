@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 
-import { ImageCarousel } from "@/components/ImageCarousel" // ajuste o caminho se necessário
+import ImageCarousel from "@/components/ImageCarousel" // IMPORT CORRIGIDO (default import)
 
 async function fetchAnimal(id: string) {
   try {
@@ -34,16 +34,19 @@ function calcularIdade(dataNascimento?: string): string {
 }
 
 export default async function AnimalDetalhesPage({ params }: { params: { id: string } }) {
-  const animal = await fetchAnimal(params.id)
+  // Aguardar params conforme aviso do Next.js
+  const { id } = (await params) as { id: string }
+
+  const animal = await fetchAnimal(id)
 
   if (!animal) {
     notFound()
   }
 
   // monta array de URLs completas das imagens
-  const imagens: string[] = (animal.imagens || []).map((img: any) =>
-    img?.caminho ? `${process.env.NEXT_PUBLIC_STORAGE_URL}/${img.caminho}` : ""
-  ).filter(Boolean)
+  const imagens: string[] = (animal.imagens || [])
+    .map((img: any) => (img?.caminho ? `${process.env.NEXT_PUBLIC_API_URL}/imagens/${img.caminho}` : ""))
+    .filter(Boolean)
 
   return (
     <>
@@ -107,7 +110,7 @@ export default async function AnimalDetalhesPage({ params }: { params: { id: str
                   </Card>
                 )}
 
-                {animal.castrado !== null && (
+                {typeof animal.castrado !== "undefined" && (
                   <Card>
                     <CardContent className="flex items-center gap-3 p-4">
                       <Heart className="h-5 w-5 text-primary" />
@@ -133,7 +136,7 @@ export default async function AnimalDetalhesPage({ params }: { params: { id: str
               )}
 
               <Button asChild size="lg" className="w-full">
-                <Link href={`/adocao/formulario?animal_id=${animal.id}`}>
+                <Link href={`/adotar/form?animal_id=${animal.id}`}>
                   Quero Adotar {animal.nome}
                 </Link>
               </Button>

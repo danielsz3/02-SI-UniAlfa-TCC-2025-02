@@ -5,8 +5,8 @@ import { type TranslationMessages, defaultTheme } from 'react-admin';
 // --- Imports de Tradução ---
 import ptBrMessages from 'ra-language-pt-br';
 import polyglotI18nProvider from 'ra-i18n-polyglot';
-import { ptBR as corePtBR } from '@mui/material/locale';       // <-- ADICIONADO
-import { ptBR as pickersPtBR } from '@mui/x-date-pickers/locales'; // <-- ADICIONADO
+import { ptBR as corePtBR } from '@mui/material/locale';
+import { ptBR as pickersPtBR } from '@mui/x-date-pickers/locales';
 
 // --- Configuração de Idioma (i18n) ---
 const messages: { [key: string]: TranslationMessages } = {

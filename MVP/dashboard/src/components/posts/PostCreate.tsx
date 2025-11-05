@@ -5,142 +5,121 @@ import {
     Typography,
     Button,
     Paper,
-    Grid,
     Alert,
-    IconButton,
-    Card,
-    CardMedia,
     CircularProgress,
-    Chip
 } from '@mui/material';
-import {
-    Delete,
-    Clear
-} from '@mui/icons-material';
+import { Clear } from '@mui/icons-material';
 import { useLocation } from 'react-router-dom';
-import { FilePlaceholder } from '../FilePlaceHolder';
-import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
+import { DropResult } from '@hello-pangea/dnd';
 import { CreateBase, Title, useNotify, useCreate } from 'react-admin';
+import { ImageData } from './types';
+import { validateAndLoadImage, isValidFeedAspect } from './utils/imageUtils';
+import { ImageCropModal } from './ImageCropModal';
+import { ImageDropzone } from './ImageDropzone';
+import { DraggableImageGrid } from './DraggableImageGrid';
 
-const FEED_MIN = 4 / 5; // 0.8
-const FEED_MAX = 1.91;  // 1.91
-const EPSILON = 0.01;
-
-const isValidFeedAspect = (width: number, height: number) => {
-    if (!width || !height) return false;
-    const ratio = width / height;
-    return ratio >= FEED_MIN - EPSILON && ratio <= FEED_MAX + EPSILON;
-};
-
-interface ImageData {
-    id: string; // Adicionar um ID único para o DND
-    file: File;
-    src: string;
-    width: number;
-    height: number;
-    isValid: boolean;
-    title: string;
-}
+type DefaultValues = {
+    legenda?: string;
+    imagens?: ImageData[];
+} | null;
 
 const PostCreate = () => {
     const [legenda, setLegenda] = useState('');
-    const [create, ] = useCreate();
+    const [create] = useCreate();
     const [imagens, setImagens] = useState<ImageData[]>([]);
-    const [invalidHelper, setInvalidHelper] = useState<string | null>(null);
     const [isDragging, setIsDragging] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [pendingCrop, setPendingCrop] = useState<ImageData[]>([]);
+    const [currentCrop, setCurrentCrop] = useState<ImageData | null>(null);
+    const [invalidHelper, setInvalidHelper] = useState<string | null>(null);
+
     const location = useLocation();
     const notify = useNotify();
 
+    const [initialDefaultValues] = useState<DefaultValues>(
+        () => location.state?.defaultValues || null
+    );
+    const [hasProcessedDefaults, setHasProcessedDefaults] = useState(false);
+
     useEffect(() => {
-        const defaults = location.state?.defaultValues || {};
 
-        if (defaults.imagens?.length) {
-            const validImages: ImageData[] = [];
-            let removedCount = 0;
+        if (!initialDefaultValues || hasProcessedDefaults) {
+            return;
+        }
 
-            // Processar as imagens padrão para garantir IDs e validade
+        setHasProcessedDefaults(true);
+
+        const defaults = initialDefaultValues;
+
+        setLegenda(defaults.legenda || '');
+
+        if (defaults.imagens && defaults.imagens.length > 0) {
+
+            const defaultsArray = defaults.imagens;
+
             const processDefaultImages = async () => {
-                for (const img of defaults.imagens) {
+                setLoading(true);
+                const newValidImages: ImageData[] = [];
+                const newImagesToCrop: ImageData[] = [];
+
+                for (const img of defaultsArray) {
                     const { file, src, width, height, title } = img;
-                    // Se for um objeto File real, precisamos revalidar e carregar
+
                     if (file instanceof File) {
                         try {
                             const imageData = await validateAndLoadImage(file);
                             if (imageData.isValid) {
-                                validImages.push({ ...imageData, id: `img-${Date.now()}-${Math.random()}` });
+                                newValidImages.push(imageData);
                             } else {
-                                removedCount++;
+                                newImagesToCrop.push(imageData);
                             }
                         } catch (error) {
-                            console.error("Erro ao carregar imagem padrão:", error);
-                            removedCount++;
+                            console.error('Erro ao carregar imagem padrão (File):', error);
                         }
-                    } else if (isValidFeedAspect(width, height)) {
-                        validImages.push({
-                            id: `img-${Date.now()}-${Math.random()}`,
-                            file: file || new File([], title || 'image.png'),
-                            src,
-                            width,
-                            height,
-                            isValid: true,
-                            title: title || 'Imagem Padrão'
-                        });
-                    } else {
-                        removedCount++;
+                    }
+
+                    else if (src && width && height) {
+                        if (isValidFeedAspect(width, height)) {
+                            newValidImages.push({
+                                id: `img-${Date.now()}-${Math.random()}`,
+                                file: new File([], title || 'image.png', { type: 'image/png' }),
+                                src,
+                                width,
+                                height,
+                                isValid: true,
+                                title: title || 'Imagem Padrão',
+                            });
+                        } else {
+                            // Descarta silenciosamente
+                        }
                     }
                 }
 
-                if (removedCount > 0) {
-                    const message = `Algumas imagens foram removidas por não estarem no formato ideal de feed. Total: ${removedCount}`;
-                    notify(message, { type: 'warning' });
+                // Atualiza os estados
+                setImagens(newValidImages);
+                if (newImagesToCrop.length > 0) {
+                    setPendingCrop(newImagesToCrop);
+                    setCurrentCrop(newImagesToCrop[0]);
                 }
-                setImagens(validImages);
-                setLegenda(defaults.legenda || '');
+                setLoading(false);
             };
 
             processDefaultImages();
         }
-    }, [location.state, notify]); // Dependência para garantir que roda quando o estado muda
-
-    const validateAndLoadImage = async (file: File): Promise<ImageData> => {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const img = new Image();
-                img.onload = () => {
-                    const isValid = isValidFeedAspect(img.width, img.height);
-                    resolve({
-                        id: `img-${Date.now()}-${Math.random()}`, // Adicionar ID aqui!
-                        file,
-                        src: e.target?.result as string,
-                        width: img.width,
-                        height: img.height,
-                        isValid,
-                        title: file.name
-                    });
-                };
-                img.onerror = () => reject(new Error('Erro ao carregar imagem'));
-                img.src = e.target?.result as string;
-            };
-            reader.onerror = () => reject(new Error('Erro ao ler arquivo'));
-            reader.readAsDataURL(file);
-        });
-    }
+    }, [initialDefaultValues, hasProcessedDefaults]);
 
     const handleFileSelect = async (files: FileList) => {
         setLoading(true);
+        setInvalidHelper(null);
         const fileArray = Array.from(files);
+
         const newValidImages: ImageData[] = [];
-        let invalidCount = 0;
+        const newImagesToCrop: ImageData[] = [];
+        let ignoredCount = 0;
 
         for (const file of fileArray) {
-            if (file.size > 10_500_000) {
-                invalidCount++;
-                continue;
-            }
-            if (!file.type.startsWith('image/')) {
-                invalidCount++;
+            if (file.size > 10_500_000 || !file.type.startsWith('image/')) {
+                ignoredCount++;
                 continue;
             }
 
@@ -149,104 +128,131 @@ const PostCreate = () => {
                 if (imageData.isValid) {
                     newValidImages.push(imageData);
                 } else {
-                    invalidCount++;
+                    // Em vez de rejeitar, adiciona à fila de corte
+                    newImagesToCrop.push(imageData);
                 }
             } catch (err) {
                 console.warn('Erro ao validar imagem:', err);
-                invalidCount++;
+                ignoredCount++;
             }
         }
 
-        if (invalidCount > 0) {
-            setInvalidHelper(`${invalidCount} imagem(ns) foram ignoradas — o feed aceita apenas proporções entre 4:5 (retrato) e 1.91:1 (paisagem).`);
-        } else {
-            setInvalidHelper(null);
+        if (newValidImages.length > 0) {
+            setImagens((prev) => [...prev, ...newValidImages]);
         }
 
-        setImagens((prevImagens) => [...prevImagens, ...newValidImages]);
+        if (newImagesToCrop.length > 0) {
+            const totalPending = [...pendingCrop, ...newImagesToCrop];
+            setPendingCrop(totalPending);
+
+            if (!currentCrop) {
+                setCurrentCrop(totalPending[0]);
+            }
+        }
+
+        if (ignoredCount > 0) {
+            setInvalidHelper(
+                `${ignoredCount} arquivo(s) foram ignorados por tipo ou tamanho inválido.`
+            );
+        }
+
         setLoading(false);
+    };
+
+    const handleNextCrop = () => {
+        // Esta lógica está correta
+        const [, ...remaining] = pendingCrop; // Pega todos, menos o primeiro
+        setPendingCrop(remaining);
+        setCurrentCrop(remaining[0] || null); // Define o próximo ou fecha o modal
+    };
+
+    /**
+     * Chamado quando o usuário salva uma imagem cortada.
+     */
+    const handleCropSave = async (croppedFile: File) => {
+        setLoading(true);
+        try {
+            // Re-valida a imagem cortada e a adiciona
+            const newImageData = await validateAndLoadImage(croppedFile);
+            setImagens((prev) => [...prev, newImageData]);
+            handleNextCrop(); // Move para a próxima
+        } catch (error) {
+            console.error('Erro ao salvar imagem cortada', error);
+            notify('Erro ao salvar imagem cortada', { type: 'error' });
+            handleNextCrop(); // Pula para a próxima mesmo se der erro
+        }
+        setLoading(false);
+    };
+
+    const handleCropSkip = () => {
+        notify('Imagem ignorada', { type: 'info' });
+        handleNextCrop(); // Apenas move para a próxima
     };
 
     const handleDragOver = (e: React.DragEvent) => {
         e.preventDefault();
         setIsDragging(true);
     };
-
     const handleDragLeave = (e: React.DragEvent) => {
         e.preventDefault();
         setIsDragging(false);
     };
-
     const handleDrop = (e: React.DragEvent) => {
         e.preventDefault();
         setIsDragging(false);
-        const files = e.dataTransfer.files;
-        if (files.length > 0) {
-            handleFileSelect(files);
+        if (e.dataTransfer.files.length > 0) {
+            handleFileSelect(e.dataTransfer.files);
         }
     };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = e.target.files;
-        if (files && files.length > 0) {
-            handleFileSelect(files);
+        if (e.target.files && e.target.files.length > 0) {
+            handleFileSelect(e.target.files);
         }
     };
 
-    const removeImage = (id: string) => { // Agora remove pelo ID
+    const removeImage = (id: string) => {
         setImagens(imagens.filter((img) => img.id !== id));
     };
 
-    // Função para reordenar o array
-    const reorder = (list: ImageData[], startIndex: number, endIndex: number) => {
-        const result = Array.from(list);
-        const [removed] = result.splice(startIndex, 1);
-        result.splice(endIndex, 0, removed);
-        return result;
-    };
-
-    // Handler do Drag and Drop
-    const onDragEnd = (result: DropResult) => {
-        // dropped outside the list
-        if (!result.destination) {
+    // --- Submissão ---
+    const handleSubmit = () => {
+        if (legenda.trim() === '') {
+            notify('A legenda é obrigatória', { type: 'warning' });
             return;
         }
 
-        const reorderedItems = reorder(
-            imagens,
-            result.source.index,
-            result.destination.index
-        );
-
-        setImagens(reorderedItems);
-    };
-
-
-    const handleSubmit = () => {
         if (imagens.length === 0) {
             notify('Pelo menos uma imagem é obrigatória', { type: 'warning' });
             return;
         }
 
+        const filesToUpload = imagens.map((img) => {
+
+            const file = new File([img.file], img.title, { type: img.file.type });
+
+            return {
+                rawFile: file,
+                title: img.title,
+            };
+        });
+
         const postData = {
             legenda: legenda,
-            
-            imagens: imagens.map(img => ({
-                src: img.src,     
-                title: img.title, 
-                rawFile: img.file
-            }))
+            imagens: filesToUpload,
         };
+
         create(
-            'posts', 
+            'posts',
             { data: postData },
             {
                 onSuccess: () => {
                     notify('Post criado com sucesso!', { type: 'success' });
+                    handleClear();
                 },
                 onError: () => {
                     notify('Erro ao criar post', { type: 'error' });
-                }
+                },
             }
         );
     };
@@ -255,194 +261,99 @@ const PostCreate = () => {
         setLegenda('');
         setImagens([]);
         setInvalidHelper(null);
+        setPendingCrop([]);
+        setCurrentCrop(null);
     };
 
+    const isSubmitting = loading || !!currentCrop;
+
     return (
-        <CreateBase
-            resource="posts"
-        >
+        <CreateBase resource="posts">
             <Title title="Criar Post" />
             <Box sx={{ py: 4, px: 2 }}>
                 <Paper
                     elevation={2}
-                    sx={{
-                        maxWidth: 600,
-                        mx: 'auto',
-                        p: 3,
-                        mb: 10
-                    }}
+                    sx={{ maxWidth: 600, mx: 'auto', p: 3, mb: 10 }}
                 >
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                        {/* Campo de Legenda */}
                         <TextField
                             label="Legenda"
                             multiline
-                            rows={6}
+                            minRows={3}
+                            maxRows={6}
                             fullWidth
                             value={legenda}
                             onChange={(e) => setLegenda(e.target.value)}
                             placeholder="Digite a legenda do post..."
                             variant="outlined"
+                            required
                         />
 
-                        {/* Área de Upload */}
                         <Box>
                             <Typography variant="subtitle2" fontWeight="medium" gutterBottom>
                                 Imagens do Post *
                             </Typography>
 
-                            <Paper
-                                elevation={0}
-                                onDragOver={handleDragOver}
+                            <ImageDropzone
+                                isDragging={isDragging}
                                 onDragLeave={handleDragLeave}
+                                onDragOver={handleDragOver}
                                 onDrop={handleDrop}
-                                component="label"
-                                htmlFor="file-input"
-                                sx={{
-                                    cursor: 'pointer',
-                                    border: isDragging ? '2px dashed primary.main' : '2px dashed grey.400',
-                                    bgcolor: isDragging ? 'primary.light' : 'transparent',
-                                }}
-                            >
-                                <FilePlaceholder
-                                    multiple
-                                    accept={['image/png', 'image/jpeg', 'image/jpg']}
-                                    maxSize={10_500_000}
-                                />
-                                <input
-                                    type="file"
-                                    id="file-input"
-                                    multiple
-                                    accept="image/png,image/jpeg,image/jpg,image/gif"
-                                    onChange={handleInputChange}
-                                    style={{ display: 'none' }}
-                                />
-                            </Paper>
+                                onInputChange={handleInputChange}
+                            />
 
-                            {/* Helper Text / Avisos */}
                             <Box sx={{ mt: 1 }}>
-                                {invalidHelper ? (
+                                {invalidHelper && (
                                     <Alert severity="warning" sx={{ fontSize: '0.875rem' }}>
                                         {invalidHelper}
                                     </Alert>
-                                ) : (
-                                    <Typography variant="caption" color="text.secondary">
-                                        Apenas imagens entre <strong>4:5 (retrato)</strong> e{' '}
-                                        <strong>1.91:1 (paisagem)</strong> são aceitas para o feed.
-                                    </Typography>
                                 )}
+                                <Typography variant="caption" color="text.secondary">
+                                    Imagens fora da proporção serão enviadas para ajuste.
+                                </Typography>
                             </Box>
 
-                            {/* Loading */}
-                            {loading && (
-                                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mt: 3 }}>
+                            {(loading || !!currentCrop) && (
+                                <Box
+                                    sx={{
+                                        display: 'flex',
+                                        justifyContent: 'center',
+                                        alignItems: 'center',
+                                        mt: 3,
+                                    }}
+                                >
                                     <CircularProgress size={24} sx={{ mr: 1 }} />
                                     <Typography variant="body2" color="text.secondary">
-                                        Processando imagens...
+                                        {loading
+                                            ? 'Processando...'
+                                            : 'Aguardando ajuste de imagem...'}
                                     </Typography>
                                 </Box>
                             )}
-
-                            {/* Grid de Imagens com Drag and Drop */}
-                            {imagens.length > 0 && (
-                                <DragDropContext onDragEnd={onDragEnd}>
-                                    <Droppable droppableId="image-list" direction="horizontal">
-                                        {(provided) => (
-                                            <Grid
-                                                container
-                                                spacing={2}
-                                                sx={{ mt: 1 }}
-                                                {...provided.droppableProps}
-                                                ref={provided.innerRef}
-                                            >
-
-                                                {imagens.map((img, index) => (
-                                                    <Draggable key={img.id} draggableId={img.id} index={index}>
-                                                        {(provided, snapshot) => (
-                                                            <Grid size={{ xs: 6, sm: 4, md: 3 }}
-                                                                ref={provided.innerRef}
-                                                                {...provided.draggableProps}
-                                                                {...provided.dragHandleProps}
-                                                                sx={{
-                                                                    opacity: snapshot.isDragging ? 0.8 : 1,
-                                                                    transition: 'opacity 0.2s',
-                                                                    zIndex: snapshot.isDragging ? 9999 : 'auto',
-                                                                }}
-                                                            >
-                                                                <Card
-                                                                    sx={{
-                                                                        position: 'relative',
-                                                                        border: snapshot.isDragging ? '2px solid primary.main' : '0px solid transparent',
-                                                                        boxShadow: snapshot.isDragging ? 6 : 1,
-                                                                        '&:hover .delete-button': {
-                                                                            opacity: 1
-                                                                        },
-                                                                    }}
-                                                                >
-                                                                    <CardMedia
-                                                                        component="img"
-                                                                        height="180"
-                                                                        image={img.src}
-                                                                        alt={img.title}
-                                                                        sx={{ objectFit: 'cover' }}
-                                                                    />
-                                                                    <IconButton
-                                                                        className="delete-button"
-                                                                        onClick={() => removeImage(img.id)}
-                                                                        sx={{
-                                                                            position: 'absolute',
-                                                                            top: 5,
-                                                                            right: 5,
-                                                                            bgcolor: 'rgba(255, 0, 0, 0.7)',
-                                                                            color: 'white',
-                                                                            opacity: 0,
-                                                                            transition: 'opacity 0.3s',
-                                                                            '&:hover': {
-                                                                                bgcolor: 'error.dark'
-                                                                            }
-                                                                        }}
-                                                                        size="small"
-                                                                    >
-                                                                        <Delete fontSize="small" />
-                                                                    </IconButton>
-                                                                    <Chip
-                                                                        label={index + 1 == 1 ? 'Capa' : `Imagem ${index + 1}`}
-                                                                        color="primary"
-                                                                        size="small"
-                                                                        sx={{
-                                                                            position: 'absolute',
-                                                                            top: 5,
-                                                                            left: 5,
-                                                                            fontSize: '0.7rem',
-                                                                            fontWeight: 'bold'
-                                                                        }}
-                                                                    />
-                                                                </Card>
-                                                            </Grid>
-                                                        )}
-                                                    </Draggable>
-                                                ))}
-                                                {provided.placeholder}
-                                            </Grid>
-                                        )}
-                                    </Droppable>
-                                </DragDropContext>
-                            )}
                         </Box>
 
-                        {imagens.length != 0 && (
-                            <Typography variant="caption" fontWeight="medium" sx={{ textAlign: 'center' }}>
+                        <DraggableImageGrid
+                            images={imagens}
+                            setImages={setImagens}
+                            onRemoveImage={removeImage}
+                        />
+
+                        {imagens.length > 1 && (
+                            <Typography
+                                variant="caption"
+                                fontWeight="medium"
+                                sx={{ textAlign: 'center' }}
+                            >
                                 Arraste para mudar a ordem das imagens
                             </Typography>
                         )}
 
-                        {/* Botões de Ação */}
-                        <Box sx={{ display: 'flex', gap: 2 }}>
+                        <Box sx={{ display: 'flex', gap: 1 }}>
                             <Button
                                 variant="contained"
                                 fullWidth
                                 onClick={handleSubmit}
-                                disabled={loading || imagens.length === 0}
+                                disabled={isSubmitting || imagens.length === 0}
                                 size="large"
                             >
                                 Criar Post
@@ -452,6 +363,7 @@ const PostCreate = () => {
                                 onClick={handleClear}
                                 startIcon={<Clear />}
                                 size="large"
+                                disabled={isSubmitting}
                             >
                                 Limpar
                             </Button>
@@ -459,6 +371,12 @@ const PostCreate = () => {
                     </Box>
                 </Paper>
             </Box>
+
+            <ImageCropModal
+                image={currentCrop}
+                onSave={handleCropSave}
+                onSkip={handleCropSkip}
+            />
         </CreateBase>
     );
 };

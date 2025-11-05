@@ -1,4 +1,4 @@
-import { BooleanInput, Button, Create, DeleteWithConfirmButton, FormDataConsumer, FormTab, ImageField, ImageInput, RadioButtonGroupInput, required, SaveButton, SelectInput, TabbedForm, TextInput, useNotify, useRedirect } from "react-admin";
+import { BooleanInput, Button, Create, FormDataConsumer, FormTab, ImageField, ImageInput, RadioButtonGroupInput, required, SaveButton, SelectInput, TabbedForm, TextInput, useNotify, useRedirect } from "react-admin";
 import { FilePlaceholder } from "../FilePlaceHolder";
 import CustomDatePicker from "../datepicker/customDatePicker";
 import { useState } from "react";
@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { Dialog, DialogActions, DialogTitle } from "@mui/material";
 import { CustomToolbar } from "../CustomToolbar";
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
-import { useFormContext } from "react-hook-form";
+import { urlToFile } from '../../utils/ImgDownloader';
 
 interface Animal {
     id: number;
@@ -21,7 +21,7 @@ interface Animal {
     sexo: string;
     castrado: number;
     vale_castracao: number;
-    imagens: any[];
+    imagens: ImageData[];
 }
 
 const AnimalToolbar = () => {
@@ -52,6 +52,7 @@ const AnimalCreate = () => {
     const [animalCriado, setAnimalCriado] = useState<Animal | null>(null);
     const navigate = useNavigate();
     const notify = useNotify();
+    const [isNavigating, setIsNavigating] = useState(false);
 
     const handleSuccess = (data: Animal) => {
         setAnimalCriado(data);
@@ -59,15 +60,40 @@ const AnimalCreate = () => {
         notify('Animal criado com sucesso!');
     };
 
-    const handleConfirmPost = () => {
-        if (!animalCriado) return;
+    const handleConfirmPost = async () => {
+        if (!animalCriado || isNavigating) return;
 
-        const imagens = [
-            ...(animalCriado.imagens || []).map(img => ({
-                ...img,
-                src: import.meta.env.VITE_API_URL + '/imagens/' + img.caminho
-            }))
-        ];
+        setIsNavigating(true);
+
+        const createImagePromise = async (imgData: any) => {
+            const path = imgData.caminho;
+            if (!path) return null;
+
+            const url = `${import.meta.env.VITE_API_URL}/imagens/${path}`;
+            const title = imgData.title || path;
+
+            const file = await urlToFile(url, title);
+
+            if (file) {
+                return {
+                    file: file,
+                    title: title,
+                };
+            }
+            return null;
+        };
+
+        const promises: Promise<unknown>[] = [];
+
+        if (animalCriado.imagens) {
+            animalCriado.imagens.forEach(img => {
+                promises.push(createImagePromise(img));
+            });
+        }
+
+        const resolvedImages = await Promise.all(promises);
+
+        const validImages = resolvedImages.filter(img => !!img);
 
         const castradoTexto = animalCriado.castrado
             ? '🐾 Já é castrado'
@@ -121,7 +147,7 @@ Entre em contato para saber mais e fazer parte dessa história de amor e adoçã
             state: {
                 defaultValues: {
                     legenda: legenda.trim(),
-                    imagens,
+                    imagens:validImages,
                 },
             },
         });

@@ -16,7 +16,6 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Arr;
 use Illuminate\Validation\Rule;
 
-
 class OngController extends Controller
 {
     use SearchIndex;
@@ -48,6 +47,7 @@ class OngController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        // permitir 'contatos' como JSON string
         if ($request->has('contatos') && is_string($request->input('contatos'))) {
             $decoded = json_decode($request->input('contatos'), true);
             if (json_last_error() === JSON_ERROR_NONE) {
@@ -81,12 +81,14 @@ class OngController extends Controller
             'contatos.*.descricao' => 'nullable|string|max:255',
         ];
 
+        // imagem de capa no store: pode ser arquivo ou URL
         if ($request->hasFile('imagem')) {
             $rules['imagem'] = 'file|image|mimes:jpeg,png,jpg,gif,webp|max:5120';
         } else {
             $rules['imagem'] = 'nullable|url';
         }
 
+        // validação padrão
         $validator = Validator::make($request->all(), $rules, [
             'contatos.*.tipo.in' => 'Tipo de contato inválido.',
             'contatos.*.contato.required_with' => 'O valor do contato é obrigatório quando contatos for informado.',
@@ -99,13 +101,11 @@ class OngController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        if ($request->hasFile('imagens')) {
-            $imgRules = ['imagens' => 'array'];
-            $imgRules['imagens.*'] = 'file|image|mimes:jpeg,png,jpg,gif,webp|max:10240';
-            $imgValidator = Validator::make($request->all(), $imgRules);
-            if ($imgValidator->fails()) {
-                return response()->json(['errors' => $imgValidator->errors()], 422);
-            }
+        // validação unificada para 'imagens' (aceita arquivos ou referências)
+        $imgRules = $this->getImagesValidationRules();
+        $imgValidator = Validator::make($request->all(), $imgRules);
+        if ($imgValidator->fails()) {
+            return response()->json(['errors' => $imgValidator->errors()], 422);
         }
 
         try {
@@ -154,10 +154,11 @@ class OngController extends Controller
                     }
                 }
 
+                // processar uploads de imagens (apenas arquivos enviados)
                 if ($request->hasFile('imagens')) {
-                    $files = $request->file('imagens');
+                    $files = Arr::wrap($request->file('imagens'));
                     foreach ($files as $file) {
-                        if (!$file->isValid()) continue;
+                        if (!$file instanceof \Illuminate\Http\UploadedFile || !$file->isValid()) continue;
 
                         $path = $file->store("ongs/{$ong->id}", 'public');
                         $originalName = $file->getClientOriginalName();
@@ -234,6 +235,7 @@ class OngController extends Controller
             return response()->json(['error' => 'ONG não encontrada'], 404);
         }
 
+        // permitir 'contatos' como JSON string
         if ($request->has('contatos') && is_string($request->input('contatos'))) {
             $decoded = json_decode($request->input('contatos'), true);
             if (json_last_error() === JSON_ERROR_NONE) {
@@ -243,7 +245,7 @@ class OngController extends Controller
 
         $rules = [
             'nome' => 'sometimes|required|string|min:3|max:255',
-            'cnpj' => 'nullable|string|size:14|regex:/^[0-9]+$/',
+            'cnpj' => ['sometimes','nullable','string','size:14','regex:/^[0-9]+$/', Rule::unique('ongs','cnpj')->ignore($ong->id)],
             'razao_social' => 'sometimes|required|string|min:3|max:255',
             'descricao' => 'nullable|string|max:1000',
             'cep' => 'nullable|string|size:8|regex:/^[0-9]+$/',
@@ -275,7 +277,7 @@ class OngController extends Controller
             }),
         ];
 
-        // imagem: arquivo ou URL no update
+        // imagem de capa no update: arquivo ou URL
         if ($request->hasFile('imagem')) {
             $rules['imagem'] = 'file|image|mimes:jpeg,png,jpg,gif,webp|max:5120';
         } else {
@@ -290,41 +292,29 @@ class OngController extends Controller
         ];
 
         $validator = Validator::make($request->all(), $rules, $messages);
-
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        if ($request->hasFile('imagens')) {
-            $imgRules = ['imagens' => 'array'];
-            $imgRules['imagens.*'] = 'file|image|mimes:jpeg,png,jpg,gif,webp|max:10240';
-            $imgValidator = Validator::make($request->all(), $imgRules);
-            if ($imgValidator->fails()) {
-                return response()->json(['errors' => $imgValidator->errors()], 422);
-            }
+        // validação unificada para 'imagens' (aceita arquivos ou referências)
+        $imgRules = $this->getImagesValidationRules();
+        $imgValidator = Validator::make($request->all(), $imgRules);
+        if ($imgValidator->fails()) {
+            return response()->json(['errors' => $imgValidator->errors()], 422);
         }
 
         try {
             return DB::transaction(function () use ($request, $ong) {
-                $data = $request->only([
-                    'nome',
-                    'cnpj',
-                    'razao_social',
-                    'descricao',
-                    'cep',
-                    'logradouro',
-                    'numero',
-                    'complemento',
-                    'bairro',
-                    'cidade',
-                    'uf',
-                    'banco',
-                    'agencia',
-                    'numero_conta',
-                    'tipo_conta',
-                    'chave_pix'
-                ]);
+                // Constrói $data apenas com campos realmente enviados (evita sobrescrever com null)
+                $fillable = $ong->getFillable();
+                $data = [];
+                foreach ($fillable as $field) {
+                    if ($request->has($field)) {
+                        $data[$field] = $request->input($field);
+                    }
+                }
 
+                // Processa imagem de capa
                 if ($request->hasFile('imagem')) {
                     $path = $request->file('imagem')->store('ongs', 'public');
 
@@ -336,14 +326,16 @@ class OngController extends Controller
                     $data['imagem'] = $request->input('imagem');
                 }
 
-                $ong->update($data);
+                if (!empty($data)) {
+                    $ong->update($data);
+                }
 
+                // Sincroniza contatos (cria/atualiza/delete)
                 if ($request->has('contatos')) {
                     $this->syncContacts($ong, $request->input('contatos', []));
                 }
 
-
-
+                // Tratar imagens da ONG (manter/remover/novas)
                 if ($request->has('imagens') || $request->hasFile('imagens')) {
                     // 🔹 1. Capturar arquivos novos
                     $arquivosNovos = [];
@@ -351,7 +343,7 @@ class OngController extends Controller
                         $arquivosNovos = Arr::wrap($request->file('imagens'));
                     }
 
-                    // 🔹 2. Processar imagens mantidas
+                    // 🔹 2. Processar imagens mantidas (references)
                     $imagensMantidas = [];
                     $imagensInput = $request->input('imagens', []);
 
@@ -362,6 +354,8 @@ class OngController extends Controller
                                 $decoded = json_decode($item, true);
                                 if ($decoded && isset($decoded['src'])) {
                                     $imagensMantidas[] = basename(parse_url($decoded['src'], PHP_URL_PATH));
+                                } elseif (filter_var($item, FILTER_VALIDATE_URL)) {
+                                    $imagensMantidas[] = basename(parse_url($item, PHP_URL_PATH));
                                 }
                             }
                             // Se já vier como array com 'src'
@@ -386,7 +380,7 @@ class OngController extends Controller
                         }
                     }
 
-                    // 🔹 5. Salvar novas imagens
+                    // 🔹 5. Salvar novas imagens (arquivos enviados)
                     foreach ($arquivosNovos as $file) {
                         if ($file instanceof \Illuminate\Http\UploadedFile && $file->isValid()) {
                             $nomeOriginal = $file->getClientOriginalName();
@@ -508,6 +502,7 @@ class OngController extends Controller
             return response()->json(['error' => 'ONG não encontrada'], 404);
         }
 
+        // uploadImages endpoint só aceita uploads de arquivos
         $validator = Validator::make($request->all(), [
             'imagens' => 'required|array',
             'imagens.*' => 'file|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
@@ -519,7 +514,7 @@ class OngController extends Controller
 
         try {
             $created = [];
-            foreach ($request->file('imagens') as $file) {
+            foreach (Arr::wrap($request->file('imagens')) as $file) {
                 if (!$file->isValid()) continue;
                 $path = $file->store("ongs/{$ong->id}", 'public');
                 $origName = $file->getClientOriginalName();
@@ -544,7 +539,7 @@ class OngController extends Controller
 
             return response()->json(['data' => $created], 201);
         } catch (\Exception $e) {
-            Log::error('Erro ao enviar imagens ONG: ' . $e->getMessage(), ['id' => $id]);
+            Log::error('Erro ao enviar imagens ONG: ' . $e->getMessage(), ['id' => $id, 'exception' => $e]);
             return response()->json(['error' => 'Erro ao enviar imagens'], 500);
         }
     }
@@ -563,7 +558,7 @@ class OngController extends Controller
             $imagem->delete();
             return response()->json(null, 204);
         } catch (\Exception $e) {
-            Log::error('Erro ao apagar imagem ONG: ' . $e->getMessage(), ['id' => $id]);
+            Log::error('Erro ao apagar imagem ONG: ' . $e->getMessage(), ['id' => $id, 'exception' => $e]);
             return response()->json(['error' => 'Não foi possível apagar a imagem'], 500);
         }
     }
@@ -573,5 +568,48 @@ class OngController extends Controller
         if (!$imagem) return null;
         if (Str::startsWith($imagem, ['http://', 'https://'])) return $imagem;
         return Storage::url($imagem);
+    }
+
+    /**
+     * Regras de validação para o campo 'imagens' — aceita:
+     * - UploadedFile (novo upload)
+     * - string URL direta
+     * - string JSON com { "src": "https://..." }
+     */
+    private function getImagesValidationRules(): array
+    {
+        return [
+            'imagens' => 'sometimes|array',
+            'imagens.*' => [
+                function ($attribute, $value, $fail) {
+                    // Upload válido
+                    if ($value instanceof \Illuminate\Http\UploadedFile) {
+                        if (!$value->isValid()) {
+                            return $fail("$attribute: arquivo inválido.");
+                        }
+                        $allowed = ['image/jpeg','image/png','image/gif','image/webp','image/jpg'];
+                        if (!in_array($value->getMimeType(), $allowed)) {
+                            return $fail("$attribute: tipo de imagem não permitido.");
+                        }
+                        return;
+                    }
+
+                    // se for string → pode ser URL ou JSON com src
+                    if (is_string($value)) {
+                        $decoded = json_decode($value, true);
+                        if ($decoded && isset($decoded['src']) && filter_var($decoded['src'], FILTER_VALIDATE_URL)) {
+                            return; // JSON com src válido
+                        }
+                        if (filter_var($value, FILTER_VALIDATE_URL)) {
+                            return; // URL direta
+                        }
+
+                        return $fail("$attribute deve ser um arquivo (upload) ou uma referência (URL ou JSON com 'src').");
+                    }
+
+                    return $fail("$attribute deve ser um arquivo (upload) ou uma referência (URL ou JSON com 'src').");
+                }
+            ]
+        ];
     }
 }

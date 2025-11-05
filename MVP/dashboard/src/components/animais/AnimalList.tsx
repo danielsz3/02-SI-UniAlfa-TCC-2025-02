@@ -57,7 +57,7 @@ const AnimalGrid = () => {
     const createPath = useCreatePath()
 
     if (isLoading || !data) return null
-
+    
     return (
         <Grid container spacing={3} sx={{ p: 2, backgroundColor: (theme) => theme.palette.background.default }}>
             {data.map((record) => (
@@ -74,6 +74,7 @@ const AnimalGrid = () => {
                                 borderRadius: 2,
                             }}
                         >
+                           
                             <Box
                                 sx={{
                                     position: 'absolute',
@@ -81,7 +82,7 @@ const AnimalGrid = () => {
                                     left: 0,
                                     width: '100%',
                                     height: '100%',
-                                    backgroundImage: `url(${record.imagens.caminho ||
+                                    backgroundImage: `url(${record.imagens[0]?.src ||
                                         import.meta.env.VITE_API_URL + '/imagens/' + record.imagens[0]?.caminho})`,
                                     backgroundSize: 'cover',
                                     backgroundPosition: 'center',
@@ -90,7 +91,7 @@ const AnimalGrid = () => {
                             <Chip
                                 label={chipTipos[record.situacao as Situacao]?.label ?? 'Indefinido'}
                                 sx={{
-                                    position: 'absolute', 
+                                    position: 'absolute',
                                     top: 16,
                                     right: 16,
                                     zIndex: 1,

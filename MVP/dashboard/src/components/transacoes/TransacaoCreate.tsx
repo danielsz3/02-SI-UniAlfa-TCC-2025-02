@@ -1,4 +1,4 @@
-import { ArrayInput, Button, Create, DateTimeInput, DeleteWithConfirmButton, NumberInput, RadioButtonGroupInput, SaveButton, SelectInput, SimpleForm, TextArrayInput, TextInput, minValue, required } from 'react-admin';
+import { Button, Create,NumberInput, SaveButton, SelectInput, SimpleForm, TextInput, minValue, required } from 'react-admin';
 import CustomDateTimePicker from '../datepicker/customDateTimePicker';
 import Grid from '@mui/material/Grid';
 import { CustomToolbar } from '../CustomToolbar';
@@ -19,12 +19,6 @@ const TransacaoToolbar = () => {
             leftButtons={[
                 <SaveButton
                     type='button'
-                    mutationOptions={{
-                        onSuccess: () => {
-                            notify('Transação salva com sucesso!', { type: 'success' });
-                            redirect('list', 'transacoes');
-                        },
-                    }}
                 />,
                 <SaveButton
                     type='button'
@@ -46,7 +40,6 @@ const TransacaoToolbar = () => {
                     startIcon={<ArrowBackIosNewIcon />}
                     onClick={handleBack}
                 />,
-                <DeleteWithConfirmButton />
             ]}
         />
     );
@@ -63,7 +56,7 @@ const TransacaoCreate = () => (
         >
             <Grid container spacing={2} columns={2}>
                 <Grid size={{ xs: 1 }}>
-                    <RadioButtonGroupInput
+                    <SelectInput
                         label="Tipo"
                         source="tipo"
                         choices={[

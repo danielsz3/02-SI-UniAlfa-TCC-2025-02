@@ -46,4 +46,9 @@ class Ong extends Model
     {
         return $this->hasMany(ContatoOng::class, 'ong_id', 'id');
     }
+
+    public function imagens()
+    {
+        return $this->hasMany(ImagemOng::class, 'ong_id', 'id');
+    }
 }

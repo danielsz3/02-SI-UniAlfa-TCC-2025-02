@@ -79,11 +79,6 @@ const OngEdit = (props: EditProps) => {
             resource="ongs"
             title="Editar ONG"
             redirect='edit'
-            mutationOptions={{
-                onSuccess: () => {
-                    notify('O registro foi atualizado com sucesso', { type: 'success' });
-                }
-            }}
         >
             <Container>
                 <Card
@@ -150,7 +145,7 @@ const OngEdit = (props: EditProps) => {
                             <TextInput source="complemento" label="Complemento" />
                             <TextInput source="bairro" label="Bairro" validate={required('O bairro é obrigatório')} />
                             <TextInput source="cidade" label="Cidade" validate={required('A cidade é obrigatória')} />
-                            <TextInput source="estado" label="UF" validate={required('A UF é obrigatória')} />
+                            <TextInput source="uf" label="UF" validate={required('A UF é obrigatória')} />
                         </FormTab>
 
                         <FormTab label="Contatos">

@@ -279,6 +279,7 @@ class EventoController extends Controller
                         }
                     }
                 }
+                
                 return response()->json($evento->fresh('imagens'), 200);
             });
         } catch (\Exception $e) {

@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'paths' => ['api/*', 'sanctum/csrf-cookie', 'jwt/*'],
+    'paths' => ['api/*', 'jwt/*'],
     'allowed_methods' => ['*'],
     'allowed_origins' => [
         'http://localhost:5173',

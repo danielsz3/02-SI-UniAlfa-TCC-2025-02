@@ -23,7 +23,7 @@ class ContatoOngController extends Controller
             $filter  = json_decode($request->input('filter', '{}'), true);
 
             // Validação de parâmetros
-            if (!in_array($sort, ['id', 'id_ong', 'tipo_contato', 'valor_contato', 'created_at'])) {
+            if (!in_array($sort, ['id', 'ong_id', 'tipo_contato', 'valor_contato', 'created_at'])) {
                 $sort = 'id';
             }
             if (!in_array($order, ['asc', 'desc'])) {
@@ -66,12 +66,12 @@ class ContatoOngController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'id_ong'        => 'required|exists:ongs,id',
+            'ong_id'        => 'required|exists:ongs,id',
             'tipo_contato'  => 'required|in:telefone,email,redesocial,outro',
             'valor_contato' => 'required|string|max:255',
         ], [
-            'id_ong.required' => 'O ID da ONG é obrigatório.',
-            'id_ong.exists' => 'A ONG informada não existe.',
+            'ong_id.required' => 'O ID da ONG é obrigatório.',
+            'ong_id.exists' => 'A ONG informada não existe.',
             
             'tipo_contato.required' => 'O tipo de contato é obrigatório.',
             'tipo_contato.in' => 'O tipo de contato deve ser telefone, email, redesocial ou outro.',
@@ -85,7 +85,7 @@ class ContatoOngController extends Controller
         }
 
         try {
-            $contato = ContatoOng::create($request->only(['id_ong', 'tipo_contato', 'valor_contato']));
+            $contato = ContatoOng::create($request->only(['ong_id', 'tipo_contato', 'valor_contato']));
 
             return response()->json($contato, 201);
         } catch (\Exception $e) {
@@ -140,11 +140,11 @@ class ContatoOngController extends Controller
             }
 
             $validator = Validator::make($request->all(), [
-                'id_ong'        => 'sometimes|required|exists:ongs,id',
+                'ong_id'        => 'sometimes|required|exists:ongs,id',
                 'tipo_contato'  => 'sometimes|required|in:telefone,email,redesocial,outro',
                 'valor_contato' => 'sometimes|required|string|max:255',
             ], [
-                'id_ong.exists' => 'A ONG informada não existe.',
+                'ong_id.exists' => 'A ONG informada não existe.',
                 
                 'tipo_contato.in' => 'O tipo de contato deve ser telefone, email, redesocial ou outro.',
                 
@@ -155,7 +155,7 @@ class ContatoOngController extends Controller
                 return response()->json(['errors' => $validator->errors()], 422);
             }
 
-            $contato->update($request->only(['id_ong', 'tipo_contato', 'valor_contato']));
+            $contato->update($request->only(['ong_id', 'tipo_contato', 'valor_contato']));
 
             return response()->json($contato->fresh(), 200);
         } catch (\Exception $e) {

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Ong;
 use App\Models\ContatoOng;
+use App\Models\ImagemOng;
 use App\Traits\SearchIndex;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -12,15 +13,13 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Arr;
+
 
 class OngController extends Controller
 {
     use SearchIndex;
 
-    /**
-     * Lista usando SearchIndex trait
-     */
     public function index(Request $request): JsonResponse
     {
         try {
@@ -46,12 +45,8 @@ class OngController extends Controller
         ], 200);
     }
 
-    /**
-     * Store: cria ONG + contatos (aceita imagem como file ou URL)
-     */
     public function store(Request $request): JsonResponse
     {
-        // aceita contatos como JSON string (ex.: via FormData)
         if ($request->has('contatos') && is_string($request->input('contatos'))) {
             $decoded = json_decode($request->input('contatos'), true);
             if (json_last_error() === JSON_ERROR_NONE) {
@@ -59,7 +54,6 @@ class OngController extends Controller
             }
         }
 
-        // validação
         $rules = [
             'nome' => 'required|string|min:3|max:255',
             'cnpj' => 'nullable|string|size:14|regex:/^[0-9]+$/',
@@ -78,7 +72,6 @@ class OngController extends Controller
             'tipo_conta' => 'nullable|string|in:corrente,poupança',
             'chave_pix' => 'nullable|string|max:255',
 
-            // contatos como array de objetos
             'contatos' => 'nullable|array',
             'contatos.*.id' => 'sometimes|integer|exists:contatos_ongs,id',
             'contatos.*.tipo' => 'required_with:contatos|in:telefone,email,whatsapp,instagram,facebook,site,outro,redesocial',
@@ -87,7 +80,6 @@ class OngController extends Controller
             'contatos.*.descricao' => 'nullable|string|max:255',
         ];
 
-        // imagem: se vier como arquivo via FormData valida como imagem, senão permite URL
         if ($request->hasFile('imagem')) {
             $rules['imagem'] = 'file|image|mimes:jpeg,png,jpg,gif,webp|max:5120';
         } else {
@@ -106,14 +98,36 @@ class OngController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
+        if ($request->hasFile('imagens')) {
+            $imgRules = ['imagens' => 'array'];
+            $imgRules['imagens.*'] = 'file|image|mimes:jpeg,png,jpg,gif,webp|max:10240';
+            $imgValidator = Validator::make($request->all(), $imgRules);
+            if ($imgValidator->fails()) {
+                return response()->json(['errors' => $imgValidator->errors()], 422);
+            }
+        }
+
         try {
             return DB::transaction(function () use ($request) {
                 $data = $request->only([
-                    'nome','cnpj','razao_social','descricao','cep','logradouro','numero','complemento',
-                    'bairro','cidade','uf','banco','agencia','numero_conta','tipo_conta','chave_pix'
+                    'nome',
+                    'cnpj',
+                    'razao_social',
+                    'descricao',
+                    'cep',
+                    'logradouro',
+                    'numero',
+                    'complemento',
+                    'bairro',
+                    'cidade',
+                    'uf',
+                    'banco',
+                    'agencia',
+                    'numero_conta',
+                    'tipo_conta',
+                    'chave_pix'
                 ]);
 
-                // imagem: arquivo ou URL
                 if ($request->hasFile('imagem')) {
                     $path = $request->file('imagem')->store('ongs', 'public');
                     $data['imagem'] = $path;
@@ -123,7 +137,6 @@ class OngController extends Controller
 
                 $ong = Ong::create($data);
 
-                // criar contatos (se houver)
                 $contatos = $request->input('contatos', []);
                 if (is_array($contatos) && !empty($contatos)) {
                     $toCreate = [];
@@ -140,9 +153,40 @@ class OngController extends Controller
                     }
                 }
 
-                $ong->load('contatos');
+                if ($request->hasFile('imagens')) {
+                    $files = $request->file('imagens');
+                    foreach ($files as $file) {
+                        if (!$file->isValid()) continue;
+
+                        $path = $file->store("ongs/{$ong->id}", 'public');
+                        $originalName = $file->getClientOriginalName();
+                        $dimensions = @getimagesize($file->getRealPath());
+                        $width = $dimensions[0] ?? null;
+                        $height = $dimensions[1] ?? null;
+
+                        ImagemOng::create([
+                            'ong_id' => $ong->id,
+                            'caminho' => $path,
+                            'nome_original' => $originalName,
+                            'width' => $width,
+                            'height' => $height,
+                        ]);
+                    }
+                }
+
+                $ong->load('contatos', 'imagens');
                 $ongArr = $ong->toArray();
                 $ongArr['imagem_url'] = $this->makeImageUrl($ong->imagem);
+                $ongArr['imagens'] = array_map(function ($i) {
+                    return [
+                        'id' => $i['id'],
+                        'caminho' => $i['caminho'],
+                        'nome_original' => $i['nome_original'],
+                        'width' => $i['width'],
+                        'height' => $i['height'],
+                        'url' => $this->makeImageUrl($i['caminho']),
+                    ];
+                }, $ongArr['imagens'] ?? []);
 
                 return response()->json($ongArr, 201);
             });
@@ -158,12 +202,9 @@ class OngController extends Controller
         }
     }
 
-    /**
-     * Exibe uma ONG com contatos
-     */
     public function show($id): JsonResponse
     {
-        $ong = Ong::with('contatos')->find($id);
+        $ong = Ong::with(['contatos', 'imagens'])->find($id);
 
         if (!$ong) {
             return response()->json(['error' => 'ONG não encontrada'], 404);
@@ -171,13 +212,20 @@ class OngController extends Controller
 
         $ongArr = $ong->toArray();
         $ongArr['imagem_url'] = $this->makeImageUrl($ong->imagem);
+        $ongArr['imagens'] = array_map(function ($i) {
+            return [
+                'id' => $i['id'],
+                'caminho' => $i['caminho'],
+                'nome_original' => $i['nome_original'],
+                'width' => $i['width'],
+                'height' => $i['height'],
+                'url' => $this->makeImageUrl($i['caminho']),
+            ];
+        }, $ongArr['imagens'] ?? []);
 
         return response()->json($ongArr, 200);
     }
 
-    /**
-     * Update: atualiza ONG + sincroniza contatos (objeto)
-     */
     public function update(Request $request, $id): JsonResponse
     {
         $ong = Ong::find($id);
@@ -185,7 +233,6 @@ class OngController extends Controller
             return response()->json(['error' => 'ONG não encontrada'], 404);
         }
 
-        // aceita contatos como JSON string
         if ($request->has('contatos') && is_string($request->input('contatos'))) {
             $decoded = json_decode($request->input('contatos'), true);
             if (json_last_error() === JSON_ERROR_NONE) {
@@ -247,37 +294,128 @@ class OngController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
+        if ($request->hasFile('imagens')) {
+            $imgRules = ['imagens' => 'array'];
+            $imgRules['imagens.*'] = 'file|image|mimes:jpeg,png,jpg,gif,webp|max:10240';
+            $imgValidator = Validator::make($request->all(), $imgRules);
+            if ($imgValidator->fails()) {
+                return response()->json(['errors' => $imgValidator->errors()], 422);
+            }
+        }
+
         try {
             return DB::transaction(function () use ($request, $ong) {
                 $data = $request->only([
-                    'nome','cnpj','razao_social','descricao','cep','logradouro','numero','complemento',
-                    'bairro','cidade','uf','banco','agencia','numero_conta','tipo_conta','chave_pix'
+                    'nome',
+                    'cnpj',
+                    'razao_social',
+                    'descricao',
+                    'cep',
+                    'logradouro',
+                    'numero',
+                    'complemento',
+                    'bairro',
+                    'cidade',
+                    'uf',
+                    'banco',
+                    'agencia',
+                    'numero_conta',
+                    'tipo_conta',
+                    'chave_pix'
                 ]);
 
-                // imagem: novo arquivo ou URL
                 if ($request->hasFile('imagem')) {
                     $path = $request->file('imagem')->store('ongs', 'public');
 
-                    // remover imagem antiga do disco se for um arquivo local salvo
-                    if ($ong->imagem && !Str::startsWith($ong->imagem, ['http://','https://'])) {
+                    if ($ong->imagem && !Str::startsWith($ong->imagem, ['http://', 'https://'])) {
                         Storage::disk('public')->delete($ong->imagem);
                     }
                     $data['imagem'] = $path;
                 } elseif ($request->has('imagem')) {
-                    // aceita atualização por URL (ou null para remover)
                     $data['imagem'] = $request->input('imagem');
                 }
 
                 $ong->update($data);
 
-                // sincroniza contatos se enviados
                 if ($request->has('contatos')) {
                     $this->syncContacts($ong, $request->input('contatos', []));
                 }
 
-                $ong->load('contatos');
+
+
+                if ($request->has('imagens') || $request->hasFile('imagens')) {
+                    // 🔹 1. Capturar arquivos novos
+                    $arquivosNovos = [];
+                    if ($request->hasFile('imagens')) {
+                        $arquivosNovos = Arr::wrap($request->file('imagens'));
+                    }
+
+                    // 🔹 2. Processar imagens mantidas
+                    $imagensMantidas = [];
+                    $imagensInput = $request->input('imagens', []);
+
+                    if (is_array($imagensInput)) {
+                        foreach ($imagensInput as $item) {
+                            // Se for string JSON, decodifica
+                            if (is_string($item)) {
+                                $decoded = json_decode($item, true);
+                                if ($decoded && isset($decoded['src'])) {
+                                    $imagensMantidas[] = basename(parse_url($decoded['src'], PHP_URL_PATH));
+                                }
+                            }
+                            // Se já vier como array com 'src'
+                            elseif (is_array($item) && isset($item['src'])) {
+                                $imagensMantidas[] = basename(parse_url($item['src'], PHP_URL_PATH));
+                            }
+                        }
+                    }
+
+                    // 🔹 3. Buscar imagens atuais do banco
+                    $imagensAtuais = ImagemOng::where('ong_id', $ong->id)->get();
+
+                    // 🔹 4. Excluir as removidas
+                    foreach ($imagensAtuais as $imagem) {
+                        $arquivoAtual = basename($imagem->caminho);
+
+                        if (!in_array($arquivoAtual, $imagensMantidas)) {
+                            if (Storage::disk('public')->exists($imagem->caminho)) {
+                                Storage::disk('public')->delete($imagem->caminho);
+                            }
+                            $imagem->delete();
+                        }
+                    }
+
+                    // 🔹 5. Salvar novas imagens
+                    foreach ($arquivosNovos as $file) {
+                        if ($file instanceof \Illuminate\Http\UploadedFile && $file->isValid()) {
+                            $nomeOriginal = $file->getClientOriginalName();
+                            $path = $file->store('ongs', 'public');
+                            [$width, $height] = @getimagesize($file->getRealPath()) ?: [null, null];
+
+                            ImagemOng::create([
+                                'ong_id' => $ong->id,
+                                'caminho' => $path,
+                                'nome_original' => $nomeOriginal,
+                                'width' => $width,
+                                'height' => $height,
+                            ]);
+                        }
+                    }
+                }
+
+                $ong->load('contatos', 'imagens');
                 $ongArr = $ong->toArray();
                 $ongArr['imagem_url'] = $this->makeImageUrl($ong->imagem);
+                $ongArr['imagens'] = array_map(function ($i) {
+                    return [
+                        'id' => $i['id'],
+                        'caminho' => $i['caminho'],
+                        'nome_original' => $i['nome_original'],
+                        'width' => $i['width'],
+                        'height' => $i['height'],
+                        'url' => $this->makeImageUrl($i['caminho']),
+                    ];
+                }, $ongArr['imagens'] ?? []);
 
                 return response()->json($ongArr, 200);
             });
@@ -291,9 +429,6 @@ class OngController extends Controller
         }
     }
 
-    /**
-     * Apaga (soft delete) ONG
-     */
     public function destroy($id): JsonResponse
     {
         $ong = Ong::find($id);
@@ -311,9 +446,6 @@ class OngController extends Controller
         }
     }
 
-    /**
-     * Restaura ONG com soft-deleted
-     */
     public function restore($id): JsonResponse
     {
         $ong = Ong::withTrashed()->find($id);
@@ -335,14 +467,6 @@ class OngController extends Controller
         }
     }
 
-    /**
-     * Sincroniza contatos: cria novos, atualiza os existentes (quando id fornecido)
-     * e soft-deleta os que não foram enviados pelo front.
-     *
-     * @param Ong $ong
-     * @param array $contatos
-     * @return void
-     */
     private function syncContacts(Ong $ong, array $contatos): void
     {
         $existing = $ong->contatos()->get()->keyBy('id');
@@ -350,7 +474,6 @@ class OngController extends Controller
 
         foreach ($contatos as $c) {
             if (isset($c['id']) && is_numeric($c['id']) && $existing->has((int) $c['id'])) {
-                // atualiza
                 $contatoModel = $existing->get((int) $c['id']);
                 $contatoModel->update([
                     'tipo' => $c['tipo'] ?? $contatoModel->tipo,
@@ -360,7 +483,6 @@ class OngController extends Controller
                 ]);
                 $incomingIds[] = (int) $c['id'];
             } else {
-                // novo
                 $new = $ong->contatos()->create([
                     'tipo' => $c['tipo'] ?? null,
                     'contato' => $c['contato'] ?? null,
@@ -371,7 +493,6 @@ class OngController extends Controller
             }
         }
 
-        // soft-delete os contatos existentes que não vieram no payload
         $toDelete = $existing->keys()->diff($incomingIds);
         if ($toDelete->isNotEmpty()) {
             // dispara model events ao deletar
@@ -379,18 +500,77 @@ class OngController extends Controller
         }
     }
 
-    /**
-     * Monta URL pública para imagem (se for URL externa retorna como está;
-     * se for caminho local retorna Storage::url; se null retorna null).
-     */
+    public function uploadImages(Request $request, $id): JsonResponse
+    {
+        $ong = Ong::find($id);
+        if (!$ong) {
+            return response()->json(['error' => 'ONG não encontrada'], 404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'imagens' => 'required|array',
+            'imagens.*' => 'file|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        try {
+            $created = [];
+            foreach ($request->file('imagens') as $file) {
+                if (!$file->isValid()) continue;
+                $path = $file->store("ongs/{$ong->id}", 'public');
+                $origName = $file->getClientOriginalName();
+                $dimensions = @getimagesize($file->getRealPath());
+                $width = $dimensions[0] ?? null;
+                $height = $dimensions[1] ?? null;
+
+                $img = ImagemOng::create([
+                    'ong_id' => $ong->id,
+                    'caminho' => $path,
+                    'nome_original' => $origName,
+                    'width' => $width,
+                    'height' => $height,
+                ]);
+
+                $created[] = [
+                    'id' => $img->id,
+                    'caminho' => $img->caminho,
+                    'url' => $this->makeImageUrl($img->caminho),
+                ];
+            }
+
+            return response()->json(['data' => $created], 201);
+        } catch (\Exception $e) {
+            Log::error('Erro ao enviar imagens ONG: ' . $e->getMessage(), ['id' => $id]);
+            return response()->json(['error' => 'Erro ao enviar imagens'], 500);
+        }
+    }
+
+    public function deleteImage($id): JsonResponse
+    {
+        $imagem = ImagemOng::find($id);
+        if (!$imagem) {
+            return response()->json(['error' => 'Imagem não encontrada'], 404);
+        }
+
+        try {
+            if ($imagem->caminho && !Str::startsWith($imagem->caminho, ['http://', 'https://'])) {
+                Storage::disk('public')->delete($imagem->caminho);
+            }
+            $imagem->delete();
+            return response()->json(null, 204);
+        } catch (\Exception $e) {
+            Log::error('Erro ao apagar imagem ONG: ' . $e->getMessage(), ['id' => $id]);
+            return response()->json(['error' => 'Não foi possível apagar a imagem'], 500);
+        }
+    }
+
     private function makeImageUrl(?string $imagem): ?string
     {
-        if (!$imagem) {
-            return null;
-        }
-        if (Str::startsWith($imagem, ['http://', 'https://'])) {
-            return $imagem;
-        }
+        if (!$imagem) return null;
+        if (Str::startsWith($imagem, ['http://', 'https://'])) return $imagem;
         return Storage::url($imagem);
     }
 }

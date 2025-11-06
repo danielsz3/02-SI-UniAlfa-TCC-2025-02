@@ -50,7 +50,6 @@ export default async function AnimalDetalhesPage({ params }: { params: { id: str
 
   return (
     <>
-      <Navbar />
       <main className="min-h-screen pt-24 pb-16">
         <div className="container mx-auto px-4 max-w-5xl">
           <div className="grid md:grid-cols-2 gap-8">

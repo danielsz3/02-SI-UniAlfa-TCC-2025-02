@@ -4,6 +4,8 @@ import {
     SimpleList,
     TextInput,
     SelectInput,
+    Pagination,
+    PaginationProps,
 } from 'react-admin'
 import {
     Grid,
@@ -18,6 +20,7 @@ import {
 import { Link } from 'react-router-dom'
 import { useCreatePath } from 'react-admin'
 import { formatarDiferencaData } from "../../utils/formatDate"
+import { JSX } from 'react/jsx-runtime'
 
 const CARD_HEIGHT = 250;
 
@@ -141,6 +144,8 @@ const AnimalGrid = () => {
     )
 }
 
+const Pag = (props: JSX.IntrinsicAttributes & PaginationProps) => <Pagination rowsPerPageOptions={[12, 24, 48, 120]} {...props} />;
+
 const AnimalList = () => {
     const theme = useTheme()
     const isSmall = useMediaQuery(theme.breakpoints.down('sm'))
@@ -148,6 +153,7 @@ const AnimalList = () => {
     return (
         <>
             <List
+                pagination={<Pag />}
                 filters={filters}
                 sort={{ field: 'created_at', order: 'DESC' }}
                 sx={{

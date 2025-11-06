@@ -84,7 +84,7 @@ const IntegracoesGrid = () => {
                                 {isActive && (
                                     <Chip
                                         label={isConnected ? "Conectado" : "Desconectado"}
-                                        size="small"
+                                        size="medium"
                                         color={isConnected ? "success" : "default"}
                                         variant="outlined"
                                     />
@@ -134,7 +134,7 @@ const IntegracoesGrid = () => {
 // Lista principal
 export const IntegracaoList = () => (
     <List filters={filters} title="Integrações"
-    
+        pagination={false}
         exporter={false}
         sx={{
             "& .RaList-content": {

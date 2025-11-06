@@ -34,7 +34,7 @@ function calcularIdade(dataNascimento?: string): string {
 }
 
 export default async function AnimalDetalhesPage({ params }: { params: { id: string } }) {
-  // Aguardar params conforme aviso do Next.js
+  
   const { id } = (await params) as { id: string }
 
   const animal = await fetchAnimal(id)

@@ -90,7 +90,7 @@ class AdocaoController extends Controller
 
     try {
         // Carregar o animal com o relacionamento 'usuario'
-        $animal = Animal::with('usuario')->find($request->animal_id);
+        $animal = Animal::find($request->animal_id);
 
         if (!$animal) {
             return response()->json(['error' => 'Animal não encontrado.'], 404);

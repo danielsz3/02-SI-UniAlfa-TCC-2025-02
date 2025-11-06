@@ -93,7 +93,7 @@ export default function MatchModal({ open, item, onClose, onChangeStatus, fetchA
 
   const img = item?.animal.imagens?.[0]?.url ?? '/no-image-available.png';
 
-  const content = (
+  return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
 
@@ -154,6 +154,4 @@ export default function MatchModal({ open, item, onClose, onChangeStatus, fetchA
       </div>
     </div>
   );
-
-  return createPortal(content, document.body);
 }

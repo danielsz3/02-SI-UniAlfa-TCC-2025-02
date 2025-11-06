@@ -266,16 +266,9 @@ export default function PainelAdotantePage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <Button variant="secondary" onClick={startMatching} disabled={loading || counts.em_adocao === 0}>
-            Iniciar matching
-          </Button>
-
-          <Button variant="ghost" onClick={openSelectedModal} disabled={!selected}>
-            Abrir match selecionado
-          </Button>
 
           <Button asChild>
-            <a href="/adotar">Ver catálogo</a>
+            <a href="/adotar">Animais disponíveis para Adoção</a>
           </Button>
         </div>
       </div>
@@ -286,7 +279,7 @@ export default function PainelAdotantePage() {
           onClick={() => setStatusFilter('em_adocao')}
           className={`px-3 py-1 rounded-full text-sm font-medium ${statusFilter === 'em_adocao' ? 'bg-sky-600 text-white' : 'bg-muted/30 text-muted-foreground'}`}
         >
-          Em adoção <span className="ml-2 text-xs bg-white/10 px-2 py-0.5 rounded-full">{counts.em_adocao}</span>
+          Aprovados <span className="ml-2 text-xs bg-white/10 px-2 py-0.5 rounded-full">{counts.em_adocao}</span>
         </button>
 
         <button
@@ -363,16 +356,4 @@ export default function PainelAdotantePage() {
       />
     </div>
   );
-}
-
-// helper fora do componente
-function calcularIdade(dataNascimento?: string | null) {
-  if (!dataNascimento) return null;
-  try {
-    const nas = new Date(dataNascimento);
-    const years = Math.floor((Date.now() - nas.getTime()) / (1000 * 60 * 60 * 24 * 365.25));
-    return years > 0 ? `${years} ano${years > 1 ? 's' : ''}` : 'Menos de 1 ano';
-  } catch {
-    return null;
-  }
 }

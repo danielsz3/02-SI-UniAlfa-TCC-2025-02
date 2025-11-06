@@ -11,14 +11,6 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 
-/**
- * Observação: Se seus componentes shadcn tiverem nomes/pastas diferentes,
- * ajuste os imports acima. Exemplo comum alternativo:
- * import { RadioGroup, RadioGroupItem } from "@/components/ui/radio"
- * ou
- * import { Radio } from "@/components/ui/radio"
- */
-
 type RoutineOption =
   | "home_office"
   | "ninguem_fica_em_casa_dia"
@@ -42,23 +34,19 @@ export default function AdocaoFormPage() {
   const animalIdParam = searchParams.get("animal_id") ?? ""
   const [animalId, setAnimalId] = useState<string>(animalIdParam)
 
-  // animal preview (opcional)
   const [animalName, setAnimalName] = useState<string | null>(null)
   const [loadingAnimal, setLoadingAnimal] = useState(false)
 
-  // stepper
-  const [step, setStep] = useState<number>(1) // 1..3
+  const [step, setStep] = useState<number>(1)
 
-  // form state
-  const [qtdPessoasCasa, setQtdPessoasCasa] = useState<string>("") // sozinho, uma_pessoa, duas_pessoas, tres_pessoas, quatro_ou_mais
-  const [possuiFilhos, setPossuiFilhos] = useState<string>("") // "true"/"false"
+  const [qtdPessoasCasa, setQtdPessoasCasa] = useState<string>("")
+  const [possuiFilhos, setPossuiFilhos] = useState<string>("")
   const [sobreRotina, setSobreRotina] = useState<RoutineOption[]>([])
   const [acessoRuaJanelas, setAcessoRuaJanelas] = useState<string>("")
   const [acessoRuaPortoesMuros, setAcessoRuaPortoesMuros] = useState<string>("")
   const [rendaFamiliar, setRendaFamiliar] = useState<string>("")
   const [aceitaTermos, setAceitaTermos] = useState<boolean>(false)
 
-  // UX state
   const [submitting, setSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [validationErrors, setValidationErrors] = useState<Record<string, string[]>>({})
@@ -66,7 +54,6 @@ export default function AdocaoFormPage() {
 
   const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api"
 
-  // Fetch basic animal info if animalId present (non-blocking)
   useEffect(() => {
     if (!animalId) {
       setAnimalName(null)
@@ -89,12 +76,9 @@ export default function AdocaoFormPage() {
         setAnimalName(null)
       })
       .finally(() => mounted && setLoadingAnimal(false))
-    return () => {
-      mounted = false
-    }
+    return () => { mounted = false }
   }, [animalId, apiBase])
 
-  // Helpers
   const goNext = useCallback(() => setStep((s) => Math.min(3, s + 1)), [])
   const goPrev = useCallback(() => setStep((s) => Math.max(1, s - 1)), [])
 
@@ -102,7 +86,6 @@ export default function AdocaoFormPage() {
     setSobreRotina((prev) => (prev.includes(key) ? prev.filter((p) => p !== key) : [...prev, key]))
   }
 
-  // validação por etapa
   function validateStep(s: number) {
     const errors: Record<string, string> = {}
     if (s === 1) {
@@ -124,9 +107,7 @@ export default function AdocaoFormPage() {
   function handleNext() {
     const errs = validateStep(step)
     setValidationErrors(Object.keys(errs).length ? { [step as any]: Object.values(errs) } : {})
-    if (Object.keys(errs).length === 0) {
-      goNext()
-    }
+    if (Object.keys(errs).length === 0) goNext()
   }
 
   function handlePrev() {
@@ -134,10 +115,47 @@ export default function AdocaoFormPage() {
     goPrev()
   }
 
-  // montagem do payload conforme controller espera
-  const buildPayload = () => {
-    return {
-      animal_id: animalId,
+  // Recupera token armazenado no localStorage (trata JSON ou string)
+  const getTokenFromStorage = () => {
+    if (typeof window === "undefined") return null
+    const keysToTry = ["token", "access_token", "authToken", "jwt"]
+    let raw: string | null = null
+    for (const k of keysToTry) {
+      raw = localStorage.getItem(k)
+      if (raw) break
+    }
+    if (!raw) return null
+    try {
+      const parsed = JSON.parse(raw)
+      return parsed?.access_token || parsed?.token || parsed?.jwt || raw
+    } catch {
+      return raw
+    }
+  }
+
+  // Decodifica JWT (payload) e retorna objeto (unsafe client-side: só para extrair o ID)
+  const parseJwtPayload = (token: string | null) => {
+    if (!token) return null
+    try {
+      const parts = token.split('.')
+      if (parts.length < 2) return null
+      const payloadB64 = parts[1].replace(/-/g, '+').replace(/_/g, '/')
+      const json = decodeURIComponent(
+        atob(payloadB64)
+          .split('')
+          .map(function(c) { return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2) })
+          .join('')
+      )
+      return JSON.parse(json)
+    } catch {
+      return null
+    }
+  }
+
+  // montagem do payload conforme controller espera (agora inclui usuario_id extraído do token)
+  const buildPayload = (usuarioId?: number | null) => {
+    const payload: any = {
+      animal_id: Number(animalId),
       qtd_pessoas_casa: qtdPessoasCasa,
       possui_filhos: possuiFilhos === "true",
       sobre_rotina: sobreRotina,
@@ -146,9 +164,10 @@ export default function AdocaoFormPage() {
       renda_familiar: rendaFamiliar,
       aceita_termos: aceitaTermos ? "1" : "0",
     }
+    if (usuarioId != null && !Number.isNaN(usuarioId)) payload.usuario_id = Number(usuarioId)
+    return payload
   }
 
-  // submit final
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault()
     setErrorMessage(null)
@@ -169,14 +188,34 @@ export default function AdocaoFormPage() {
 
     setSubmitting(true)
     try {
+      const token = getTokenFromStorage()
+
+      if (!token) {
+        setErrorMessage("Você precisa estar autenticado para solicitar adoção. Faça login e tente novamente.")
+        setSubmitting(false)
+        return
+      }
+
+      // Decodifica token para extrair id do usuário (tenta várias chaves comuns)
+      const payload = parseJwtPayload(token)
+      const possibleUserId = payload?.sub ?? payload?.id ?? payload?.user_id ?? payload?.usuario_id ?? payload?.id_usuario ?? null
+      if (!possibleUserId) {
+        setErrorMessage("Não foi possível extrair o ID do usuário do token. Verifique o token ou ajuste a extração conforme suas claims.")
+        setSubmitting(false)
+        return
+      }
+      const usuarioId = Number(possibleUserId)
+
+      const headers: Record<string, string> = {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      }
+
       const res = await fetch(`${apiBase}/adocoes`, {
         method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify(buildPayload()),
+        headers,
+        body: JSON.stringify(buildPayload(usuarioId)),
       })
 
       if (res.status === 401) {
@@ -207,9 +246,7 @@ export default function AdocaoFormPage() {
 
       const data = await res.json()
       setSuccessMessage("Solicitação de adoção criada com sucesso!")
-      setTimeout(() => {
-        router.push(`/adotar/${animalId}`)
-      }, 1200)
+      setTimeout(() => { router.push(`/adotar/${animalId}`) }, 1200)
     } catch (err: any) {
       console.error(err)
       setErrorMessage(err?.message || "Erro ao enviar solicitação.")
@@ -218,7 +255,6 @@ export default function AdocaoFormPage() {
     }
   }
 
-  // UI: step dots (theme-aware)
   const stepDots = useMemo(() => {
     return [1, 2, 3].map((s) => (
       <div key={s} className="flex items-center gap-3">
@@ -234,7 +270,6 @@ export default function AdocaoFormPage() {
         <h1 className="text-center text-2xl font-bold mb-4">Formulário de Adoção</h1>
 
         <div className="bg-card rounded-lg border text-foreground p-4 shadow-sm">
-          {/* header with animal preview */}
           <div className="flex items-center gap-4 mb-4">
             <div className="w-12 h-12 bg-muted rounded flex items-center justify-center">
               <span className="text-sm text-muted-foreground">📷</span>
@@ -248,11 +283,9 @@ export default function AdocaoFormPage() {
             </div>
           </div>
 
-          {/* progress */}
           <div className="flex items-center justify-center mb-4">{stepDots}</div>
 
           <form onSubmit={handleSubmit}>
-            {/* STEP 1 */}
             {step === 1 && (
               <section className="space-y-4">
                 <h2 className="text-lg font-semibold">1. Sobre Você, sua Família e sua Rotina</h2>
@@ -308,7 +341,6 @@ export default function AdocaoFormPage() {
                           id={`rotina-${opt.key}`}
                           checked={sobreRotina.includes(opt.key)}
                           onCheckedChange={(checked) => {
-                            // onCheckedChange pode receber boolean | "indeterminate"
                             const isChecked = !!checked
                             if (isChecked) setSobreRotina((p) => [...p, opt.key])
                             else setSobreRotina((p) => p.filter((k) => k !== opt.key))
@@ -331,7 +363,6 @@ export default function AdocaoFormPage() {
               </section>
             )}
 
-            {/* STEP 2 */}
             {step === 2 && (
               <section className="space-y-4">
                 <h2 className="text-lg font-semibold">2. Segurança da Casa</h2>
@@ -384,7 +415,6 @@ export default function AdocaoFormPage() {
               </section>
             )}
 
-            {/* STEP 3 */}
             {step === 3 && (
               <section className="space-y-4">
                 <h2 className="text-lg font-semibold">3. Condições Finais e Acordo</h2>
@@ -438,7 +468,6 @@ export default function AdocaoFormPage() {
             )}
           </form>
 
-          {/* messages */}
           <div className="mt-4">
             {errorMessage && <p className="text-sm text-destructive">{errorMessage}</p>}
             {Object.keys(validationErrors).length > 0 && (

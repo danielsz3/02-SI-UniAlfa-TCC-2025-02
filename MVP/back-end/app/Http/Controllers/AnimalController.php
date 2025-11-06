@@ -16,7 +16,9 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Illuminate\Http\UploadedFile;
-use Carbon\Carbon;
+use Illuminate\Pagination\LengthAwarePaginator;
+
+
 
 class AnimalController extends Controller
 {
@@ -395,59 +397,81 @@ class AnimalController extends Controller
     /**
      * Recomendar animais para um usuário de acordo com preferências
      */
-    public function recomendar($usuarioId): JsonResponse
-    {
-        try {
-            $usuario = Usuario::with('preferencias')->find($usuarioId);
+    public function recomendar(Request $request, $usuarioId): JsonResponse
+{
+    try {
+        $usuario = Usuario::with('preferencias')->find($usuarioId);
 
-            if (!$usuario) {
-                return response()->json(['error' => 'Usuário não encontrado'], 404);
-            }
-
-            $pref = $usuario->preferencias;
-            if (!$pref) {
-                return response()->json(['error' => 'Usuário não possui preferências definidas'], 400);
-            }
-
-            $animais = Cache::remember('animais_ativos', 3600, function () {
-                return Animal::with('imagens')->get();
-            });
-
-            $resultados = $animais->map(function ($animal) use ($pref) {
-                $score = 0;
-                $total = 4;
-
-                if (!empty($pref->tamanho_pet) && $pref->tamanho_pet === $animal->tamanho) {
-                    $score += 1;
-                }
-                if (!empty($pref->tempo_disponivel) && $pref->tempo_disponivel === $animal->tempo_necessario) {
-                    $score += 1;
-                }
-                if (!empty($pref->estilo_vida) && $pref->estilo_vida === $animal->nivel_energia) {
-                    $score += 1;
-                }
-                if (!empty($pref->espaco_casa) && $pref->espaco_casa === $animal->ambiente_ideal) {
-                    $score += 1;
-                }
-
-                $percent = $total > 0 ? intval(($score / $total) * 100) : 0;
-
-                return [
-                    'animal' => $animal,
-                    'afinidade' => $score,
-                    'afinidade_percent' => $percent,
-                ];
-            });
-
-            $ordenados = $resultados->sortByDesc('afinidade')->values();
-
-            return response()->json($ordenados, 200);
-        } catch (\Exception $e) {
-            Log::error('Erro ao recomendar animais: ' . $e->getMessage(), ['usuario_id' => $usuarioId, 'exception' => $e]);
-            return response()->json([
-                'error' => 'Não foi possível gerar recomendações',
-                'message' => config('app.debug') ? $e->getMessage() : 'Erro interno do servidor'
-            ], 500);
+        if (!$usuario) {
+            return response()->json(['error' => 'Usuário não encontrado'], 404);
         }
+
+        $pref = $usuario->preferencias;
+        if (!$pref) {
+            return response()->json(['error' => 'Usuário não possui preferências definidas'], 400);
+        }
+
+        // paginação: página atual e itens por página (limitado)
+        $page = max(1, (int) $request->query('page', 1));
+        $perPage = (int) $request->query('per_page', 10);
+        $perPage = max(1, min($perPage, 100)); // limita entre 1 e 100
+
+        // buscar do cache (ou recalcular)
+        $animais = Cache::remember('animais_ativos', 3600, function () {
+            return Animal::with('imagens')->get();
+        });
+
+        $resultados = $animais->map(function ($animal) use ($pref) {
+            $score = 0;
+            $total = 4;
+
+            if (!empty($pref->tamanho_pet) && $pref->tamanho_pet === $animal->tamanho) {
+                $score += 1;
+            }
+            if (!empty($pref->tempo_disponivel) && $pref->tempo_disponivel === $animal->tempo_necessario) {
+                $score += 1;
+            }
+            if (!empty($pref->estilo_vida) && $pref->estilo_vida === $animal->nivel_energia) {
+                $score += 1;
+            }
+            if (!empty($pref->espaco_casa) && $pref->espaco_casa === $animal->ambiente_ideal) {
+                $score += 1;
+            }
+
+            $percent = $total > 0 ? intval(($score / $total) * 100) : 0;
+
+            return [
+                'animal' => $animal,
+                'afinidade' => $score,
+                'afinidade_percent' => $percent,
+            ];
+        });
+
+        // ordenar e resetar chaves
+        $ordenados = $resultados->sortByDesc('afinidade')->values();
+
+        // Paginar a Collection (LengthAwarePaginator)
+        $total = $ordenados->count();
+        $itemsForCurrentPage = $ordenados->forPage($page, $perPage)->values();
+
+        $paginator = new LengthAwarePaginator(
+            $itemsForCurrentPage,
+            $total,
+            $perPage,
+            $page,
+            [
+                'path' => LengthAwarePaginator::resolveCurrentPath(),
+                'query' => $request->query(),
+            ]
+        );
+
+        return response()->json($paginator->toArray(), 200);
+    } catch (\Exception $e) {
+        Log::error('Erro ao recomendar animais: ' . $e->getMessage(), ['usuario_id' => $usuarioId, 'exception' => $e]);
+        return response()->json([
+            'error' => 'Não foi possível gerar recomendações',
+            'message' => config('app.debug') ? $e->getMessage() : 'Erro interno do servidor'
+        ], 500);
     }
+}
 }

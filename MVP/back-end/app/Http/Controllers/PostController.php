@@ -108,14 +108,17 @@ class PostController extends Controller
                 ])
                     ->asMultipart()
                     ->timeout(30)
-                    ->post('https://n8n.chatfacil.cloud/webhook-test/postar-instagram', $multipart);
+                    ->post('https://webhook.chatfacil.cloud/webhook/postar-instagram', $multipart);
 
                 if (!$response->successful()) {
                     throw new \Exception("Erro ao enviar para n8n: " . $response->body());
                 }
 
-                Log::info('Post enviado para n8n com sucesso.', ['resposta' => $response->json()]);
             } catch (\Throwable $e) {
+                $post->delete();
+                return response()->json([
+                    'error' => 'Falha ao enviar post para Instagram: ' . $e->getMessage()
+                ], 500);
                 Log::error('Erro ao enviar post para n8n: ' . $e->getMessage());
             }
 

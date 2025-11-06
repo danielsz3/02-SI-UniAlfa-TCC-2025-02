@@ -70,7 +70,7 @@ function AnimalCard({ animal }: { animal: Animal }) {
 
       <CardFooter className="flex-col gap-2">
         <Button asChild className="w-full">
-          <Link href={`/adotar/${animal.id}`}>Ver Detalhes</Link>
+          <Link href={`/adotar/afinidade/${animal.id}`}>Ver Detalhes</Link>
         </Button>
         <p className="text-xs text-muted-foreground text-center">
           Cadastrado em {new Date(animal.created_at).toLocaleDateString("pt-BR")}
@@ -79,6 +79,8 @@ function AnimalCard({ animal }: { animal: Animal }) {
     </Card>
   )
 }
+
+//if TokenExiste: true / aparecer botão para ir para afinidade/page.tsx
 
 /** converte chave de faixa etária em intervalo de nascimento (YYYY-MM-DD) */
 function ageRangeToBirthdateRange(key: AgeRangeKey) {
@@ -133,6 +135,14 @@ export default function AdotarPageClient() {
 
   const prefetchControllerRef = useRef<AbortController | null>(null)
   const componentUnmountedRef = useRef(false)
+
+  const [tokenExiste, setTokenExiste] = useState(false)
+
+  useEffect(() => {
+    const token = localStorage.getItem("token")
+    setTokenExiste(!!token)
+  }, [])
+
 
   /**
    * Constrói a URL da API com base no estado atual dos filtros e da página.
@@ -477,14 +487,21 @@ export default function AdotarPageClient() {
 
   return (
     <>
-      <Navbar />
       <main className="min-h-screen pt-24 pb-16">
         <div className="container mx-auto px-4">
           <div className="text-center mb-6">
             <h1 className="text-4xl font-bold mb-2">Animais Para Adoção</h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Encontre seu novo melhor amigo. Filtre por tipo, gênero e idade.
+              Encontre seu novo melhor amigo.
             </p>
+
+            {tokenExiste && (
+              <div className="flex justify-center mb-6 mt-4">
+                <Button asChild className="px-8 py-4 text-lg">
+                  <Link href="/adotar/afinidade">Ir para Afinidade</Link>
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* filtros */}

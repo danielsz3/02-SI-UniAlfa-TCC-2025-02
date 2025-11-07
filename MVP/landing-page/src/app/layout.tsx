@@ -21,16 +21,14 @@ export default function RootLayout({
           {/* Navbar fixa no topo */}
           <Navbar />
 
-          {/* Espaço para não ficar sob a navbar (ajuste conforme altura da sua Navbar) */}
-          <main className="min-h-screen pt-20">
+          <main className="min-h-screen">
             {children}
           </main>
 
-          {/* Footer em todas as páginas */}
           <Footer />
 
         </ThemeProvider>
       </body>
-    </html>
+    </html >
   )
 }

@@ -25,6 +25,7 @@ import {
   HeartHandshake,
   HandHeart,
 } from "lucide-react"
+import Image from "next/image"
 
 type MeResponse =
   | { authenticated: true; id?: number | string; name?: string; email?: string; avatarUrl?: string; role?: string }
@@ -78,7 +79,7 @@ async function apiLogout(token?: string): Promise<boolean> {
 function Brand() {
   return (
     <Link href="/" className="flex items-center gap-2">
-      <PawPrint className="h-5 w-5 text-primary" aria-hidden="true" />
+      <Image src="/logo.svg" alt="PetAffinity" width={32} height={32} />
       <span className="text-xl font-bold tracking-tight">PetAffinity</span>
     </Link>
   )
@@ -273,7 +274,7 @@ export function Navbar() {
   }
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky inset-x-0 top-0 z-50 border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 md:py-4">
         <div className="flex items-center gap-3">
           {/* Mobile toggle */}

@@ -2,8 +2,6 @@
 
 import { useState, ChangeEvent, FormEvent } from "react"
 import { useRouter } from "next/navigation"
-
-import { Navbar } from "@/components/navbar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -139,8 +137,7 @@ export default function DoarPage() {
 
   return (
     <>
-      <Navbar />
-      <main className="min-h-screen pt-24 pb-16 bg-muted/30">
+      <main className="min-h-screen pt-24 bg-muted/30">
         <div className="max-w-3xl mx-auto px-4">
           <Card>
             <CardHeader>

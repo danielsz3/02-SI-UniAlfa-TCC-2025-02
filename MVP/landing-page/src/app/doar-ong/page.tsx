@@ -5,8 +5,7 @@ import { Navbar } from "@/components/navbar";
 export default function DoarPage() {
   return (
     <>
-      <Navbar />
-      <main className="min-h-screen bg-background flex flex-col items-center px-4 py-10">
+      <main className="min-h-screen bg-background flex flex-col items-center px-4 py-10 bg-muted/30">
         <div className="max-w-4xl w-full text-center">
           <h1 className="text-3xl font-bold mb-8">Ajude na causa</h1>
 

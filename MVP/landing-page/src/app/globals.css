@@ -1,11 +1,9 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-/* Variant customizada para dark (opcional; Tailwind v4 já suporta .dark nativamente) */
+/* Dark variant (Tailwind v4 compatível) */
 @custom-variant dark (&:is(.dark *));
 
-/* Tokens do Tailwind v4 mapeados para suas CSS variables.
-   Isso habilita utilities como bg-background, text-foreground, border-border, etc. */
 @theme {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -41,106 +39,155 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-/* Light theme */
+/* ===== LIGHT THEME ===== */
 :root {
   --radius: 0.625rem;
 
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.129 0.042 264.695);
+  --background: #F2F1F0;
+  --foreground: #000000; /* texto preto */
 
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.129 0.042 264.695);
+  --card: #ffffff;
+  --card-foreground: #000000;
 
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.129 0.042 264.695);
+  --popover: #ffffff;
+  --popover-foreground: #000000;
 
-  --primary: oklch(0.208 0.042 265.755);
-  --primary-foreground: oklch(0.984 0.003 247.858);
+  --primary: #0367A6;
+  --primary-foreground: #ffffff;
+  --primary-hover: #025A90;
+  --primary-focus: #024E7C;
 
-  --secondary: oklch(0.968 0.007 247.896);
-  --secondary-foreground: oklch(0.208 0.042 265.755);
+  --secondary: #049DBF;
+  --secondary-foreground: #ffffff;
+  --secondary-hover: #038EAD;
+  --secondary-focus: #027E9B;
 
-  --muted: oklch(0.968 0.007 247.896);
-  --muted-foreground: oklch(0.554 0.046 257.417);
+  --accent: #32BAD9;
+  --accent-foreground: #ffffff;
+  --accent-hover: #2BA9C6;
+  --accent-focus: #2395B0;
 
-  --accent: oklch(0.968 0.007 247.896);
-  --accent-foreground: oklch(0.208 0.042 265.755);
+  --muted: #3DD1F2;
+  --muted-foreground: #0367A6;
 
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
+  --destructive: #E63946;
+  --destructive-foreground: #ffffff;
 
-  --border: oklch(0.929 0.013 255.508);
-  --input: oklch(0.929 0.013 255.508);
-  --ring: oklch(0.704 0.04 256.788);
+  --border: #d9d9d9;
+  --input: #d9d9d9;
+  --ring: #32BAD9;
 
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
+  --chart-1: #0367A6;
+  --chart-2: #049DBF;
+  --chart-3: #32BAD9;
+  --chart-4: #3DD1F2;
+  --chart-5: #F2F1F0;
 
-  --sidebar: oklch(0.984 0.003 247.858);
-  --sidebar-foreground: oklch(0.129 0.042 264.695);
-  --sidebar-primary: oklch(0.208 0.042 265.755);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.968 0.007 247.896);
-  --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
-  --sidebar-border: oklch(0.929 0.013 255.508);
-  --sidebar-ring: oklch(0.704 0.04 256.788);
+  --sidebar: #F2F1F0;
+  --sidebar-foreground: #000000;
+  --sidebar-primary: #0367A6;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #049DBF;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #d9d9d9;
+  --sidebar-ring: #32BAD9;
 }
 
-/* Dark theme */
+/* ===== DARK THEME ===== */
 .dark {
-  --background: oklch(0.129 0.042 264.695);
-  --foreground: oklch(0.984 0.003 247.858);
+  --background: #0B2E45;
+  --foreground: #F2F1F0;
 
-  --card: oklch(0.208 0.042 265.755);
-  --card-foreground: oklch(0.984 0.003 247.858);
+  --card: #103D5A;
+  --card-foreground: #F2F1F0;
 
-  --popover: oklch(0.208 0.042 265.755);
-  --popover-foreground: oklch(0.984 0.003 247.858);
+  --popover: #103D5A;
+  --popover-foreground: #F2F1F0;
 
-  --primary: oklch(0.929 0.013 255.508);
-  --primary-foreground: oklch(0.208 0.042 265.755);
+  --primary: #049DBF;
+  --primary-foreground: #F2F1F0;
+  --primary-hover: #05B6DA;
+  --primary-focus: #32BAD9;
 
-  --secondary: oklch(0.279 0.041 260.031);
-  --secondary-foreground: oklch(0.984 0.003 247.858);
+  --secondary: #32BAD9;
+  --secondary-foreground: #0B2E45;
+  --secondary-hover: #3DD1F2;
+  --secondary-focus: #54DBF7;
 
-  --muted: oklch(0.279 0.041 260.031);
-  --muted-foreground: oklch(0.704 0.04 256.788);
+  --accent: #3DD1F2;
+  --accent-foreground: #0B2E45;
+  --accent-hover: #54DBF7;
+  --accent-focus: #69E3FA;
 
-  --accent: oklch(0.279 0.041 260.031);
-  --accent-foreground: oklch(0.984 0.003 247.858);
+  --muted: #064D73;
+  --muted-foreground: #F2F1F0;
 
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
+  --destructive: #FF5A5A;
+  --destructive-foreground: #F2F1F0;
 
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.551 0.027 264.364);
+  --border: #1C4F6A;
+  --input: #1C4F6A;
+  --ring: #3DD1F2;
 
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
+  --chart-1: #049DBF;
+  --chart-2: #32BAD9;
+  --chart-3: #3DD1F2;
+  --chart-4: #0367A6;
+  --chart-5: #F2F1F0;
 
-  --sidebar: oklch(0.208 0.042 265.755);
-  --sidebar-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.279 0.041 260.031);
-  --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.551 0.027 264.364);
+  --sidebar: #0B2E45;
+  --sidebar-foreground: #F2F1F0;
+  --sidebar-primary: #049DBF;
+  --sidebar-primary-foreground: #F2F1F0;
+  --sidebar-accent: #32BAD9;
+  --sidebar-accent-foreground: #0B2E45;
+  --sidebar-border: #1C4F6A;
+  --sidebar-ring: #3DD1F2;
 }
 
-/* Base layer aplicando utilities habilitadas pelos tokens acima */
+/* ===== BASE STYLES ===== */
 @layer base {
   * {
     @apply border-border;
   }
   body {
     @apply bg-background text-foreground antialiased;
+  }
+
+  button {
+    @apply rounded-md px-4 py-2 font-medium transition-colors duration-200;
+  }
+
+  .btn-primary {
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+  }
+  .btn-primary:hover {
+    background-color: var(--primary-hover);
+  }
+  .btn-primary:focus {
+    background-color: var(--primary-focus);
+  }
+
+  .btn-secondary {
+    background-color: var(--secondary);
+    color: var(--secondary-foreground);
+  }
+  .btn-secondary:hover {
+    background-color: var(--secondary-hover);
+  }
+  .btn-secondary:focus {
+    background-color: var(--secondary-focus);
+  }
+
+  .btn-accent {
+    background-color: var(--accent);
+    color: var(--accent-foreground);
+  }
+  .btn-accent:hover {
+    background-color: var(--accent-hover);
+  }
+  .btn-accent:focus {
+    background-color: var(--accent-focus);
   }
 }

@@ -1,7 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { PawPrint, Instagram, Facebook, Github, Mail } from "lucide-react"
+import { Instagram, Facebook, Github, Mail } from "lucide-react"
+import Image from "next/image"
 
 export function Footer() {
   return (
@@ -10,7 +11,7 @@ export function Footer() {
         {/* Logo */}
         <div className="flex flex-col items-center gap-3">
           <div className="flex items-center gap-2">
-            <PawPrint className="h-6 w-6 text-primary" aria-hidden="true" />
+            <Image src="/logo.svg" alt="PetAffinity" width={32} height={32} />
             <span className="text-xl font-semibold tracking-tight">PetAffinity</span>
           </div>
 

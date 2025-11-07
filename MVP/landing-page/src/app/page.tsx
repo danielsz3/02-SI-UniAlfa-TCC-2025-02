@@ -99,7 +99,7 @@ function EventosSection({ eventos, loading }: { eventos: Evento[]; loading: bool
     <section className="w-full py-16 bg-background">
       <div className="mx-auto max-w-6xl px-4">
         <h2 className="text-3xl font-bold mb-8">Eventos</h2>
-        
+
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[...Array(4)].map((_, i) => (
@@ -146,11 +146,10 @@ function StarRating({ rating }: { rating: number }) {
       {[...Array(5)].map((_, i) => (
         <Star
           key={i}
-          className={`h-4 w-4 ${
-            i < rating
+          className={`h-4 w-4 ${i < rating
               ? "fill-yellow-400 text-yellow-400"
               : "text-muted"
-          }`}
+            }`}
         />
       ))}
     </div>
@@ -187,7 +186,7 @@ function FeedbacksSection({ feedbacks, loading }: { feedbacks: Feedback[]; loadi
     <section className="w-full py-16 bg-muted/30">
       <div className="mx-auto max-w-6xl px-4">
         <h2 className="text-3xl font-bold mb-8">Feedbacks</h2>
-        
+
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[...Array(4)].map((_, i) => (
@@ -245,12 +244,9 @@ export default function Home() {
 
   return (
     <>
-      <Navbar />
-      <main className="min-h-screen pt-20">
-        <HeroSection />
-        <EventosSection eventos={eventos} loading={loading} />
-        <FeedbacksSection feedbacks={feedbacks} loading={loading} />
-      </main>
+      <HeroSection />
+      <EventosSection eventos={eventos} loading={loading} />
+      <FeedbacksSection feedbacks={feedbacks} loading={loading} />
     </>
   )
 }

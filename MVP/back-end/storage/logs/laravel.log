@@ -22008,3 +22008,60 @@ Did you mean one of these?
 #53 C:\\Users\\joaox\\OneDrive\\Área de Trabalho\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\resources\\server.php(23): require_once('C:\\\\Users\\\\joaox\\\\...')
 #54 {main}
 ","payload":{"animal_id":"48","qtd_pessoas_casa":"sozinho","possui_filhos":false,"sobre_rotina":["home_office","muitas_visitas"],"acesso_rua_janelas":"janelas_sem_telas_instalarei","acesso_rua_portoes_muros":"serao_adaptados","renda_familiar":"abaixo_2_sm"}} 
+[2025-11-08 01:27:11] local.ERROR: Maximum execution time of 30 seconds exceeded {"exception":"[object] (Symfony\\Component\\ErrorHandler\\Error\\FatalError(code: 0): Maximum execution time of 30 seconds exceeded at C:\\Users\\danie\\Documents\\6º Semestre\\TCC\\petaffinity\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\composer\\ClassLoader.php:429)
+[stacktrace]
+#0 {main}
+"} 
+[2025-11-08 01:27:14] local.ERROR: Target class [view] does not exist. {"exception":"[object] (Illuminate\\Contracts\\Container\\BindingResolutionException(code: 0): Target class [view] does not exist. at C:\\Users\\danie\\Documents\\6º Semestre\\TCC\\petaffinity\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\Container.php:1163)
+[stacktrace]
+#0 C:\\Users\\danie\\Documents\\6º Semestre\\TCC\\petaffinity\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\Container.php(972): Illuminate\\Container\\Container->build()
+#1 C:\\Users\\danie\\Documents\\6º Semestre\\TCC\\petaffinity\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Application.php(1078): Illuminate\\Container\\Container->resolve()
+#2 C:\\Users\\danie\\Documents\\6º Semestre\\TCC\\petaffinity\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\Container.php(903): Illuminate\\Foundation\\Application->resolve()
+#3 C:\\Users\\danie\\Documents\\6º Semestre\\TCC\\petaffinity\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Application.php(1058): Illuminate\\Container\\Container->make()
+#4 C:\\Users\\danie\\Documents\\6º Semestre\\TCC\\petaffinity\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\Container.php(1856): Illuminate\\Foundation\\Application->make()
+#5 C:\\Users\\danie\\Documents\\6º Semestre\\TCC\\petaffinity\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\RoutingServiceProvider.php(177): Illuminate\\Container\\Container->offsetGet()
+#6 C:\\Users\\danie\\Documents\\6º Semestre\\TCC\\petaffinity\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\Container.php(1154): Illuminate\\Routing\\RoutingServiceProvider->Illuminate\\Routing\\{closure}()
+#7 C:\\Users\\danie\\Documents\\6º Semestre\\TCC\\petaffinity\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\Container.php(972): Illuminate\\Container\\Container->build()
+#8 C:\\Users\\danie\\Documents\\6º Semestre\\TCC\\petaffinity\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Application.php(1078): Illuminate\\Container\\Container->resolve()
+#9 C:\\Users\\danie\\Documents\\6º Semestre\\TCC\\petaffinity\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\Container.php(903): Illuminate\\Foundation\\Application->resolve()
+#10 C:\\Users\\danie\\Documents\\6º Semestre\\TCC\\petaffinity\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Application.php(1058): Illuminate\\Container\\Container->make()
+#11 C:\\Users\\danie\\Documents\\6º Semestre\\TCC\\petaffinity\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\helpers.php(138): Illuminate\\Foundation\\Application->make()
+#12 C:\\Users\\danie\\Documents\\6º Semestre\\TCC\\petaffinity\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\helpers.php(851): app()
+#13 C:\\Users\\danie\\Documents\\6º Semestre\\TCC\\petaffinity\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Exceptions\\Handler.php(987): response()
+#14 C:\\Users\\danie\\Documents\\6º Semestre\\TCC\\petaffinity\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Exceptions\\Handler.php(839): Illuminate\\Foundation\\Exceptions\\Handler->toIlluminateResponse()
+#15 C:\\Users\\danie\\Documents\\6º Semestre\\TCC\\petaffinity\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Exceptions\\Handler.php(738): Illuminate\\Foundation\\Exceptions\\Handler->prepareResponse()
+#16 C:\\Users\\danie\\Documents\\6º Semestre\\TCC\\petaffinity\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Exceptions\\Handler.php(626): Illuminate\\Foundation\\Exceptions\\Handler->renderExceptionResponse()
+#17 C:\\Users\\danie\\Documents\\6º Semestre\\TCC\\petaffinity\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Bootstrap\\HandleExceptions.php(221): Illuminate\\Foundation\\Exceptions\\Handler->render()
+#18 C:\\Users\\danie\\Documents\\6º Semestre\\TCC\\petaffinity\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Bootstrap\\HandleExceptions.php(198): Illuminate\\Foundation\\Bootstrap\\HandleExceptions->renderHttpResponse()
+#19 C:\\Users\\danie\\Documents\\6º Semestre\\TCC\\petaffinity\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Bootstrap\\HandleExceptions.php(234): Illuminate\\Foundation\\Bootstrap\\HandleExceptions->handleException()
+#20 C:\\Users\\danie\\Documents\\6º Semestre\\TCC\\petaffinity\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Bootstrap\\HandleExceptions.php(258): Illuminate\\Foundation\\Bootstrap\\HandleExceptions->handleShutdown()
+#21 [internal function]: Illuminate\\Foundation\\Bootstrap\\HandleExceptions->Illuminate\\Foundation\\Bootstrap\\{closure}()
+#22 {main}
+
+[previous exception] [object] (ReflectionException(code: -1): Class \"view\" does not exist at C:\\Users\\danie\\Documents\\6º Semestre\\TCC\\petaffinity\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\Container.php:1161)
+[stacktrace]
+#0 C:\\Users\\danie\\Documents\\6º Semestre\\TCC\\petaffinity\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\Container.php(1161): ReflectionClass->__construct()
+#1 C:\\Users\\danie\\Documents\\6º Semestre\\TCC\\petaffinity\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\Container.php(972): Illuminate\\Container\\Container->build()
+#2 C:\\Users\\danie\\Documents\\6º Semestre\\TCC\\petaffinity\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Application.php(1078): Illuminate\\Container\\Container->resolve()
+#3 C:\\Users\\danie\\Documents\\6º Semestre\\TCC\\petaffinity\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\Container.php(903): Illuminate\\Foundation\\Application->resolve()
+#4 C:\\Users\\danie\\Documents\\6º Semestre\\TCC\\petaffinity\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Application.php(1058): Illuminate\\Container\\Container->make()
+#5 C:\\Users\\danie\\Documents\\6º Semestre\\TCC\\petaffinity\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\Container.php(1856): Illuminate\\Foundation\\Application->make()
+#6 C:\\Users\\danie\\Documents\\6º Semestre\\TCC\\petaffinity\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\RoutingServiceProvider.php(177): Illuminate\\Container\\Container->offsetGet()
+#7 C:\\Users\\danie\\Documents\\6º Semestre\\TCC\\petaffinity\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\Container.php(1154): Illuminate\\Routing\\RoutingServiceProvider->Illuminate\\Routing\\{closure}()
+#8 C:\\Users\\danie\\Documents\\6º Semestre\\TCC\\petaffinity\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\Container.php(972): Illuminate\\Container\\Container->build()
+#9 C:\\Users\\danie\\Documents\\6º Semestre\\TCC\\petaffinity\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Application.php(1078): Illuminate\\Container\\Container->resolve()
+#10 C:\\Users\\danie\\Documents\\6º Semestre\\TCC\\petaffinity\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\Container.php(903): Illuminate\\Foundation\\Application->resolve()
+#11 C:\\Users\\danie\\Documents\\6º Semestre\\TCC\\petaffinity\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Application.php(1058): Illuminate\\Container\\Container->make()
+#12 C:\\Users\\danie\\Documents\\6º Semestre\\TCC\\petaffinity\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\helpers.php(138): Illuminate\\Foundation\\Application->make()
+#13 C:\\Users\\danie\\Documents\\6º Semestre\\TCC\\petaffinity\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\helpers.php(851): app()
+#14 C:\\Users\\danie\\Documents\\6º Semestre\\TCC\\petaffinity\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Exceptions\\Handler.php(987): response()
+#15 C:\\Users\\danie\\Documents\\6º Semestre\\TCC\\petaffinity\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Exceptions\\Handler.php(839): Illuminate\\Foundation\\Exceptions\\Handler->toIlluminateResponse()
+#16 C:\\Users\\danie\\Documents\\6º Semestre\\TCC\\petaffinity\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Exceptions\\Handler.php(738): Illuminate\\Foundation\\Exceptions\\Handler->prepareResponse()
+#17 C:\\Users\\danie\\Documents\\6º Semestre\\TCC\\petaffinity\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Exceptions\\Handler.php(626): Illuminate\\Foundation\\Exceptions\\Handler->renderExceptionResponse()
+#18 C:\\Users\\danie\\Documents\\6º Semestre\\TCC\\petaffinity\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Bootstrap\\HandleExceptions.php(221): Illuminate\\Foundation\\Exceptions\\Handler->render()
+#19 C:\\Users\\danie\\Documents\\6º Semestre\\TCC\\petaffinity\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Bootstrap\\HandleExceptions.php(198): Illuminate\\Foundation\\Bootstrap\\HandleExceptions->renderHttpResponse()
+#20 C:\\Users\\danie\\Documents\\6º Semestre\\TCC\\petaffinity\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Bootstrap\\HandleExceptions.php(234): Illuminate\\Foundation\\Bootstrap\\HandleExceptions->handleException()
+#21 C:\\Users\\danie\\Documents\\6º Semestre\\TCC\\petaffinity\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Bootstrap\\HandleExceptions.php(258): Illuminate\\Foundation\\Bootstrap\\HandleExceptions->handleShutdown()
+#22 [internal function]: Illuminate\\Foundation\\Bootstrap\\HandleExceptions->Illuminate\\Foundation\\Bootstrap\\{closure}()
+#23 {main}
+"} 

@@ -1,7 +1,7 @@
-"use client"
+'use client'
 
 import Link from "next/link"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
@@ -26,38 +26,9 @@ import {
   HandHeart,
 } from "lucide-react"
 import Image from "next/image"
-
-type MeResponse =
-  | { authenticated: true; id?: number | string; name?: string; email?: string; avatarUrl?: string; role?: string }
-  | { authenticated: false }
+import { useAuth } from "@/components/Providers"
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000/api"
-
-// -------- API --------
-async function apiMe(token: string): Promise<MeResponse> {
-  try {
-    const res = await fetch(`${API_BASE}/me`, {
-      method: "GET",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    })
-    if (!res.ok) return { authenticated: false }
-    const data = await res.json()
-    return {
-      authenticated: true,
-      id: data?.id,
-      name: data?.nome ?? data?.name ?? data?.username ?? "",
-      email: data?.email ?? "",
-      avatarUrl: data?.avatar ?? data?.avatar_url ?? data?.foto ?? "",
-      role: data?.role ?? data?.perfil ?? "",
-    }
-  } catch {
-    return { authenticated: false }
-  }
-}
 
 async function apiLogout(token?: string): Promise<boolean> {
   try {
@@ -75,7 +46,6 @@ async function apiLogout(token?: string): Promise<boolean> {
   }
 }
 
-// -------- UI --------
 function Brand() {
   return (
     <Link href="/" className="flex items-center gap-2">
@@ -118,7 +88,7 @@ function DonateMenu() {
           <Link href="/doar-ong">Doar para a ONG</Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href="/lar-temporario">Lares Temporários</Link>
+          <Link href="/lar-temporario">Ser um Lar Temporários</Link>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -162,13 +132,13 @@ function CenterNav() {
 }
 
 function RightActions({
-  me,
-  onLogoutClick,
   loading,
+  onLogout,
+  user,
 }: {
-  me: MeResponse
-  onLogoutClick: () => Promise<void>
   loading: boolean
+  onLogout: () => Promise<void>
+  user: any | null
 }) {
   return (
     <div className="flex items-center gap-3">
@@ -176,34 +146,27 @@ function RightActions({
 
       {loading ? (
         <div className="h-9 w-9 rounded-full bg-muted animate-pulse" />
-      ) : me.authenticated ? (
+      ) : user ? (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="relative">
               <Avatar className="h-8 w-8">
-                <AvatarImage
-                  src={(me as any).avatarUrl || undefined}
-                  alt={(me as any).name ?? "Usuário"}
-                />
-                <AvatarFallback>
-                  {(me as any).name ? (me as any).name[0]?.toUpperCase() : "U"}
-                </AvatarFallback>
+                <AvatarImage src={user.avatarUrl || undefined} alt={user.name ?? "Usuário"} />
+                <AvatarFallback>{user.name ? user.name[0]?.toUpperCase() : "U"}</AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
 
           <DropdownMenuContent align="end" className="w-56">
-            {/* Cabeçalho com nome/email */}
             <DropdownMenuLabel>
               <div className="flex flex-col">
-                <span className="font-medium leading-tight truncate">{(me as any).name ?? "Usuário"}</span>
-                <span className="text-xs text-muted-foreground truncate">{(me as any).email ?? ""}</span>
+                <span className="font-medium leading-tight truncate">{user.name ?? "Usuário"}</span>
+                <span className="text-xs text-muted-foreground truncate">{user.email ?? ""}</span>
               </div>
             </DropdownMenuLabel>
 
             <DropdownMenuSeparator />
 
-            {/* Item Perfil */}
             <DropdownMenuItem asChild>
               <Link href="/perfil" className="flex items-center gap-2">
                 <User className="h-4 w-4" />
@@ -211,14 +174,9 @@ function RightActions({
               </Link>
             </DropdownMenuItem>
 
-            {/* Separador entre Perfil e Sair */}
             <DropdownMenuSeparator />
 
-            {/* Item Sair */}
-            <DropdownMenuItem
-              className="text-red-600 focus:text-red-600"
-              onClick={onLogoutClick}
-            >
+            <DropdownMenuItem className="text-red-600 focus:text-red-600" onClick={onLogout}>
               <LogOut className="h-4 w-4 mr-2" />
               Sair
             </DropdownMenuItem>
@@ -238,46 +196,23 @@ function RightActions({
 
 export function Navbar() {
   const router = useRouter()
-  const [me, setMe] = useState<MeResponse>({ authenticated: false })
-  const [loading, setLoading] = useState(true)
+  const { user, logout } = useAuth()
+  const [loading, setLoading] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
 
-  useEffect(() => {
-    let active = true
-    ;(async () => {
-      // Chama /me apenas se houver token
-      const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : ""
-      if (!token) {
-        if (active) setLoading(false)
-        return
-      }
-      const res = await apiMe(token)
-      if (active) {
-        setMe(res)
-        setLoading(false)
-      }
-    })()
-    return () => {
-      active = false
-    }
-  }, [])
-
   const handleLogout = async () => {
+    setLoading(true)
     const token = typeof window !== "undefined" ? localStorage.getItem("token") || undefined : undefined
-    const ok = await apiLogout(token)
-    localStorage.removeItem("token")
-    if (ok) {
-      setMe({ authenticated: false })
-      router.refresh()
-      router.push("/")
-    }
+    await apiLogout(token)
+    logout()
+    setLoading(false)
+    router.replace("/")
   }
 
   return (
-    <header className="sticky inset-x-0 top-0 z-50 border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky inset-x-0 top-0 z-50 border-b bg-background/80 backdrop-blur supports-backdrop-filter:bg-background/60">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 md:py-4">
         <div className="flex items-center gap-3">
-          {/* Mobile toggle */}
           <button
             className="md:hidden -ml-2 p-2 rounded hover:bg-accent"
             onClick={() => setMobileOpen((v) => !v)}
@@ -290,10 +225,9 @@ export function Navbar() {
 
         <CenterNav />
 
-        <RightActions me={me} onLogoutClick={handleLogout} loading={loading} />
+        <RightActions loading={loading} onLogout={handleLogout} user={user} />
       </div>
 
-      {/* Mobile menu */}
       {mobileOpen && (
         <div className="md:hidden border-t bg-background">
           <div className="mx-auto max-w-6xl px-4 py-3 space-y-3">
@@ -305,7 +239,6 @@ export function Navbar() {
               ADOTAR UM PET
             </Link>
 
-            {/* DOAR submenu */}
             <div>
               <div className="text-xs uppercase text-muted-foreground mb-1">Doar</div>
               <div className="flex flex-col gap-2">
@@ -321,7 +254,6 @@ export function Navbar() {
               </div>
             </div>
 
-            {/* SOBRE submenu */}
             <div>
               <div className="text-xs uppercase text-muted-foreground mb-1">Sobre</div>
               <div className="flex flex-col gap-2">

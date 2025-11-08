@@ -1,27 +1,29 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { Navbar } from "@/components/navbar";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
+import { useState } from "react"
+import { Navbar } from "@/components/navbar"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
+
+//enviar cpf junto para a validação de senha
 
 export default function ResetPasswordPage() {
-  const [email, setEmail] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [email, setEmail] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    setMessage(null);
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
+    setMessage(null)
 
     try {
-      const rawApi = process.env.NEXT_PUBLIC_API_URL;
-      if (!rawApi) throw new Error("Variável NEXT_PUBLIC_API_URL não configurada.");
+      const rawApi = process.env.NEXT_PUBLIC_API_URL
+      if (!rawApi) throw new Error("Variável NEXT_PUBLIC_API_URL não configurada.")
 
-      const apiUrl = rawApi.replace(/\/$/, "");
+      const apiUrl = rawApi.replace(/\/$/, "")
       const res = await fetch(`${apiUrl}/forgot-password`, {
         method: "POST",
         headers: {
@@ -30,25 +32,25 @@ export default function ResetPasswordPage() {
         },
 
         body: JSON.stringify({ email }),
-      });
+      })
 
-      const data = await res.json().catch(() => null);
+      const data = await res.json().catch(() => null)
 
       if (!res.ok) {
         if (res.status === 422 && data?.errors) {
-          const firstError = Object.values(data.errors).flat()[0];
+          const firstError = Object.values(data.errors).flat()[0]
        }
 
-        throw new Error(data?.message || `Erro ao enviar link (status ${res.status})`);
+        throw new Error(data?.message || `Erro ao enviar link (status ${res.status})`)
       }
 
       // sucesso
-      setMessage(data?.message || "Link de recuperação enviado para seu e-mail.");
-      setEmail("");
+      setMessage(data?.message || "Link de recuperação enviado para seu e-mail.")
+      setEmail("")
     } catch (err: any) {
-      setError(err.message || "Erro inesperado");
+      setError(err.message || "Erro inesperado")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
   }
 
@@ -96,5 +98,5 @@ export default function ResetPasswordPage() {
         </div>
       </main>
     </>
-  );
+  )
 }

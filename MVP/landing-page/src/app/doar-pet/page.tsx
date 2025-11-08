@@ -31,7 +31,7 @@ export default function DoarPage() {
 
   const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/jpg", "image/webp"]
   const MAX_FILES = 10
-  const MAX_SIZE_BYTES = 10240 * 1024
+  const MAX_SIZE_BYTES = 10 * 1024 * 1024
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })

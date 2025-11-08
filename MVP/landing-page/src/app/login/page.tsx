@@ -1,13 +1,12 @@
-"use client"
+'use client'
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Navbar } from "@/components/navbar"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import { useAuth } from "@/components/Providers"
 
 export default function LoginPage() {
-  const router = useRouter()
+  const { login } = useAuth()
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -28,27 +27,19 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password }),
       })
 
+      const data = await res.json()
       if (!res.ok) {
-        const data = await res.json()
         throw new Error(data.message || data.error || "Erro ao fazer login")
       }
 
-      const data = await res.json()
-
       const token = data.access_token
+      const user = data.user
+
       if (!token) throw new Error("Token não recebido")
 
-      localStorage.setItem("token", token)
-      
-      if (data.user) {
-        localStorage.setItem("user", JSON.stringify(data.user))
-      }
-
-      router.push("/")
-      router.refresh()
-
+      login(user, token, "/")
     } catch (err: any) {
-      setError(err.message)
+      setError(err?.message ?? "Erro desconhecido")
     } finally {
       setLoading(false)
     }
@@ -56,7 +47,6 @@ export default function LoginPage() {
 
   return (
     <>
-      <Navbar />
       <main className="flex min-h-screen items-center justify-center">
         <div className="w-full max-w-md rounded-lg bg-white dark:bg-slate-800 shadow-lg p-8">
           <h2 className="text-2xl font-bold mb-6 text-center text-slate-900 dark:text-white">

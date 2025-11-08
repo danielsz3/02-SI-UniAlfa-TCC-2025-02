@@ -44,9 +44,7 @@ Route::apiResource('parceiros', ParceiroController::class)->only(['index', 'show
 Route::apiResource('contato-ongs', ContatoOngController::class)->only(['index', 'show']);
 Route::apiResource('documentos', DocumentoController::class)->only(['index', 'show']);
 Route::apiResource('transacoes', TransacaoController::class)->only(['index', 'show']);
-route::apiResource('lares-temporarios', LaresTemporarioController::class)->only(['index', 'show']);
-
-
+route::apiResource('lares-temporarios', LaresTemporarioController::class)->only(['index', 'show', 'store']);
 
 // Usuários públicos: ver 1 e criar cadastro
 Route::apiResource('usuarios', UsuarioController::class)->only(['show', 'store', 'update']);
@@ -88,7 +86,7 @@ Route::middleware(['jwt.auth'])->group(function () {
         Route::apiResource('parceiros', ParceiroController::class)->except(['index', 'show']);
         Route::post('parceiros/{id}/restore', [ParceiroController::class, 'restore'])->name('parceiros.restore');
 
-        Route::apiResource('lares-temporarios', LaresTemporarioController::class)->except(['index', 'show']);
+        Route::apiResource('lares-temporarios', LaresTemporarioController::class)->except(['index', 'show', 'store']);
         Route::post('lares-temporarios/{id}/restore', [LaresTemporarioController::class, 'restore'])->name('lares-temporarios.restore');
 
         Route::apiResource('contato-ongs', ContatoOngController::class)->except(['index', 'show']);

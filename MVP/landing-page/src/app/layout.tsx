@@ -1,6 +1,6 @@
 import "./globals.css"
 import type { Metadata } from "next"
-import { ThemeProvider } from "next-themes"
+import Providers from "@/components/Providers"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 
@@ -17,8 +17,7 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <body className="bg-background text-foreground antialiased">
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          {/* Navbar fixa no topo */}
+        <Providers>
           <Navbar />
 
           <main className="min-h-screen">
@@ -26,9 +25,8 @@ export default function RootLayout({
           </main>
 
           <Footer />
-
-        </ThemeProvider>
+        </Providers>
       </body>
-    </html >
+    </html>
   )
 }

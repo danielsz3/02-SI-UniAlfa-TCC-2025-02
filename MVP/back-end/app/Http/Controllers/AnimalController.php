@@ -397,7 +397,7 @@ class AnimalController extends Controller
     /**
      * Recomendar animais para um usuário de acordo com preferências
      */
-    public function recomendar(Request $request, $usuarioId): JsonResponse
+ public function recomendar(Request $request, $usuarioId): JsonResponse
 {
     try {
         $usuario = Usuario::with('preferencias')->find($usuarioId);
@@ -410,11 +410,6 @@ class AnimalController extends Controller
         if (!$pref) {
             return response()->json(['error' => 'Usuário não possui preferências definidas'], 400);
         }
-
-        // paginação: página atual e itens por página (limitado)
-        $page = max(1, (int) $request->query('page', 1));
-        $perPage = (int) $request->query('per_page', 10);
-        $perPage = max(1, min($perPage, 100)); // limita entre 1 e 100
 
         // buscar do cache (ou recalcular)
         $animais = Cache::remember('animais_ativos', 3600, function () {
@@ -447,25 +442,27 @@ class AnimalController extends Controller
             ];
         });
 
-        // ordenar e resetar chaves
+        // ordenar por afinidade (desc) e resetar chaves
         $ordenados = $resultados->sortByDesc('afinidade')->values();
 
-        // Paginar a Collection (LengthAwarePaginator)
-        $total = $ordenados->count();
+        // === Paginação manual ===
+        $range = json_decode($request->query('range', '[0,9]'), true);
+        $start = $range[0] ?? 0;
+        $end   = $range[1] ?? 9;
+        $perPage = ($end - $start + 1);
+        $page    = intval($start / $perPage) + 1;
+
+        // Aplicar paginação na collection
         $itemsForCurrentPage = $ordenados->forPage($page, $perPage)->values();
+        $total = $ordenados->count();
 
-        $paginator = new LengthAwarePaginator(
-            $itemsForCurrentPage,
-            $total,
-            $perPage,
-            $page,
-            [
-                'path' => LengthAwarePaginator::resolveCurrentPath(),
-                'query' => $request->query(),
-            ]
-        );
+        // Montar resposta com cabeçalhos
+        $response = response()
+            ->json($itemsForCurrentPage->toArray())
+            ->header('Content-Range', "recomendacoes {$start}-{$end}/{$total}")
+            ->header('Access-Control-Expose-Headers', 'Content-Range');
 
-        return response()->json($paginator->toArray(), 200);
+        return $response;
     } catch (\Exception $e) {
         Log::error('Erro ao recomendar animais: ' . $e->getMessage(), ['usuario_id' => $usuarioId, 'exception' => $e]);
         return response()->json([

@@ -36,6 +36,7 @@ class AnimalSeeder extends Seeder
                 'tamanho' => $faker->randomElement($tamanhoOptions),
                 'tempo_necessario' => $faker->randomElement($tempoNecessarioOptions),
                 'ambiente_ideal' => $faker->randomElement($ambienteIdealOptions),
+                'usuario_id' => $faker->numberBetween(1, 10),
                 'deleted_at' => null,
                 'created_at' => now(),
                 'updated_at' => now(),

@@ -13,7 +13,7 @@ class UsuarioSeeder extends Seeder
     {
         $faker = Faker::create();
 
-        for ($i = 0; $i < 50; $i++) {
+        for ($i = 0; $i < 10; $i++) {
             Usuario::create([
                 'nome' => $faker->name(),
                 'email' => $faker->unique()->safeEmail(),

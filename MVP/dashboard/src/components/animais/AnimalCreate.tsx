@@ -147,7 +147,7 @@ Entre em contato para saber mais e fazer parte dessa história de amor e adoçã
             state: {
                 defaultValues: {
                     legenda: legenda.trim(),
-                    imagens:validImages,
+                    imagens: validImages,
                 },
             },
         });

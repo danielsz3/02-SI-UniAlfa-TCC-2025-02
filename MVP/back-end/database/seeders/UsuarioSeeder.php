@@ -21,9 +21,8 @@ class UsuarioSeeder extends Seeder
         $estilosVida = ['vida_tranquila', 'ritmo_equilibrado', 'sempre_em_acao'];
         $espacosCasa = ['area_pequena', 'area_media', 'area_externa'];
 
-        for ($i = 0; $i < 50; $i++) {
-            // 1. Cria o usuário e armazena na variável $usuario
-            $usuario = Usuario::create([
+        for ($i = 0; $i < 10; $i++) {
+            Usuario::create([
                 'nome' => $faker->name(),
                 'email' => $faker->unique()->safeEmail(),
                 'password' => Hash::make('password'), // senha padrão para os usuários

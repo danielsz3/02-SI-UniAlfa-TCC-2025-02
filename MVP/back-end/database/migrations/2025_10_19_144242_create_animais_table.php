@@ -25,6 +25,13 @@ return new class extends Migration
             $table->enum('tamanho', ['pequeno', 'medio', 'grande'])->nullable();
             $table->enum('tempo_necessario', ['pouco_tempo', 'tempo_moderado', 'muito_tempo'])->nullable();
             $table->enum('ambiente_ideal', ['area_pequena', 'area_media', 'area_externa'])->nullable();
+
+            $table->unsignedBigInteger('usuario_id');
+            $table->foreign('usuario_id')->references('id')->on('usuarios')->onDelete('set null');
+
+            $table->unsignedBigInteger('lar_temporario_id')->nullable();
+            $table->foreign('lar_temporario_id')->references('id')->on('lares_temporarios')->onDelete('set null');
+
             $table->softDeletes();
             $table->timestamps();
         });

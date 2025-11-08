@@ -18,8 +18,6 @@ use Illuminate\Support\Str;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
 
-
-
 class AnimalController extends Controller
 {
     use SearchIndex;
@@ -32,7 +30,7 @@ class AnimalController extends Controller
         try {
             return $this->SearchIndex(
                 $request,
-                Animal::with('imagens'),
+                Animal::with(['imagens', 'usuario', 'larTemporario']),
                 'animais',
                 ['nome', 'descricao']
             );
@@ -61,6 +59,8 @@ class AnimalController extends Controller
             'ambiente_ideal' => 'nullable|in:area_pequena,area_media,area_externa',
             'imagens' => 'nullable|array|max:10',
             'imagens.*' => 'image|mimes:jpeg,png,jpg,webp|max:10240',
+            'usuario_id' => 'nullable|exists:usuarios,id',
+            'lar_temporario_id' => 'nullable|exists:lares_temporarios,id',
         ], [
             'nome.required' => 'O nome do animal é obrigatório.',
             'nome.max' => 'O nome pode ter no máximo 100 caracteres.',
@@ -75,6 +75,8 @@ class AnimalController extends Controller
             'imagens.max' => 'Você pode enviar no máximo 10 imagens.',
             'imagens.*.image' => 'Cada arquivo enviado deve ser uma imagem válida.',
             'imagens.*.max' => 'Cada imagem deve ter no máximo 10MB.',
+            'usuario_id.exists' => 'Usuário não encontrado.',
+            'lar_temporario_id.exists' => 'Lar temporário não encontrado.',
         ]);
 
         if ($validator->fails()) {
@@ -94,7 +96,9 @@ class AnimalController extends Controller
                     'nivel_energia',
                     'tamanho',
                     'tempo_necessario',
-                    'ambiente_ideal'
+                    'ambiente_ideal',
+                    'usuario_id',
+                    'lar_temporario_id',
                 ]));
 
                 $files = Arr::wrap($request->file('imagens', []));
@@ -119,7 +123,7 @@ class AnimalController extends Controller
 
                 Cache::forget('animais_ativos');
 
-                $animal->load('imagens');
+                $animal->load(['imagens', 'usuario', 'larTemporario']);
                 $animal->imagens->transform(function ($img) {
                     $img->url = Storage::url($img->caminho);
                     return $img;
@@ -142,7 +146,7 @@ class AnimalController extends Controller
     public function show($id): JsonResponse
     {
         try {
-            $animal = Animal::with('imagens')->find($id);
+            $animal = Animal::with(['imagens', 'usuario', 'larTemporario'])->find($id);
 
             if (!$animal) {
                 return response()->json(['error' => 'Animal não encontrado'], 404);
@@ -185,6 +189,8 @@ class AnimalController extends Controller
             'ambiente_ideal' => 'nullable|in:area_pequena,area_media,area_externa',
             'imagens' => 'nullable|array|max:10',
             'imagens.*' => 'image|mimes:jpeg,png,jpg,webp|max:10240',
+            'usuario_id' => 'nullable|exists:usuarios,id',
+            'lar_temporario_id' => 'nullable|exists:lares_temporarios,id',
         ];
 
         // Só valida como file se houver arquivos enviados (mantendo webp)
@@ -204,6 +210,8 @@ class AnimalController extends Controller
             'imagens.max' => 'Você pode enviar no máximo 10 imagens.',
             'imagens.*.image' => 'Cada arquivo enviado deve ser uma imagem válida.',
             'imagens.*.max' => 'Cada imagem deve ter no máximo 10MB.',
+            'usuario_id.exists' => 'Usuário não encontrado.',
+            'lar_temporario_id.exists' => 'Lar temporário não encontrado.',
         ]);
 
         if ($validator->fails()) {
@@ -224,7 +232,9 @@ class AnimalController extends Controller
                     'nivel_energia',
                     'tamanho',
                     'tempo_necessario',
-                    'ambiente_ideal'
+                    'ambiente_ideal',
+                    'usuario_id',
+                    'lar_temporario_id',
                 ]));
 
                 // === Tratamento de imagens ===
@@ -304,7 +314,7 @@ class AnimalController extends Controller
 
                 Cache::forget('animais_ativos');
 
-                $fresh = $animal->fresh('imagens');
+                $fresh = $animal->fresh(['imagens', 'usuario', 'larTemporario']);
                 $fresh->imagens->transform(function ($img) {
                     $img->url = Storage::url($img->caminho);
                     return $img;
@@ -378,7 +388,7 @@ class AnimalController extends Controller
 
             Cache::forget('animais_ativos');
 
-            $fresh = $animal->fresh('imagens');
+            $fresh = $animal->fresh(['imagens', 'usuario', 'larTemporario']);
             $fresh->imagens->transform(function ($img) {
                 $img->url = Storage::url($img->caminho);
                 return $img;
@@ -397,78 +407,78 @@ class AnimalController extends Controller
     /**
      * Recomendar animais para um usuário de acordo com preferências
      */
- public function recomendar(Request $request, $usuarioId): JsonResponse
-{
-    try {
-        $usuario = Usuario::with('preferencias')->find($usuarioId);
+    public function recomendar(Request $request, $usuarioId): JsonResponse
+    {
+        try {
+            $usuario = Usuario::with('preferencias')->find($usuarioId);
 
-        if (!$usuario) {
-            return response()->json(['error' => 'Usuário não encontrado'], 404);
+            if (!$usuario) {
+                return response()->json(['error' => 'Usuário não encontrado'], 404);
+            }
+
+            $pref = $usuario->preferencias;
+            if (!$pref) {
+                return response()->json(['error' => 'Usuário não possui preferências definidas'], 400);
+            }
+
+            // buscar do cache (ou recalcular) — agora trazendo relações relevantes
+            $animais = Cache::remember('animais_ativos', 3600, function () {
+                return Animal::with(['imagens', 'usuario', 'larTemporario'])->get();
+            });
+
+            $resultados = $animais->map(function ($animal) use ($pref) {
+                $score = 0;
+                $total = 4;
+
+                if (!empty($pref->tamanho_pet) && $pref->tamanho_pet === $animal->tamanho) {
+                    $score += 1;
+                }
+                if (!empty($pref->tempo_disponivel) && $pref->tempo_disponivel === $animal->tempo_necessario) {
+                    $score += 1;
+                }
+                if (!empty($pref->estilo_vida) && $pref->estilo_vida === $animal->nivel_energia) {
+                    $score += 1;
+                }
+                if (!empty($pref->espaco_casa) && $pref->espaco_casa === $animal->ambiente_ideal) {
+                    $score += 1;
+                }
+
+                $percent = $total > 0 ? intval(($score / $total) * 100) : 0;
+
+                return [
+                    'animal' => $animal,
+                    'afinidade' => $score,
+                    'afinidade_percent' => $percent,
+                ];
+            });
+
+            // ordenar por afinidade (desc) e resetar chaves
+            $ordenados = $resultados->sortByDesc('afinidade')->values();
+
+            // === Paginação manual ===
+            $range = json_decode($request->query('range', '[0,9]'), true);
+            $start = $range[0] ?? 0;
+            $end   = $range[1] ?? 9;
+            $perPage = ($end - $start + 1);
+            $page    = intval($start / $perPage) + 1;
+
+            // Aplicar paginação na collection
+            $itemsForCurrentPage = $ordenados->forPage($page, $perPage)->values();
+            $total = $ordenados->count();
+
+            // Montar resposta com cabeçalhos
+            $response = response()
+                ->json($itemsForCurrentPage->toArray())
+                ->header('Content-Range', "recomendacoes {$start}-{$end}/{$total}")
+                ->header('Access-Control-Expose-Headers', 'Content-Range');
+
+            return $response;
+        } catch (\Exception $e) {
+            Log::error('Erro ao recomendar animais: ' . $e->getMessage(), ['usuario_id' => $usuarioId, 'exception' => $e]);
+            return response()->json([
+                'error' => 'Não foi possível gerar recomendações',
+                'message' => config('app.debug') ? $e->getMessage() : 'Erro interno do servidor'
+            ], 500);
         }
-
-        $pref = $usuario->preferencias;
-        if (!$pref) {
-            return response()->json(['error' => 'Usuário não possui preferências definidas'], 400);
-        }
-
-        // buscar do cache (ou recalcular)
-        $animais = Cache::remember('animais_ativos', 3600, function () {
-            return Animal::with('imagens')->get();
-        });
-
-        $resultados = $animais->map(function ($animal) use ($pref) {
-            $score = 0;
-            $total = 4;
-
-            if (!empty($pref->tamanho_pet) && $pref->tamanho_pet === $animal->tamanho) {
-                $score += 1;
-            }
-            if (!empty($pref->tempo_disponivel) && $pref->tempo_disponivel === $animal->tempo_necessario) {
-                $score += 1;
-            }
-            if (!empty($pref->estilo_vida) && $pref->estilo_vida === $animal->nivel_energia) {
-                $score += 1;
-            }
-            if (!empty($pref->espaco_casa) && $pref->espaco_casa === $animal->ambiente_ideal) {
-                $score += 1;
-            }
-
-            $percent = $total > 0 ? intval(($score / $total) * 100) : 0;
-
-            return [
-                'animal' => $animal,
-                'afinidade' => $score,
-                'afinidade_percent' => $percent,
-            ];
-        });
-
-        // ordenar por afinidade (desc) e resetar chaves
-        $ordenados = $resultados->sortByDesc('afinidade')->values();
-
-        // === Paginação manual ===
-        $range = json_decode($request->query('range', '[0,9]'), true);
-        $start = $range[0] ?? 0;
-        $end   = $range[1] ?? 9;
-        $perPage = ($end - $start + 1);
-        $page    = intval($start / $perPage) + 1;
-
-        // Aplicar paginação na collection
-        $itemsForCurrentPage = $ordenados->forPage($page, $perPage)->values();
-        $total = $ordenados->count();
-
-        // Montar resposta com cabeçalhos
-        $response = response()
-            ->json($itemsForCurrentPage->toArray())
-            ->header('Content-Range', "recomendacoes {$start}-{$end}/{$total}")
-            ->header('Access-Control-Expose-Headers', 'Content-Range');
-
-        return $response;
-    } catch (\Exception $e) {
-        Log::error('Erro ao recomendar animais: ' . $e->getMessage(), ['usuario_id' => $usuarioId, 'exception' => $e]);
-        return response()->json([
-            'error' => 'Não foi possível gerar recomendações',
-            'message' => config('app.debug') ? $e->getMessage() : 'Erro interno do servidor'
-        ], 500);
     }
-}
 }

@@ -290,6 +290,9 @@ class DocumentoController extends Controller
     /**
  * Download do arquivo do documento
  */
+/**
+ * Download ou visualização do arquivo do documento
+ */
 public function download($id): StreamedResponse|JsonResponse
 {
     try {
@@ -305,26 +308,77 @@ public function download($id): StreamedResponse|JsonResponse
             return response()->json(['error' => 'Arquivo não encontrado no armazenamento'], 404);
         }
 
-        // Pega a extensão do arquivo original
+        // Detecta MIME e extensão
+        $mime = $documento->tipo ?? Storage::disk('public')->mimeType($path) ?? 'application/octet-stream';
         $extension = pathinfo($documento->nome_original ?? $path, PATHINFO_EXTENSION);
 
-        // Sanitiza o título para uso seguro no nome do arquivo
+        // Nome seguro para o arquivo
         $safeTitle = preg_replace('/[^A-Za-z0-9_\-]/', '_', Str::ascii($documento->titulo));
+        $fileName = $safeTitle . ($extension ? '.' . $extension : '');
 
-        // Nome do arquivo para download (usa o título + extensão)
-        $fileName = $safeTitle . '.' . $extension;
+        // Determina se é PDF
+        $isPdf = stripos($mime, 'pdf') !== false || strcasecmp($extension, 'pdf') === 0;
 
-        // Content-Type
-        $mime = $documento->tipo ?? Storage::disk('public')->mimeType($path) ?? 'application/octet-stream';
+        // 1) Se storage for local, usar caminho físico (suporta Range requests)
+        try {
+            $localPath = Storage::disk('public')->path($path);
+            if (file_exists($localPath)) {
+                if ($isPdf) {
+                    return response()->file($localPath, [
+                        'Content-Type' => 'application/pdf',
+                        'Content-Disposition' => 'inline; filename="' . $fileName . '"',
+                        'X-Content-Type-Options' => 'nosniff',
+                    ]);
+                } else {
+                    return response()->download($localPath, $fileName, [
+                        'Content-Type' => $mime,
+                        'X-Content-Type-Options' => 'nosniff',
+                    ]);
+                }
+            }
+        } catch (\Throwable $e) {
+        }
 
-        return Storage::disk('public')->download($path, $fileName, [
+        try {
+            if (method_exists(Storage::disk('public'), 'temporaryUrl')) {
+                $expires = now()->addMinutes(5);
+                $disposition = $isPdf ? 'inline; filename="' . $fileName . '"' : 'attachment; filename="' . $fileName . '"';
+                $options = [
+                    'ResponseContentDisposition' => $disposition,
+                    'ResponseContentType' => $mime,
+                ];
+
+                $url = Storage::disk('public')->temporaryUrl($path, $expires, $options);
+                return redirect()->away($url);
+            }
+        } catch (\Throwable $e) {
+        }
+
+        $stream = Storage::disk('public')->readStream($path);
+        if ($stream === false) {
+            return response()->json(['error' => 'Não foi possível abrir o arquivo para leitura'], 500);
+        }
+
+        $headers = [
             'Content-Type' => $mime,
-        ]);
+            'Content-Disposition' => ($isPdf ? 'inline' : 'attachment') . '; filename="' . $fileName . '"',
+            'Cache-Control' => 'no-cache, no-store, must-revalidate',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
+            'X-Content-Type-Options' => 'nosniff',
+        ];
+
+        return response()->stream(function () use ($stream) {
+            fpassthru($stream);
+            if (is_resource($stream)) {
+                fclose($stream);
+            }
+        }, 200, $headers);
     } catch (\Exception $e) {
-        Log::error('Erro ao fazer download do documento: ' . $e->getMessage(), ['id' => $id, 'exception' => $e]);
+        Log::error('Erro ao fazer download/visualizar documento: ' . $e->getMessage(), ['id' => $id, 'exception' => $e]);
 
         return response()->json([
-            'error' => 'Não foi possível realizar o download',
+            'error' => 'Não foi possível realizar a operação',
             'message' => config('app.debug') ? $e->getMessage() : 'Erro interno do servidor'
         ], 500);
     }

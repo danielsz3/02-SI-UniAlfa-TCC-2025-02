@@ -16,7 +16,7 @@ use Illuminate\Support\Arr;
 class EventoController extends Controller
 {
     use SearchIndex;
-    
+
     public function index(Request $request): JsonResponse
     {
         try {
@@ -155,7 +155,7 @@ class EventoController extends Controller
 
         // Só valida como file se houver arquivos enviados
         if ($request->hasFile('imagens')) {
-            $rules['imagens.*'] = 'nullable|file|image|mimes:jpeg,png,jpg,webp|max:10240';
+            $rules['imagens.*'] = 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240';
         }
 
         $validator = Validator::make($request->all(), $rules, [
@@ -193,7 +193,7 @@ class EventoController extends Controller
         if ($request->hasFile('imagens')) {
             $totalImagens = count($request->file('imagens'));
             $imagensExistentes = ImagemEvento::where('evento_id', $evento->id)->count();
-            
+
             if (($totalImagens + $imagensExistentes) > 10) {
                 return response()->json([
                     'errors' => ['imagens' => ['O total de imagens não pode exceder 10.']]
@@ -279,7 +279,7 @@ class EventoController extends Controller
                         }
                     }
                 }
-                
+
                 return response()->json($evento->fresh('imagens'), 200);
             });
         } catch (\Exception $e) {

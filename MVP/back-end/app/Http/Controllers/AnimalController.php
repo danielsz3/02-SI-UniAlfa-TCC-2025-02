@@ -188,8 +188,7 @@ class AnimalController extends Controller
             'tempo_necessario' => 'nullable|in:pouco_tempo,tempo_moderado,muito_tempo',
             'ambiente_ideal' => 'nullable|in:area_pequena,area_media,area_externa',
             'imagens' => 'nullable|array|max:10',
-            'imagens.*' => 'image|mimes:jpeg,png,jpg,webp|max:10240',
-            'usuario_id' => 'nullable|exists:usuarios,id',
+            'usuario_id' => 'required|exists:usuarios,id',
             'lar_temporario_id' => 'nullable|exists:lares_temporarios,id',
         ];
 

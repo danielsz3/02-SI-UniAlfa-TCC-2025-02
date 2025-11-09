@@ -158,6 +158,13 @@ Entre em contato para saber mais e fazer parte dessa história de amor e adoçã
         navigate('/animais');
     };
 
+    const getUserIdFromLocalStorage = () => {
+        const userString = localStorage.getItem('user');
+        if (!userString) return null;
+        const user = JSON.parse(userString);
+        return user.id;
+    }
+
 
     return (
         <>
@@ -168,7 +175,9 @@ Entre em contato para saber mais e fazer parte dessa história de amor e adoçã
                 transform={data => ({
                     ...data,
                     castrado: data.castrado === true ? 1 : 0,
-                    vale_castracao: data.vale_castracao === true ? 1 : 0
+                    vale_castracao: data.vale_castracao === true ? 1 : 0,
+                    id_usuario: getUserIdFromLocalStorage(),
+                    
                 })}
                 mutationOptions={{ onSuccess: handleSuccess }}
             >

@@ -18,11 +18,11 @@ class UsuarioSeeder extends Seeder
         // Opções para as preferências
         $tamanhosPet = ['pequeno', 'medio', 'grande'];
         $temposDisponiveis = ['pouco_tempo', 'tempo_moderado', 'muito_tempo'];
-        $estilosVida = ['vida_tranquila', 'ritmo_equilibrado', 'sempre_em_acao'];
+        $estilosVida = ['baixa', 'moderada', 'alta'];
         $espacosCasa = ['area_pequena', 'area_media', 'area_externa'];
 
         for ($i = 0; $i < 10; $i++) {
-            Usuario::create([
+            $usuario = Usuario::create([
                 'nome' => $faker->name(),
                 'email' => $faker->unique()->safeEmail(),
                 'password' => Hash::make('password'), // senha padrão para os usuários

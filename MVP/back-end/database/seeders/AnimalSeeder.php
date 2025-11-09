@@ -49,7 +49,22 @@ class AnimalSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
+
+            DB::table('imagens_animais')->insert([
+                'animal_id' => $i + 1,
+                'caminho' => $faker->randomElement($tipoImagemOptions),
+                'deleted_at' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            
+            DB::table('imagens_animais')->insert([
+                'animal_id' => $i + 1,
+                'caminho' => $faker->randomElement($tipoImagemOptions),
+                'deleted_at' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
         }
     }
 }
-

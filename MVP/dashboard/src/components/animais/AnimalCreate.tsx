@@ -1,4 +1,4 @@
-import { BooleanInput, Button, Create, FormDataConsumer, FormTab, ImageField, ImageInput, RadioButtonGroupInput, required, SaveButton, SelectInput, TabbedForm, TextInput, useNotify, useRedirect } from "react-admin";
+import { BooleanInput, Button, Create, FormDataConsumer, FormTab, ImageField, ImageInput, RadioButtonGroupInput, ReferenceInput, required, SaveButton, SelectInput, TabbedForm, TextInput, useNotify, useRedirect } from "react-admin";
 import { FilePlaceholder } from "../FilePlaceHolder";
 import CustomDatePicker from "../datepicker/customDatePicker";
 import { useState } from "react";
@@ -176,8 +176,8 @@ Entre em contato para saber mais e fazer parte dessa história de amor e adoçã
                     ...data,
                     castrado: data.castrado === true ? 1 : 0,
                     vale_castracao: data.vale_castracao === true ? 1 : 0,
-                    id_usuario: getUserIdFromLocalStorage(),
-                    
+                    usuario_id: getUserIdFromLocalStorage(),
+                    situacao: 'disponivel',
                 })}
                 mutationOptions={{ onSuccess: handleSuccess }}
             >
@@ -186,6 +186,18 @@ Entre em contato para saber mais e fazer parte dessa história de amor e adoçã
                 >
                     <FormTab label="Informações">
 
+                        <ReferenceInput
+                            source="lar_temporario_id"
+                            reference="lares-temporarios"
+                        >
+                            <SelectInput
+                                validate={required('O usuário é obrigatório')}
+                                optionValue="id"
+                                optionText="nome"
+                                label="Lar Temporário"
+                            />
+                        </ReferenceInput>
+
                         <TextInput
                             source="nome"
                             label="Nome"
@@ -193,6 +205,7 @@ Entre em contato para saber mais e fazer parte dessa história de amor e adoçã
                         />
 
                         <CustomDatePicker
+                            past
                             source='data_nascimento'
                             label="Data de Nascimento *"
                             validate={required('A data de nascimento é obrigatória')}

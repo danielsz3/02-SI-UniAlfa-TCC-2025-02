@@ -79,19 +79,11 @@ export function AnimalDetailModal({ initialData, onClose }: AnimalDetailModalPro
     const renderContent = () => {
         if (!animal) return null
 
-        const imagens: string[] = (animal.imagens || [])
-            .map((img: any) =>
-                img?.caminho
-                    ? `${process.env.NEXT_PUBLIC_API_URL}/imagens/${img.caminho}`
-                    : ""
-            )
-            .filter(Boolean)
-
         return (
             <div className="grid lg:grid-cols-2 grid-cols-1 gap-6 md:gap-8">
                 {/* Coluna 1: Imagem */}
                 <div className="rounded-lg overflow-hidden">
-                    <ImageCarousel images={imagens} alt={animal.nome} />
+                    <ImageCarousel images={animal.imagens} alt={animal.nome} />
                 </div>
 
                 {/* Coluna 2: Informações */}

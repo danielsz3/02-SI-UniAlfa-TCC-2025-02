@@ -4,9 +4,10 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ChevronLeft, ChevronRight } from "lucide-react"
+import { Imagens } from "@/types"
 
 interface ImageCarouselProps {
-  images: string[]
+  images: Imagens[]
   alt?: string
   className?: string
   showArrows?: boolean
@@ -100,11 +101,11 @@ export default function ImageCarousel({
       aria-label="Galeria de imagens"
     >
       {/* imagens com fade */}
-      <div className="w-full h-80 md:h-[28rem] relative">
-        {images.map((src, i) => (
+      <div className="w-full h-80 relative">
+        {images.map((image, i) => (
           <img
             key={i}
-            src={src}
+            src={`${process.env.NEXT_PUBLIC_API_URL}/imagens/${image.caminho}`}
             alt={`${alt}${count > 1 ? ` (${i + 1} de ${count})` : ""}`}
             loading="lazy"
             className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${
@@ -117,7 +118,7 @@ export default function ImageCarousel({
       {/* arrows */}
       {showArrows && count > 1 && (
         <>
-          <div className="absolute left-3 top-1/2 -translate-y-1/2">
+          <div className="z-11 absolute left-3 top-1/2 -translate-y-1/2">
             <Button
               variant="ghost"
               size="icon"
@@ -131,7 +132,7 @@ export default function ImageCarousel({
             </Button>
           </div>
 
-          <div className="absolute right-3 top-1/2 -translate-y-1/2">
+          <div className="z-11 absolute right-3 top-1/2 -translate-y-1/2">
             <Button
               variant="ghost"
               size="icon"
@@ -149,7 +150,7 @@ export default function ImageCarousel({
 
       {/* indicators */}
       {showIndicators && count > 1 && (
-        <div className="absolute left-1/2 -translate-x-1/2 bottom-3 flex items-center gap-2">
+        <div className="absolute z-11 left-1/2 -translate-x-1/2 bottom-3 flex items-center gap-2">
           {images.map((_, i) => (
             <button
               key={i}

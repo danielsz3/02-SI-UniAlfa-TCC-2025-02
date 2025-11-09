@@ -1,34 +1,44 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import type { Animal } from '@/types'; // Importa nossos tipos
+import { useState, useEffect, useCallback } from 'react';
+import type { Animal, AnimalAffinity } from '@/types'; // Importa nossos tipos
 import AnimalCard from './CardAnimalAffinity'; // Importa o card com shadcn
 
-const getTokenFromStorage = () => {
-    if (typeof window === "undefined") return null
-    const keysToTry = ["token", "access_token", "authToken", "jwt"]
-    let raw: string | null = null
-    for (const k of keysToTry) {
-      raw = localStorage.getItem(k)
-      if (raw) break
-    }
-    if (!raw) return null
-    try {
-      const parsed = JSON.parse(raw)
-      return parsed?.access_token || parsed?.token || parsed?.jwt || raw
-    } catch {
-      return raw
-    }
-  }
+// --- Importações Adicionadas ---
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+  type CarouselApi, // Tipo da API do carrossel
+} from "@/components/ui/carousel";
+import { Skeleton } from "@/components/ui/skeleton"; // Para loading inicial
+import { Loader2 } from "lucide-react"; // Ícone de carregamento
 
-interface Props {
-  userId: string;
+// --- Funções de API ( getTokenFromStorage ) ---
+const getTokenFromStorage = () => {
+  if (typeof window === "undefined") return null
+  const keysToTry = ["token", "access_token", "authToken", "jwt"]
+  let raw: string | null = null
+  for (const k of keysToTry) {
+    raw = localStorage.getItem(k)
+    if (raw) break
+  }
+  if (!raw) return null
+  try {
+    const parsed = JSON.parse(raw)
+    return parsed?.access_token || parsed?.token || parsed?.jwt || raw
+  } catch {
+    return raw
+  }
 }
 
-// Função para buscar dados da nossa API interna
-async function fetchAnimais(userId: string, page: number): Promise<Animal[]> {
+// --- Funções de API ( fetchAnimais ) ---
+async function fetchAnimais(userId: string, page: number): Promise<AnimalAffinity[]> {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/animais/${userId}/recomendar?page=${page}`, {
+    // Adicionei query params de paginação
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/usuarios/${userId}/recomendar-animais?page=${page}&limit=10`, { 
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -36,126 +46,197 @@ async function fetchAnimais(userId: string, page: number): Promise<Animal[]> {
       },
     });
 
-    console.log('Fetch Animais Response:', response);
-
     const data = await response.json();
-    return data; 
+    // Assumindo que a API retorna um array direto. 
+    return Array.isArray(data) ? data : [];
   } catch (error) {
     console.error(error);
     return []; // Retorna array vazio em caso de erro
   }
 }
 
-export default function AffinityCarousel({ userId }: Props) {
-  const [animais, setAnimais] = useState<Animal[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0); // Índice do animal
-  const [page, setPage] = useState(1);
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasMore, setHasMore] = useState(true); // Se há mais páginas
+// --- Props do Componente ---
+interface Props {
+  userId: string;
+}
 
-  // 1. Busca inicial de dados
+// --- Componente Refatorado ---
+export default function AffinityCarousel({ userId }: Props) {
+  // 1. Estados
+  const [api, setApi] = useState<CarouselApi>(); // API do Carrossel
+  const [animais, setAnimais] = useState<AnimalAffinity[]>([]);
+  const [page, setPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(true); // Apenas para carga inicial
+  const [isPaginating, setIsPaginating] = useState(false); // Para paginações
+  const [hasMore, setHasMore] = useState(true);
+  
+  // Estado para guardar o índice do item em foco
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
+  // 2. Busca inicial de dados
   useEffect(() => {
     setIsLoading(true);
     fetchAnimais(userId, 1).then((initialAnimais) => {
       setAnimais(initialAnimais);
       setIsLoading(false);
-      if (initialAnimais.length < 10) { // Assumindo 10 por página
+      if (initialAnimais.length < 10) {
         setHasMore(false);
       }
     });
-  }, [userId]); 
+  }, [userId]);
 
-  // 2. Função para buscar mais animais (Paginação)
-  const loadMore = async () => {
-    if (isLoading || !hasMore) return; 
+  // 3. Função para buscar mais animais (Paginação)
+  // Envolvida com 'useCallback'
+  // *** JÁ COM A CORREÇÃO DE DUPLICADOS ***
+  const loadMore = useCallback(async () => {
+    
+    if (isPaginating || !hasMore) return;
 
-    setIsLoading(true);
+    setIsPaginating(true); 
+    
     const nextPage = page + 1;
     const newAnimais = await fetchAnimais(userId, nextPage);
 
     if (newAnimais.length > 0) {
-      setAnimais((prev) => [...prev, ...newAnimais]); 
-      setPage(nextPage);
+      
+      // --- CORREÇÃO DE DUPLICADOS ---
+      // Filtra os resultados para garantir que não há chaves duplicadas
+      setAnimais((prev) => {
+        // 1. Cria um Set (conjunto) com todos os IDs de animais que já temos
+        const existingIds = new Set(prev.map(a => a.animal.id));
+        
+        // 2. Filtra a lista de 'newAnimais'
+        const uniqueNewAnimais = newAnimais.filter(
+          (novoAnimal) => !existingIds.has(novoAnimal.animal.id)
+        );
+
+        // 3. Retorna a lista anterior + apenas os animais que são novos
+        return [...prev, ...uniqueNewAnimais];
+      });
+      // --- FIM DA CORREÇÃO ---
+
+      setPage(nextPage); // Atualiza a página
     }
-    
+
+    // Se a API retornou menos de 10 (ou zero, ou duplicados que foram filtrados)
+    // consideramos que não há mais o que buscar.
     if (newAnimais.length < 10) {
       setHasMore(false); // Chegamos ao fim
     }
-    
-    setIsLoading(false);
-  };
 
-  // 3. Lógica de navegação
-  const handleNext = () => {
-    const nextIndex = currentIndex + 1;
-    
-    if (nextIndex < animais.length) {
-      setCurrentIndex(nextIndex);
+    setIsPaginating(false); 
+  }, [isPaginating, hasMore, page, userId]); // Dependências do useCallback
+
+  
+  // 4. Lógica de Paginação E Estilos de Foco (useEffect)
+  useEffect(() => {
+    if (!api) {
+      return;
     }
 
-    // 4. Lógica de Paginação:
-    // Quando estiver a 3 itens do fim, busca mais
-    if (nextIndex >= animais.length - 3 && hasMore && !isLoading) {
-      loadMore();
-    }
-  };
+    // Define o índice inicial assim que a API estiver pronta
+    setSelectedIndex(api.selectedScrollSnap());
 
-  const handlePrev = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
-    }
-  };
+    // Função que "ouve" a mudança de slide
+    const handleSelect = () => {
+      const newIndex = api.selectedScrollSnap();
+      const totalSnaps = api.scrollSnapList().length;
 
+      // 1. Atualiza o estado de foco
+      setSelectedIndex(newIndex);
+
+      // 2. Lógica de Paginação (que já tínhamos)
+      // Verifica se deve carregar mais
+      if (newIndex >= totalSnaps - 3 && hasMore && !isPaginating) {
+        loadMore();
+      }
+    };
+
+    api.on("select", handleSelect); // "Ouve" o evento 'select'
+
+    // Limpeza do "ouvinte"
+    return () => {
+      api.off("select", handleSelect);
+    };
+  }, [api, hasMore, isPaginating, loadMore]); // Adiciona 'loadMore'
+
+  
   // ----- RENDERIZAÇÃO -----
 
-  if (isLoading && animais.length === 0) {
-    return <div style={{color: 'white'}}>Carregando afinidades...</div>;
-  }
-
-  if (animais.length === 0) {
-    return <div style={{color: 'white'}}>Nenhum animal encontrado.</div>;
-  }
-
-  // Pega os 3 animais para a UI (anterior, atual, próximo)
-  const prevAnimal = animais[currentIndex - 1]; 
-  const currentAnimal = animais[currentIndex];
-  const nextAnimal = animais[currentIndex + 1]; 
-
-  return (
-    <div className="affinity-container" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-      
-      <button onClick={handlePrev} disabled={currentIndex === 0} style={{color: 'white', background: 'none', border: 'none', fontSize: '2rem'}}>&lt;</button>
-
-      <div className="carousel-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-        
-        {/* 1. ANIMAL ANTERIOR (Preview) */}
-        {prevAnimal && (
-          <div style={{ opacity: 0.5, transform: 'scale(0.8)' }}>
-            <AnimalCard animal={prevAnimal} />
-          </div>
-        )}
-
-        {/* 2. ANIMAL ATUAL (Foco) */}
-        {currentAnimal && (
-          <div className="story-main">
-            <AnimalCard animal={currentAnimal} />
-          </div>
-        )}
-
-        {/* 3. PRÓXIMO ANIMAL (Preview) */}
-        {nextAnimal && (
-          <div style={{ opacity: 0.5, transform: 'scale(0.8)' }}>
-            <AnimalCard animal={nextAnimal} />
-          </div>
-        )}
+  // 1. Estado de Carregamento Inicial (Usa Skeleton)
+  if (isLoading) {
+    return (
+      <div className="flex w-full max-w-6xl mx-auto space-x-4 p-4">
+        <Skeleton className="h-[350px] w-full rounded-lg md:w-1/2 lg:w-1/3" />
+        <Skeleton className="h-[350px] w-1/2 rounded-lg hidden md:block lg:w-1/3" />
+        <Skeleton className="h-[350px] w-1/3 rounded-lg hidden lg:block" />
       </div>
-      
-      <button onClick={handleNext} disabled={currentIndex === animais.length - 1 && !hasMore} style={{color: 'white', background: 'none', border: 'none', fontSize: '2rem'}}>
-        &gt;
-      </button>
+    );
+  }
 
-      {/* Indicador de loading de paginação */}
-      {isLoading && animais.length > 0 && <div style={{color: 'white'}}>Carregando mais...</div>}
+  // 2. Estado Vazio (Usa Tailwind)
+  if (animais.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-48 text-muted-foreground">
+        Nenhum animal com afinidade encontrado.
+      </div>
+    );
+  }
+
+  // 3. Renderização Principal com Carrossel
+  return (
+    <div className="w-[95vw] max-w-6xl mx-auto px-4 md:px-8">
+      <Carousel
+        setApi={setApi} // Conecta o estado 'api' ao carrossel
+        opts={{
+          align: "start",
+          loop: false, // Desativar loop para paginação funcionar
+        }}
+        className="w-full"
+      >
+        <CarouselContent className="-ml-4">
+          
+          {/* Mapeia todos os animais */}
+          {animais.map((animal, index) => (
+            <CarouselItem 
+              key={animal.animal.id} // Agora as keys são únicas
+              // Classes de Responsividade:
+              // - Padrão (mobile): 1 item
+              // - 'md' (tablet): 2 itens
+              // - 'lg' (desktop): 3 itens
+              className="pl-4 basis-full md:basis-1/2 lg:basis-1/3"
+            >
+              <div 
+                className={`
+                  p-1 h-full
+                  transition-all duration-300 ease-in-out
+                  ${index === selectedIndex
+                    ? 'opacity-100 scale-100' // Em foco
+                    : 'opacity-60 scale-90 pointer-events-none' // Fora de foco
+                  }
+                `}
+              >
+                {/* O CardAnimalAffinity deve ser responsivo (ex: h-full) */}
+                <AnimalCard animal_afinidade={animal} />
+              </div>
+            </CarouselItem>
+          ))}
+
+          {/* Item de Loading da Paginação */}
+          {isPaginating && (
+            <CarouselItem className="pl-4 basis-full md:basis-1/2 lg:basis-1/3 opacity-60 scale-90">
+              <div className="flex h-full min-h-[350px] w-full items-center justify-center rounded-lg border-3 border-dashed">
+                <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" />
+              </div>
+            </CarouselItem>
+          )}
+
+        </CarouselContent>
+        
+        {/* Botões de Navegação (escondidos em mobile) */}
+        <CarouselPrevious className="hidden sm:flex" />
+        <CarouselNext className="hidden sm:flex" />
+      </Carousel>
     </div>
   );
 }

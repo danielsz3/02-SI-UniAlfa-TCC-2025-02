@@ -60,8 +60,8 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $this->call([
-            AnimalSeeder::class,
             UsuarioSeeder::class,
+            AnimalSeeder::class,
             AdocaoSeeder::class,
         ]);
     }

@@ -24,12 +24,6 @@ function DialogPortal({
   return <DialogPrimitive.Portal data-slot="dialog-portal" {...props} />
 }
 
-function DialogClose({
-  ...props
-}: React.ComponentProps<typeof DialogPrimitive.Close>) {
-  return <DialogPrimitive.Close data-slot="dialog-close" {...props} />
-}
-
 function DialogOverlay({
   className,
   ...props
@@ -38,7 +32,7 @@ function DialogOverlay({
     <DialogPrimitive.Overlay
       data-slot="dialog-overlay"
       className={cn(
-        "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/50",
+        "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-999 bg-black/50",
         className
       )}
       {...props}
@@ -56,27 +50,49 @@ function DialogContent({
 }) {
   return (
     <DialogPortal data-slot="dialog-portal">
+      {/* Overlay (z-40) */}
       <DialogOverlay />
-      <DialogPrimitive.Content
-        data-slot="dialog-content"
-        className={cn(
-          "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200 sm:max-w-lg",
-          className
-        )}
-        {...props}
-      >
-        {children}
+
+      {/* Container centraliza e garante stacking context */}
+      <div className="fixed inset-0 z-1000 flex items-center justify-center pointer-events-none">
+        {/* Content (z-50) — pointer-events-auto para interagir */}
+        <DialogPrimitive.Content
+          data-slot="dialog-content"
+          className={cn(
+            "pointer-events-auto bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 grid w-full max-w-[calc(100%-2rem)] rounded-lg border p-6 shadow-lg duration-200 sm:max-w-lg",
+            className
+          )}
+          {...props}
+        >
+          {children}
+        </DialogPrimitive.Content>
+
         {showCloseButton && (
           <DialogPrimitive.Close
             data-slot="dialog-close"
-            className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
+            className="pointer-events-auto absolute top-6 right-6 z-1001 bg-background border border-border hover:bg-muted hover:text-white text-foreground p-2 rounded-full shadow-md transition focus:ring-2 focus:ring-ring focus:outline-hidden"
           >
-            <XIcon />
-            <span className="sr-only">Close</span>
+            <XIcon className="h-4 w-4" />
+            <span className="sr-only">Fechar</span>
           </DialogPrimitive.Close>
         )}
-      </DialogPrimitive.Content>
+      </div>
     </DialogPortal>
+  )
+}
+
+function DialogCloseFloating({
+  className,
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Close>) {
+  return (
+    <DialogPrimitive.Close
+      className={cn(
+        "pointer-events-auto fixed top-4 right-4 z-60 bg-background border border-border p-2 rounded-full shadow-md hover:bg-muted transition",
+        className
+      )}
+      {...props}
+    />
   )
 }
 
@@ -131,7 +147,7 @@ function DialogDescription({
 
 export {
   Dialog,
-  DialogClose,
+  DialogCloseFloating, // opcional
   DialogContent,
   DialogDescription,
   DialogFooter,

@@ -27,7 +27,7 @@ return new class extends Migration
             $table->enum('ambiente_ideal', ['area_pequena', 'area_media', 'area_externa'])->nullable();
 
             $table->unsignedBigInteger('usuario_id');
-            $table->foreign('usuario_id')->references('id')->on('usuarios')->onDelete('set null');
+            $table->foreign('usuario_id')->references('id')->on('usuarios');
 
             $table->unsignedBigInteger('lar_temporario_id')->nullable();
             $table->foreign('lar_temporario_id')->references('id')->on('lares_temporarios')->onDelete('set null');

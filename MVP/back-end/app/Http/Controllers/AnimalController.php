@@ -91,6 +91,7 @@ class AnimalController extends Controller
                     'data_nascimento',
                     'castrado',
                     'vale_castracao',
+                    'situacao',
                     'descricao',
                     'tipo_animal',
                     'nivel_energia',

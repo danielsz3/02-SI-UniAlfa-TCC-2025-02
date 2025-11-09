@@ -1,10 +1,9 @@
-// app/adotar/afinidade/page.tsx
-'use client'; 
+'use client'
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import AffinityCarousel from '@/components/AffinityCarousel'; 
-import { X } from 'lucide-react'; // Ícone para o botão de fechar
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import AffinityCarousel from '@/components/AffinityCarousel'
+import { X } from 'lucide-react'
 
 type User = {
   id: number | string;
@@ -16,33 +15,33 @@ export default function AffinityPage() {
   const [error, setError] = useState<string | null>(null);
 
   const handleClose = () => {
-    router.push('/adotar'); 
+    router.push('/adotar')
   };
 
   // Trava/Destrava o scroll (lógica não muda)
   useEffect(() => {
-    document.body.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden'
     
     // Lógica do localStorage (não muda)
-    const userJsonString = localStorage.getItem('user');
+    const userJsonString = localStorage.getItem('user')
     if (userJsonString) {
       try {
         const userObject: User = JSON.parse(userJsonString);
         if (userObject && userObject.id) {
-          setUserId(String(userObject.id));
+          setUserId(String(userObject.id))
         } else {
-          setError('Erro: ID de usuário inválido.');
+          setError('Erro: ID de usuário inválido.')
         }
       } catch (e) {
-        setError('Erro: Dados de usuário corrompidos.');
+        setError('Erro: Dados de usuário corrompidos.')
       }
     } else {
-      setError('Erro: Usuário não autenticado.');
+      setError('Erro: Usuário não autenticado.')
     }
 
     // Função de limpeza
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflow = ''
     };
   }, []); 
 

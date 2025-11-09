@@ -5,13 +5,17 @@ import Link from "next/link"
 import { Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import ImageCarousel from "@/components/ImageCarousel"
+import { Imagens } from "@/types"
 
 type Evento = {
   id: number
   titulo: string
-  manchete: string
   imagem?: string
-  data: string
+  descricao: string
+  data_inicio: string
+  data_fim: string
+  imagens: Imagens[]
 }
 
 function HeroSection() {
@@ -45,7 +49,7 @@ function EventoCardSkeleton() {
     <Card className="overflow-hidden">
       <div className="h-48 bg-muted animate-pulse" />
       <CardContent className="p-4 space-y-2">
-        <div className="h-4 bg-muted rounded animate-pulse" />
+        <div className="h-4 bg-muted rounded animate-pulse mt-2" />
         <div className="h-3 bg-muted rounded animate-pulse w-2/3" />
       </CardContent>
     </Card>
@@ -55,12 +59,13 @@ function EventoCardSkeleton() {
 function EventoCard({ evento }: { evento: Evento }) {
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
-      <div className="h-48 bg-muted relative">
+      <div className="h-50 bg-muted">
         {evento.imagem ? (
-          <img
-            src={evento.imagem}
-            alt={evento.titulo}
-            className="w-full h-full object-cover"
+          <ImageCarousel
+            className="h-full"
+            images={evento.imagens ? [{ id: evento.imagens.length + 1, caminho: evento.imagem }, ...evento.imagens] : [{ id: 0, caminho: evento.imagem }]}
+            alt={evento.titulo} variant="minimal"
+            autoPlay
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-muted-foreground">
@@ -68,11 +73,10 @@ function EventoCard({ evento }: { evento: Evento }) {
           </div>
         )}
       </div>
-      <CardContent className="p-4">
-        <h3 className="font-semibold text-lg mb-1">{evento.titulo}</h3>
-        <p className="text-sm text-muted-foreground mb-2">{evento.manchete}</p>
-        <p className="text-xs text-muted-foreground">
-          {new Date(evento.data).toLocaleDateString('pt-BR')}
+      <CardContent className="p-4 mt-2">
+        <h3 className="font-semibold text-md md:text-lg mb-1">{evento.titulo}</h3>
+        <p className="text-xs font-bold text-primary mt-2">
+          de {new Date(evento.data_inicio).toLocaleDateString('pt-BR')} até {new Date(evento.data_fim).toLocaleDateString('pt-BR')}
         </p>
       </CardContent>
     </Card>

@@ -82,7 +82,7 @@ export function AnimalDetailModal({ initialData, onClose }: AnimalDetailModalPro
         return (
             <div className="grid lg:grid-cols-2 grid-cols-1 gap-6 md:gap-8">
                 {/* Coluna 1: Imagem */}
-                <div className="rounded-lg overflow-hidden">
+                <div className="rounded-lg overflow-hidden h-[30vh] sm:h-[55vh]">
                     <ImageCarousel images={animal.imagens} alt={animal.nome} />
                 </div>
 
@@ -107,7 +107,7 @@ export function AnimalDetailModal({ initialData, onClose }: AnimalDetailModalPro
 
                     {/* Grid de Cards */}
                     <div className="grid grid-cols-2 gap-4">
-                        <Card className="flex items-center gap-3 p-4 px-6">
+                        <Card className="flex items-center gap-3 p-4 px-3">
                             <Calendar className="h-5 w-5 text-primary shrink-0" />
                             <div>
                                 <p className="text-sm text-muted-foreground">Idade</p>
@@ -118,7 +118,7 @@ export function AnimalDetailModal({ initialData, onClose }: AnimalDetailModalPro
                         </Card>
 
                         {animal.tamanho && (
-                            <Card className="flex items-center gap-3 p-4 px-6">
+                            <Card className="flex items-center gap-3 p-4 px-3">
                                 <Ruler className="h-5 w-5 text-primary shrink-0" />
                                 <div>
                                     <p className="text-sm text-muted-foreground">Tamanho</p>
@@ -128,7 +128,7 @@ export function AnimalDetailModal({ initialData, onClose }: AnimalDetailModalPro
                         )}
 
                         {animal.nivel_energia && (
-                            <Card className="flex items-center gap-3 p-4 px-6">
+                            <Card className="flex items-center gap-3 p-4 px-3">
                                 <Zap className="h-5 w-5 text-primary shrink-0" />
                                 <div>
                                     <p className="text-sm text-muted-foreground">Energia</p>
@@ -140,7 +140,7 @@ export function AnimalDetailModal({ initialData, onClose }: AnimalDetailModalPro
                         )}
 
                         {typeof animal.castrado !== "undefined" && (
-                            <Card className="flex items-center gap-3 p-4 px-6">
+                            <Card className="flex items-center gap-3 p-4 px-3">
                                 <Heart className="h-5 w-5 text-primary shrink-0" />
                                 <div>
                                     <p className="text-sm text-muted-foreground">Castrado</p>
@@ -198,7 +198,7 @@ export function AnimalDetailModal({ initialData, onClose }: AnimalDetailModalPro
                 modal
             >
                 <DialogContent
-                    className="max-h-[90vh] min-w-[80vw] overflow-y-auto p-6 gap-0 "
+                    className="max-h-[90vh] min-w-[90vw] overflow-y-auto p-6 gap-0 "
                 >
                     {renderContent()}
                 </DialogContent>

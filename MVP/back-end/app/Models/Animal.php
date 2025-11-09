@@ -29,6 +29,7 @@ class Animal extends Model
         'situacao',
         'usuario_id',         // Novo campo
         'lar_temporario_id',  // Novo campo
+        'fica_usuario',       // Novo campo
     ];
 
     protected $casts = [

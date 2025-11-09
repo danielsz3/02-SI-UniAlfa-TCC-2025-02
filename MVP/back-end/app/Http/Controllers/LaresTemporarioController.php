@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\LarTemporario;
 use App\Models\Endereco;
 use App\Models\ImagemLarTemporario;
+use App\Traits\ManagerGallery;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
@@ -18,6 +19,12 @@ use Carbon\Carbon;
 class LaresTemporarioController extends Controller
 {
     use SearchIndex;
+    use ManagerGallery;  
+    // Define as propriedades para a trait ManagerGallery
+    protected $campoGaleria = 'imagens';
+    protected $storagePath = 'lares_temporarios';
+    protected $modeloRelacaoGaleria = ImagemLarTemporario::class;
+    protected $foreignKeyGaleria = 'id_lar_temporario';
 
     /*
     |--------------------------------------------------------------------------
@@ -228,7 +235,6 @@ class LaresTemporarioController extends Controller
             'imagens' => 'nullable|array',
         ];
 
-        // Só valida como file se houver arquivos enviados
         if ($request->hasFile('imagens')) {
             $rules['imagens.*'] = 'file|image|mimes:jpeg,png,jpg,webp|max:10240';
         }
@@ -277,7 +283,7 @@ class LaresTemporarioController extends Controller
                     'experiencia'
                 ]));
 
-                // Endereço
+                // Atualiza endereço
                 if ($request->has('endereco') && is_array($request->endereco) && !empty(array_filter($request->endereco))) {
                     $enderecoData = $request->endereco;
 
@@ -288,77 +294,19 @@ class LaresTemporarioController extends Controller
                         if ($endereco) {
                             $endereco->update($enderecoData);
                         } else {
-                            // se id informado não pertence a este lar, criamos um novo endereço vinculado
                             $enderecoData['lar_temporario_id'] = $lar->id;
                             Endereco::create($enderecoData);
                         }
                     } else {
-                        // remove endereços anteriores e cria novo (mantendo seu comportamento original)
                         Endereco::where('lar_temporario_id', $lar->id)->delete();
                         $enderecoData['lar_temporario_id'] = $lar->id;
                         Endereco::create($enderecoData);
                     }
                 }
 
-                // === Tratamento de imagens ===
-                if ($request->has('imagens') || $request->hasFile('imagens')) {
-                    // 🔹 1. Capturar arquivos novos
-                    $arquivosNovos = [];
-                    if ($request->hasFile('imagens')) {
-                        $arquivosNovos = Arr::wrap($request->file('imagens'));
-                    }
-
-                    // 🔹 2. Processar imagens mantidas
-                    $imagensMantidas = [];
-                    $imagensInput = $request->input('imagens', []);
-
-                    if (is_array($imagensInput)) {
-                        foreach ($imagensInput as $item) {
-                            // Se for string JSON, decodifica
-                            if (is_string($item)) {
-                                $decoded = json_decode($item, true);
-                                if ($decoded && isset($decoded['src'])) {
-                                    $imagensMantidas[] = basename(parse_url($decoded['src'], PHP_URL_PATH));
-                                }
-                            }
-                            // Se já vier como array com 'src'
-                            elseif (is_array($item) && isset($item['src'])) {
-                                $imagensMantidas[] = basename(parse_url($item['src'], PHP_URL_PATH));
-                            }
-                        }
-                    }
-
-                    // 🔹 3. Buscar imagens atuais do banco
-                    $imagensAtuais = ImagemLarTemporario::where('id_lar_temporario', $lar->id)->get();
-
-                    // 🔹 4. Excluir as removidas
-                    foreach ($imagensAtuais as $imagem) {
-                        $arquivoAtual = basename($imagem->caminho);
-
-                        if (!in_array($arquivoAtual, $imagensMantidas)) {
-                            if (Storage::disk('public')->exists($imagem->caminho)) {
-                                Storage::disk('public')->delete($imagem->caminho);
-                            }
-                            $imagem->delete();
-                        }
-                    }
-
-                    // 🔹 5. Salvar novas imagens
-                    foreach ($arquivosNovos as $file) {
-                        if ($file instanceof \Illuminate\Http\UploadedFile && $file->isValid()) {
-                            $nomeOriginal = $file->getClientOriginalName(); // 🔹 ADICIONADO
-                            $path = $file->store('lares_temporarios', 'public');
-                            [$width, $height] = @getimagesize($file->getRealPath()) ?: [null, null];
-
-                            ImagemLarTemporario::create([
-                                'id_lar_temporario' => $lar->id,
-                                'caminho'           => $path,
-                                'nome_original'     => $nomeOriginal, // 🔹 ADICIONADO
-                                'width'             => $width,
-                                'height'            => $height,
-                            ]);
-                        }
-                    }
+                // Usa a trait para sincronizar a galeria de imagens
+                if ($request->has($this->campoGaleria) || $request->hasFile($this->campoGaleria)) {
+                    $this->sincronizarGaleria($request, $lar);
                 }
 
                 return response()->json($lar->fresh(['endereco', 'imagens']), 200);

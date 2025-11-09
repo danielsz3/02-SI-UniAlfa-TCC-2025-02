@@ -121,7 +121,7 @@ const httpClient = (url: string, options: fetchUtils.Options = {}) => {
         status: response.status,
         headers: response.headers,
         body: "",
-        json: json, 
+        json: json,
       }));
     })
     .catch((error) => {
@@ -150,25 +150,29 @@ const convertDataRequestToHTTP = (
   if (isUpdate) {
     Object.keys(requestData).forEach((key) => {
       const field = requestData[key];
+      console.log('Processando item de array para FormData:', key, field); // DEBUG
       if (
-        (key === "arquivo" || key === "imagem" || key === "imagens") &&
+        (key === "arquivo" || key === "imagem") &&
         field &&
         typeof field === "object" &&
         !field.rawFile
       ) {
         delete requestData[key];
       }
+      console.log('Após verificação, item é:', key, requestData[key]); // DEBUG
     });
   }
 
   const hasFileUpload = Object.keys(requestData).some((key) => {
     const field = requestData[key];
+    console.log('Verificando campo para upload de arquivo:', key, field); // DEBUG
     return Array.isArray(field)
       ? field.some(
         (item) => item && typeof item === "object" && item.rawFile instanceof File
       )
       : field && typeof field === "object" && field.rawFile instanceof File;
   });
+
 
   if (!hasFileUpload) {
     return {
@@ -191,13 +195,15 @@ const convertDataRequestToHTTP = (
 
     } else if (Array.isArray(field)) {
       field.forEach((item) => {
-
         if (item && typeof item === 'object' && 'rawFile' in item && item.rawFile instanceof File) {
           formData.append(`${key}[]`, item.rawFile, item.rawFile.name);
 
         } else if (item instanceof File) {
           formData.append(`${key}[]`, item, item.name);
 
+        } else if (item !== null && item !== undefined) {
+          const valueToAppend = typeof item === 'object' ? JSON.stringify(item) : String(item);
+          formData.append(`${key}[]`, valueToAppend);
         }
       });
 

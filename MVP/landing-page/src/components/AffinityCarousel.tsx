@@ -38,7 +38,7 @@ const getTokenFromStorage = () => {
 async function fetchAnimais(userId: string, page: number): Promise<AnimalAffinity[]> {
   try {
     // Adicionei query params de paginação
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/usuarios/${userId}/recomendar-animais?page=${page}&limit=10`, { 
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/usuarios/${userId}/recomendar-animais?page=${page}&limit=10`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -69,7 +69,7 @@ export default function AffinityCarousel({ userId }: Props) {
   const [isLoading, setIsLoading] = useState(true); // Apenas para carga inicial
   const [isPaginating, setIsPaginating] = useState(false); // Para paginações
   const [hasMore, setHasMore] = useState(true);
-  
+
   // Estado para guardar o índice do item em foco
   const [selectedIndex, setSelectedIndex] = useState(0);
 
@@ -89,22 +89,22 @@ export default function AffinityCarousel({ userId }: Props) {
   // Envolvida com 'useCallback'
   // *** JÁ COM A CORREÇÃO DE DUPLICADOS ***
   const loadMore = useCallback(async () => {
-    
+
     if (isPaginating || !hasMore) return;
 
-    setIsPaginating(true); 
-    
+    setIsPaginating(true);
+
     const nextPage = page + 1;
     const newAnimais = await fetchAnimais(userId, nextPage);
 
     if (newAnimais.length > 0) {
-      
+
       // --- CORREÇÃO DE DUPLICADOS ---
       // Filtra os resultados para garantir que não há chaves duplicadas
       setAnimais((prev) => {
         // 1. Cria um Set (conjunto) com todos os IDs de animais que já temos
         const existingIds = new Set(prev.map(a => a.animal.id));
-        
+
         // 2. Filtra a lista de 'newAnimais'
         const uniqueNewAnimais = newAnimais.filter(
           (novoAnimal) => !existingIds.has(novoAnimal.animal.id)
@@ -124,10 +124,10 @@ export default function AffinityCarousel({ userId }: Props) {
       setHasMore(false); // Chegamos ao fim
     }
 
-    setIsPaginating(false); 
+    setIsPaginating(false);
   }, [isPaginating, hasMore, page, userId]); // Dependências do useCallback
 
-  
+
   // 4. Lógica de Paginação E Estilos de Foco (useEffect)
   useEffect(() => {
     if (!api) {
@@ -160,7 +160,7 @@ export default function AffinityCarousel({ userId }: Props) {
     };
   }, [api, hasMore, isPaginating, loadMore]); // Adiciona 'loadMore'
 
-  
+
   // ----- RENDERIZAÇÃO -----
 
   // 1. Estado de Carregamento Inicial (Usa Skeleton)
@@ -195,10 +195,10 @@ export default function AffinityCarousel({ userId }: Props) {
         className="w-full"
       >
         <CarouselContent className="-ml-4">
-          
+
           {/* Mapeia todos os animais */}
           {animais.map((animal, index) => (
-            <CarouselItem 
+            <CarouselItem
               key={animal.animal.id} // Agora as keys são únicas
               // Classes de Responsividade:
               // - Padrão (mobile): 1 item
@@ -206,7 +206,8 @@ export default function AffinityCarousel({ userId }: Props) {
               // - 'lg' (desktop): 3 itens
               className="pl-4 basis-full md:basis-1/2 lg:basis-1/3"
             >
-              <div 
+              <div
+                aria-hidden={index !== selectedIndex}
                 className={`
                   p-1 h-full
                   transition-all duration-300 ease-in-out
@@ -232,7 +233,7 @@ export default function AffinityCarousel({ userId }: Props) {
           )}
 
         </CarouselContent>
-        
+
         {/* Botões de Navegação (escondidos em mobile) */}
         <CarouselPrevious className="hidden sm:flex" />
         <CarouselNext className="hidden sm:flex" />

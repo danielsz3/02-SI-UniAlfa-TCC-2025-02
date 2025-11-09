@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, ChangeEvent, FormEvent } from "react"
+import { useState, useEffect, ChangeEvent, FormEvent } from "react"
 import { Button } from "@/components/ui/button"
 import TextField from "@/components/forms/inputs/TextField"
 import PasswordField from "@/components/forms/inputs/PasswordField"
@@ -9,55 +9,89 @@ import { validatePersonal } from "@/components/forms/validators/personal"
 
 interface PersonalFormProps {
   onNext: (data: any) => void
-  defaultValues?: {
+  defaultValues: {
     nome?: string
     telefone?: string
     email?: string
     cpf?: string
     dataNascimento?: string
-    imagem?: string
+    senha?: string
+    confirmarSenha?: string
+    imagemPreviewUrl?: string | null
   }
+  defaultImageFile: File | null
+  setImageFile: (file: File | null) => void
 }
 
-export default function PersonalForm({ onNext, defaultValues = {} }: PersonalFormProps) {
+export default function PersonalForm({ onNext, defaultValues, defaultImageFile, setImageFile }: PersonalFormProps) {
   const [form, setForm] = useState({
     nome: defaultValues.nome || "",
     telefone: defaultValues.telefone || "",
     email: defaultValues.email || "",
     cpf: defaultValues.cpf || "",
     dataNascimento: defaultValues.dataNascimento || "",
-    senha: "",
-    confirmarSenha: "",
+    senha: defaultValues.senha || "",
+    confirmarSenha: defaultValues.confirmarSenha || "",
   })
 
-  const [imagem, setImagem] = useState<File | null>(null)
+  const [imagem, setImagem] = useState<File | null>(defaultImageFile)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(defaultValues.imagemPreviewUrl || null)
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  // Sincroniza o estado local com defaultValues quando eles mudam (ex: ao voltar para a etapa)
+  useEffect(() => {
+    setForm({
+      nome: defaultValues.nome || "",
+      telefone: defaultValues.telefone || "",
+      email: defaultValues.email || "",
+      cpf: defaultValues.cpf || "",
+      dataNascimento: defaultValues.dataNascimento || "",
+      senha: defaultValues.senha || "",
+      confirmarSenha: defaultValues.confirmarSenha || "",
+    })
+
+    if (!imagem) {
+      setPreviewUrl(defaultValues.imagemPreviewUrl || null)
+    }
+  }, [defaultValues])
+
+  // Cria e libera URL temporária para o arquivo File
+  useEffect(() => {
+    if (imagem) {
+      const url = URL.createObjectURL(imagem)
+      setPreviewUrl(url)
+
+      return () => {
+        URL.revokeObjectURL(url)
+        setPreviewUrl(null)
+      }
+    }
+  }, [imagem])
+
+  // Atualiza estado local e também o estado do pai para o arquivo
+  const handleImageChange = (file: File | null) => {
+    setImagem(file)
+    setImageFile(file)
+  }
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value })
   }
 
-const handleSubmit = (e: FormEvent) => {
-  e.preventDefault()
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault()
 
-  const validationErrors = validatePersonal(form)
-  setErrors(validationErrors)
-  if (Object.keys(validationErrors).length > 0) return
+    const validationErrors = validatePersonal(form)
+    setErrors(validationErrors)
+    if (Object.keys(validationErrors).length > 0) return
 
-  const payload = {
-    nome: form.nome,
-    telefone: form.telefone,
-    email: form.email,
-    cpf: form.cpf,
-    dataNascimento: form.dataNascimento,
-    senha: form.senha,
-    confirmarSenha: form.confirmarSenha,
-    imagem
+    const payload = {
+      ...form,
+      imagem, // arquivo File | null
+    }
+
+    onNext(payload)
   }
-
-  console.log("PersonalForm payload ->", payload)
-  onNext(payload)
-}
 
   return (
     <form
@@ -69,15 +103,13 @@ const handleSubmit = (e: FormEvent) => {
         Dados Pessoais
       </h2>
 
-      {/* Upload de Avatar */}
       <AvatarUpload
         label="Foto de Perfil"
         name="imagem"
-        defaultPreviewUrl={defaultValues.imagem || null}
-        onChange={setImagem}
+        defaultPreviewUrl={previewUrl}
+        onChange={handleImageChange}
       />
 
-      {/* Campos do formulário */}
       <TextField
         id="nome"
         name="nome"
@@ -155,7 +187,6 @@ const handleSubmit = (e: FormEvent) => {
         error={errors.confirmarSenha}
       />
 
-      {/* Botão de submit */}
       <Button type="submit" className="w-full mt-6" size="lg">
         Próximo
       </Button>

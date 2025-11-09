@@ -14,6 +14,7 @@ interface ImageCarouselProps {
   showIndicators?: boolean
   autoPlay?: boolean
   autoPlayInterval?: number
+  variant?: "default" | "minimal"
 }
 
 export default function ImageCarousel({
@@ -24,6 +25,7 @@ export default function ImageCarousel({
   showIndicators = true,
   autoPlay = false,
   autoPlayInterval = 5000,
+  variant = "default",
 }: ImageCarouselProps) {
   const [index, setIndex] = useState(0)
   const touchStartX = useRef<number | null>(null)
@@ -92,7 +94,7 @@ export default function ImageCarousel({
 
   return (
     <div
-      className={`relative w-full rounded-md overflow-hidden bg-card ${className}`}
+      className={`relative h-full w-full rounded-md overflow-hidden bg-card ${className}`}
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
@@ -101,7 +103,7 @@ export default function ImageCarousel({
       aria-label="Galeria de imagens"
     >
       {/* imagens com fade */}
-      <div className="w-full h-80 relative">
+      <div className="w-full h-full relative">
         {images.map((image, i) => (
           <img
             key={i}
@@ -116,7 +118,7 @@ export default function ImageCarousel({
       </div>
 
       {/* arrows */}
-      {showArrows && count > 1 && (
+      {variant === "default" && showArrows && count > 1 && (
         <>
           <div className="z-11 absolute left-3 top-1/2 -translate-y-1/2">
             <Button
@@ -128,7 +130,7 @@ export default function ImageCarousel({
               }}
               aria-label="Anterior"
             >
-              <ChevronLeft className="h-5 w-5" />
+              <ChevronLeft className="h-5 w-5 text-white" />
             </Button>
           </div>
 
@@ -142,7 +144,7 @@ export default function ImageCarousel({
               }}
               aria-label="Próximo"
             >
-              <ChevronRight className="h-5 w-5" />
+              <ChevronRight className="h-5 w-5 text-white" />
             </Button>
           </div>
         </>
@@ -158,10 +160,21 @@ export default function ImageCarousel({
               aria-label={`Ir para o slide ${i + 1}`}
               className="focus:outline-none"
             >
-              {i === index ? (
-                <Badge variant="secondary" className="px-3 py-1">{i + 1}</Badge>
+              {variant === "default" ? (
+                <>
+                  {i === index ? (
+                    <Badge variant="secondary" className="px-3 py-1">{i + 1}</Badge>
+                  ) : (
+                    <div className="w-3 h-3 rounded-full bg-muted/60" />
+                  )}
+                </>
               ) : (
-                <div className="w-3 h-3 rounded-full bg-muted/60" />
+                // Variante minimalista: apenas pontos
+                <div
+                  className={`w-2.5 h-2.5 rounded-full transition-all ${
+                    i === index ? "bg-primary" : "bg-muted/60"
+                  }`}
+                />
               )}
             </button>
           ))}

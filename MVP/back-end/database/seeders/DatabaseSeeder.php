@@ -63,6 +63,10 @@ class DatabaseSeeder extends Seeder
             UsuarioSeeder::class,
             AnimalSeeder::class,
             AdocaoSeeder::class,
+            LarTempSeeder::class,
+            TransacaoSeeder::class,
+            EventoSeeder::class,
+            MatchSeeder::class,
         ]);
     }
 }

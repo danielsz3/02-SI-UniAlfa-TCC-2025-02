@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Traits\ManagerGallery;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
@@ -11,10 +12,18 @@ use Illuminate\Support\Facades\Validator;
 use App\Models\Post;
 use App\Models\ImagemPost;
 use App\Models\Integracao;
+use App\Traits\SearchIndex;
 use Illuminate\Support\Facades\Log;
 
 class PostController extends Controller
 {
+    use SearchIndex;
+    use ManagerGallery;
+    
+    protected $campoGaleria = 'imagens';
+    protected $storagePath = 'posts';
+    protected $modeloRelacaoGaleria = ImagemPost::class;
+    protected $foreignKeyGaleria = 'post_id';
     public function index(): JsonResponse
     {
         $posts = Post::with('imagens')->paginate(10);
@@ -27,11 +36,11 @@ class PostController extends Controller
         $validator = Validator::make($request->all(), [
             'legenda' => 'nullable|string|max:1000',
             'imagens' => 'nullable|array',
-            'imagens.*' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'imagens.*' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240',
         ], [
             'imagens.*.image' => 'Cada arquivo deve ser uma imagem válida.',
             'imagens.*.mimes' => 'As imagens devem ser do tipo jpeg, png, jpg ou webp.',
-            'imagens.*.max' => 'Cada imagem deve ter no máximo 2MB.',
+            'imagens.*.max' => 'Cada imagem deve ter no máximo 10MB.',
             'legenda.max' => 'A legenda deve ter no máximo 1000 caracteres.',
         ]);
 
@@ -171,33 +180,14 @@ class PostController extends Controller
         return DB::transaction(function () use ($request, $post) {
             $post->update($request->only('legenda'));
 
-            if ($request->hasFile('imagens')) {
-                // Deletar imagens antigas
-                foreach ($post->imagens as $imagem) {
-                    $oldPath = str_replace('/storage/', '', $imagem->caminho);
-                    Storage::disk('public')->delete($oldPath);
-                }
-                $post->imagens()->delete();
-
-                // Salvar novas imagens
-                foreach ($request->file('imagens') as $file) {
-                    $nomeOriginal = $file->getClientOriginalName(); // 🔹 ADICIONADO
-                    $path = $file->store('posts', 'public');
-                    [$width, $height] = getimagesize($file->getRealPath()) ?: [null, null];
-                    ImagemPost::create([
-                        'post_id' => $post->id,
-                        'caminho' => $path,
-                        'nome_original' => $nomeOriginal, // 🔹 ADICIONADO
-                        'width' => $width,
-                        'height' => $height,
-                    ]);
-                }
+            // Usar a trait para sincronizar a galeria de imagens
+            if ($request->has($this->campoGaleria) || $request->hasFile($this->campoGaleria)) {
+                $this->sincronizarGaleria($request, $post);
             }
 
             return response()->json($post->fresh('imagens'));
         });
     }
-
     public function destroy($id): JsonResponse
     {
         $post = Post::find($id);

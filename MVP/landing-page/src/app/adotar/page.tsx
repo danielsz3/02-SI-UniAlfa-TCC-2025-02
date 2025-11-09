@@ -556,7 +556,7 @@ export default function AdotarPageClient() {
           {animais.length === 0 && !loading ? (
             <div className="text-center py-16">
               <p className="text-muted-foreground text-lg mb-4">Nenhum animal disponível para adoção no momento.</p>
-              <Button asChild><Link href="/doar-pet">Cadastrar Animal</Link></Button>
+              <Button asChild><Link href="/doar-pet">Quero doar um pet</Link></Button>
             </div>
           ) : (
             <>

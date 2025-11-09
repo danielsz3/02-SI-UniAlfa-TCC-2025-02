@@ -17,6 +17,7 @@ return new class extends Migration
             $table->enum('sexo', ['macho', 'femea']);
             $table->date('data_nascimento');
             $table->boolean('castrado')->default(false);
+            $table->boolean('fica_usuario')->default(false);
             $table->boolean('vale_castracao')->default(false);
             $table->text('descricao')->nullable();
             $table->enum('situacao', ['disponivel', 'adotado', 'em_adocao', 'em_aprovacao'])->default('em_aprovacao');

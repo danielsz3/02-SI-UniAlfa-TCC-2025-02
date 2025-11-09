@@ -36,7 +36,7 @@ export function Footer() {
               <Facebook className="h-5 w-5" />
             </a>
             <a
-              href="https://github.com"
+              href="https://github.com/danielsz3/02-SI-UniAlfa-TCC-2025-02"
               target="_blank"
               rel="noreferrer"
               aria-label="GitHub"
@@ -44,24 +44,17 @@ export function Footer() {
             >
               <Github className="h-5 w-5" />
             </a>
-            <a
-              href="mailto:contato@petaffinity.com"
-              aria-label="E-mail"
-              className="transition-colors hover:text-primary"
-            >
-              <Mail className="h-5 w-5" />
-            </a>
           </div>
 
           {/* Links */}
           <nav className="mt-6 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm text-muted-foreground">
-            <Link href="/ongs" className="transition-colors hover:text-primary">
+            <Link href="/sobre" className="transition-colors hover:text-primary">
               ONG
             </Link>
-            <Link href="/colaboradores" className="transition-colors hover:text-primary">
+            <Link href="/" className="transition-colors hover:text-primary">
               Colaboradores
             </Link>
-            <Link href="/termos" className="transition-colors hover:text-primary">
+            <Link href="/" className="transition-colors hover:text-primary">
               Termos e Condições
             </Link>
           </nav>

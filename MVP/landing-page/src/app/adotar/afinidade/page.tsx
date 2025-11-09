@@ -1,5 +1,4 @@
-// app/adotar/afinidade/page.tsx
-'use client';
+'use client'
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -26,25 +25,25 @@ export default function AffinityPage() {
     document.body.style.overflow = 'hidden';
 
     // Lógica do localStorage (não muda)
-    const userJsonString = localStorage.getItem('user');
+    const userJsonString = localStorage.getItem('user')
     if (userJsonString) {
       try {
         const userObject: User = JSON.parse(userJsonString);
         if (userObject && userObject.id) {
-          setUserId(String(userObject.id));
+          setUserId(String(userObject.id))
         } else {
-          setError('Erro: ID de usuário inválido.');
+          setError('Erro: ID de usuário inválido.')
         }
       } catch (e) {
-        setError('Erro: Dados de usuário corrompidos.');
+        setError('Erro: Dados de usuário corrompidos.')
       }
     } else {
-      setError('Erro: Usuário não autenticado.');
+      setError('Erro: Usuário não autenticado.')
     }
 
     // Função de limpeza
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflow = ''
     };
   }, []);
 

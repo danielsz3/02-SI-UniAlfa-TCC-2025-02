@@ -220,71 +220,73 @@ class MatchAfinidadeController extends Controller
         try {
             $match = MatchAfinidade::where('usuario_id', $request->usuario_id)
                 ->where('animal_id', $request->animal_id)
-                ->first();
-
-            if (!$match) {
-                return response()->json(['error' => 'Match não encontrado'], 404);
-            }
+                ->firstOrCreate([
+                    'status' => $request->status,
+                    'usuario_id' => $request->usuario_id,
+                    'animal_id' => $request->animal_id,
+                ]);
 
             if ($user->id !== (int)$request->usuario_id && ($user->role ?? '') !== 'admin') {
                 return response()->json(['error' => 'Não autorizado a alterar este match'], 403);
             }
 
             return DB::transaction(function () use ($match, $request) {
-                $newStatus = $request->status;
-                $match->status = $newStatus;
-                $match->save();
+                if ($match->wasRecentlyCreated) {
+                    $newStatus = $request->status;
+                    $match->status = $newStatus;
+                    $match->save();
 
-                if ($newStatus === 'escolhido') {
-                    $existeAprovada = Adocao::where('animal_id', $match->animal_id)
-                        ->where('status', 'aprovado')
-                        ->exists();
+                    if ($newStatus === 'escolhido') {
+                        $existeAprovada = Adocao::where('animal_id', $match->animal_id)
+                            ->where('status', 'aprovado')
+                            ->exists();
 
-                    if ($existeAprovada) {
-                        return response()->json(['error' => 'Este animal já possui uma adoção aprovada.'], 422);
-                    }
+                        if ($existeAprovada) {
+                            return response()->json(['error' => 'Este animal já possui uma adoção aprovada.'], 422);
+                        }
 
-                    $adocao = Adocao::firstOrCreate(
-                        ['usuario_id' => $match->usuario_id, 'animal_id' => $match->animal_id],
-                        ['status' => 'aprovado']
-                    );
+                        $adocao = Adocao::firstOrCreate(
+                            ['usuario_id' => $match->usuario_id, 'animal_id' => $match->animal_id],
+                            ['status' => 'aprovado']
+                        );
 
-                    if ($adocao->status !== 'aprovado') {
-                        $adocao->status = 'aprovado';
-                        $adocao->save();
-                    }
+                        if ($adocao->status !== 'aprovado') {
+                            $adocao->status = 'aprovado';
+                            $adocao->save();
+                        }
 
-                    Adocao::where('animal_id', $match->animal_id)
-                        ->where('id', '!=', $adocao->id)
-                        ->where('status', '!=', 'negado')
-                        ->update(['status' => 'negado']);
+                        Adocao::where('animal_id', $match->animal_id)
+                            ->where('id', '!=', $adocao->id)
+                            ->where('status', '!=', 'negado')
+                            ->update(['status' => 'negado']);
 
-                    $animal = $match->animal;
-                    if ($animal) {
-                        $animal->situacao = 'adotado';
-                        $animal->save();
-                    }
-                } elseif ($newStatus === 'rejeitado') {
-                    // Ao rejeitar o match, marcar a adoção vinculada como negada (se existir)
-                    $adocao = Adocao::where('usuario_id', $match->usuario_id)
-                        ->where('animal_id', $match->animal_id)
-                        ->first();
-
-                    if ($adocao && $adocao->status !== 'negado') {
-                        $adocao->status = 'negado';
-                        $adocao->save();
-                    }
-
-                    // Se não existir nenhuma adoção aprovada para o animal, liberar a situacao do animal
-                    $existeAprovada = Adocao::where('animal_id', $match->animal_id)
-                        ->where('status', 'aprovado')
-                        ->exists();
-
-                    if (!$existeAprovada) {
                         $animal = $match->animal;
                         if ($animal) {
-                            $animal->situacao = 'disponivel';
+                            $animal->situacao = 'adotado';
                             $animal->save();
+                        }
+                    } elseif ($newStatus === 'rejeitado') {
+                        // ao rejeitar o match, marcar a adoção vinculada como negada (se existir)
+                        $adocao = Adocao::where('usuario_id', $match->usuario_id)
+                            ->where('animal_id', $match->animal_id)
+                            ->first();
+
+                        if ($adocao && $adocao->status !== 'negado') {
+                            $adocao->status = 'negado';
+                            $adocao->save();
+                        }
+
+                        // Se não existir nenhuma adoção aprovada para o animal, liberar a situacao do animal
+                        $existeAprovada = Adocao::where('animal_id', $match->animal_id)
+                            ->where('status', 'aprovado')
+                            ->exists();
+
+                        if (!$existeAprovada) {
+                            $animal = $match->animal;
+                            if ($animal) {
+                                $animal->situacao = 'disponivel';
+                                $animal->save();
+                            }
                         }
                     }
                 }

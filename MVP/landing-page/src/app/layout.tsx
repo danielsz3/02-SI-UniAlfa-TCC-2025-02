@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import Providers from "@/components/Providers"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
+import { Toaster } from "sonner"
 
 export const metadata: Metadata = {
   title: "PetAffinity",
@@ -23,7 +24,7 @@ export default function RootLayout({
           <main className="min-h-screen">
             {children}
           </main>
-
+          <Toaster position="top-center" closeButton />
           <Footer />
         </Providers>
       </body>

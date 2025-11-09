@@ -12,42 +12,48 @@ import {
   CarouselNext,
   CarouselPrevious,
   type CarouselApi, // Tipo da API do carrossel
-} from "@/components/ui/carousel";
-import { Skeleton } from "@/components/ui/skeleton"; // Para loading inicial
-import { Loader2 } from "lucide-react"; // Ícone de carregamento
+} from '@/components/ui/carousel';
+import { Skeleton } from '@/components/ui/skeleton'; // Para loading inicial
+import { Loader2 } from 'lucide-react'; // Ícone de carregamento
 
 // --- Funções de API ( getTokenFromStorage ) ---
 const getTokenFromStorage = () => {
-  if (typeof window === "undefined") return null
-  const keysToTry = ["token", "access_token", "authToken", "jwt"]
-  let raw: string | null = null
+  if (typeof window === 'undefined') return null;
+  const keysToTry = ['token', 'access_token', 'authToken', 'jwt'];
+  let raw: string | null = null;
   for (const k of keysToTry) {
-    raw = localStorage.getItem(k)
-    if (raw) break
+    raw = localStorage.getItem(k);
+    if (raw) break;
   }
-  if (!raw) return null
+  if (!raw) return null;
   try {
-    const parsed = JSON.parse(raw)
-    return parsed?.access_token || parsed?.token || parsed?.jwt || raw
+    const parsed = JSON.parse(raw);
+    return parsed?.access_token || parsed?.token || parsed?.jwt || raw;
   } catch {
-    return raw
+    return raw;
   }
-}
+};
 
 // --- Funções de API ( fetchAnimais ) ---
-async function fetchAnimais(userId: string, page: number): Promise<AnimalAffinity[]> {
+async function fetchAnimais(
+  userId: string,
+  page: number
+): Promise<AnimalAffinity[]> {
   try {
     // Adicionei query params de paginação
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/usuarios/${userId}/recomendar-animais?page=${page}&limit=10`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${getTokenFromStorage()}`,
-      },
-    });
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/usuarios/${userId}/recomendar-animais?page=${page}&limit=10`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${getTokenFromStorage()}`,
+        },
+      }
+    );
 
     const data = await response.json();
-    // Assumindo que a API retorna um array direto. 
+    // Assumindo que a API retorna um array direto.
     return Array.isArray(data) ? data : [];
   } catch (error) {
     console.error(error);
@@ -86,10 +92,7 @@ export default function AffinityCarousel({ userId }: Props) {
   }, [userId]);
 
   // 3. Função para buscar mais animais (Paginação)
-  // Envolvida com 'useCallback'
-  // *** JÁ COM A CORREÇÃO DE DUPLICADOS ***
   const loadMore = useCallback(async () => {
-
     if (isPaginating || !hasMore) return;
 
     setIsPaginating(true);
@@ -98,12 +101,10 @@ export default function AffinityCarousel({ userId }: Props) {
     const newAnimais = await fetchAnimais(userId, nextPage);
 
     if (newAnimais.length > 0) {
-
       // --- CORREÇÃO DE DUPLICADOS ---
-      // Filtra os resultados para garantir que não há chaves duplicadas
       setAnimais((prev) => {
         // 1. Cria um Set (conjunto) com todos os IDs de animais que já temos
-        const existingIds = new Set(prev.map(a => a.animal.id));
+        const existingIds = new Set(prev.map((a) => a.animal.id));
 
         // 2. Filtra a lista de 'newAnimais'
         const uniqueNewAnimais = newAnimais.filter(
@@ -126,7 +127,6 @@ export default function AffinityCarousel({ userId }: Props) {
 
     setIsPaginating(false);
   }, [isPaginating, hasMore, page, userId]); // Dependências do useCallback
-
 
   // 4. Lógica de Paginação E Estilos de Foco (useEffect)
   useEffect(() => {
@@ -152,15 +152,18 @@ export default function AffinityCarousel({ userId }: Props) {
       }
     };
 
-    api.on("select", handleSelect); // "Ouve" o evento 'select'
+    api.on('select', handleSelect); 
 
-    // Limpeza do "ouvinte"
     return () => {
-      api.off("select", handleSelect);
+      api.off('select', handleSelect);
     };
-  }, [api, hasMore, isPaginating, loadMore]); // Adiciona 'loadMore'
+  }, [api, hasMore, isPaginating, loadMore]); 
 
-
+  const handleRemoverAnimalDaLista = (animalId: number) => {
+    setAnimais((listaAtual) =>
+      listaAtual.filter((item) => item.animal.id !== animalId)
+    );
+  };
   // ----- RENDERIZAÇÃO -----
 
   // 1. Estado de Carregamento Inicial (Usa Skeleton)
@@ -183,60 +186,59 @@ export default function AffinityCarousel({ userId }: Props) {
     );
   }
 
-  // 3. Renderização Principal com Carrossel
   return (
-    <div className="w-[95vw] max-w-6xl mx-auto px-4 md:px-8">
+    <div className="w-[90vw] mx-auto">
       <Carousel
-        setApi={setApi} // Conecta o estado 'api' ao carrossel
+        setApi={setApi}
         opts={{
-          align: "start",
-          loop: false, // Desativar loop para paginação funcionar
+          align: 'center',
+          loop: false,
         }}
         className="w-full"
       >
-        <CarouselContent className="-ml-4">
-
+        <CarouselContent
+          className="flex gap-4"
+        >
           {/* Mapeia todos os animais */}
           {animais.map((animal, index) => (
             <CarouselItem
-              key={animal.animal.id} // Agora as keys são únicas
-              // Classes de Responsividade:
-              // - Padrão (mobile): 1 item
-              // - 'md' (tablet): 2 itens
-              // - 'lg' (desktop): 3 itens
-              className="pl-4 basis-full md:basis-1/2 lg:basis-1/3"
+              key={animal.animal.id}
+              className="w-full pl-4 basis-full sm:basis-1/2"
             >
               <div
                 aria-hidden={index !== selectedIndex}
                 className={`
-                  p-1 h-full
-                  transition-all duration-300 ease-in-out
-                  ${index === selectedIndex
-                    ? 'opacity-100 scale-100' // Em foco
-                    : 'opacity-60 scale-90 pointer-events-none' // Fora de foco
-                  }
-                `}
+                    p-1 w-fullh-full
+                    transition-all duration-500 ease-in-out
+                    ${
+                      index === selectedIndex
+                        ? 'opacity-100 scale-100' // Em foco
+                        : 'opacity-60 scale-80 pointer-events-none' // Fora de foco
+                    }
+                  `}
               >
-                {/* O CardAnimalAffinity deve ser responsivo (ex: h-full) */}
-                <AnimalCard animal_afinidade={animal} />
+                <AnimalCard
+                  animal_afinidade={animal}
+                  onStatusChangeSuccess={handleRemoverAnimalDaLista}
+                />
               </div>
             </CarouselItem>
           ))}
 
           {/* Item de Loading da Paginação */}
           {isPaginating && (
-            <CarouselItem className="pl-4 basis-full md:basis-1/2 lg:basis-1/3 opacity-60 scale-90">
+            // <-- MUDANÇA 4: Removemos 'pl-4' aqui também
+            <CarouselItem className="basis-full md:basis-1/2 lg:basis-1/3 opacity-60 scale-90">
               <div className="flex h-full min-h-[350px] w-full items-center justify-center rounded-lg border-3 border-dashed">
                 <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" />
               </div>
             </CarouselItem>
           )}
-
         </CarouselContent>
 
         {/* Botões de Navegação (escondidos em mobile) */}
-        <CarouselPrevious className="hidden sm:flex" />
-        <CarouselNext className="hidden sm:flex" />
+        <CarouselPrevious className="hidden lg:flex" />
+        <CarouselNext className="hidden lg:flex" />
       </Carousel>
     </div>
   );

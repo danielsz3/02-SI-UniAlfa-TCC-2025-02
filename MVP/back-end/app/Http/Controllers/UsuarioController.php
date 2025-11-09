@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Usuario;
 use App\Models\Endereco;
 use App\Models\PreferenciaUsuario;
+use App\Traits\ManagerGallery;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
@@ -17,6 +18,11 @@ use App\Traits\SearchIndex;
 class UsuarioController extends Controller
 {
     use SearchIndex;
+    use ManagerGallery;
+
+    protected $campoGaleria = 'imagens';
+    protected $storagePath = 'usuarios';
+    protected $modeloRelacaoGaleria = Usuario::class;
 
     /**
      * Lista de usuários (getList)
@@ -51,9 +57,9 @@ class UsuarioController extends Controller
             'data_nascimento' => 'required|date|before:today|after:1900-01-01',
             'telefone' => 'nullable|string|size:11|regex:/^[0-9]+$/',
             'role' => 'nullable|string|in:user,admin',
-            
+
             // Validação da imagem
-            'imagem' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:10240', 
+            'imagem' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:10240',
 
             'endereco' => 'nullable|array',
             'endereco.cep' => 'nullable|string|max:9',
@@ -217,7 +223,7 @@ class UsuarioController extends Controller
                 'data_nascimento' => 'sometimes|required|date|before:today|after:1900-01-01',
                 'telefone' => 'nullable|string|size:11|regex:/^[0-9]+$/',
                 'role' => 'nullable|string|in:user,admin',
-                
+
                 // Validação da imagem no update
                 'imagem' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:5120',
 
@@ -239,7 +245,6 @@ class UsuarioController extends Controller
                 'imagem.image' => 'O arquivo deve ser uma imagem.',
                 'imagem.mimes' => 'A imagem deve ser do tipo: jpeg, jpg, png ou webp.',
                 'imagem.max' => 'A imagem deve ter no máximo 5MB.',
-                // ... outras mensagens
             ]);
 
             if ($validator->fails()) {
@@ -262,18 +267,10 @@ class UsuarioController extends Controller
                 if ($request->filled('password')) {
                     $userData['password'] = Hash::make($request->password);
                 }
-
-                // Upload da nova imagem
-                if ($request->hasFile('imagem')) {
-                    // Deleta a imagem antiga se existir
-                    if ($usuario->imagem && Storage::disk('public')->exists($usuario->imagem)) {
-                        Storage::disk('public')->delete($usuario->imagem);
-                    }
-
-                    $imagem = $request->file('imagem');
-                    $imagemNome = time() . '_' . uniqid() . '.' . $imagem->getClientOriginalExtension();
-                    $imagemPath = $imagem->storeAs('usuarios', $imagemNome, 'public');
-                    $userData['imagem'] = $imagemPath;
+                
+                $novoPathImagem = $this->processarCapaParaUpdate($request, $usuario);
+                if ($novoPathImagem !== null) {
+                    $usuario->imagem = $novoPathImagem;
                 }
 
                 $usuario->update($userData);

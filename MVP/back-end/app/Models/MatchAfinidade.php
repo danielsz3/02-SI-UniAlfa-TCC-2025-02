@@ -16,6 +16,7 @@ class MatchAfinidade extends Model
         'usuario_id',
         'animal_id',
         'status', // 'em_adocao' | 'escolhido' | 'rejeitado'
+        'observacao',
     ];
 
     // Relacionamentos

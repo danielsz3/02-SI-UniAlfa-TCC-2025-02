@@ -44,6 +44,7 @@ class MatchAfinidadeController extends Controller
             'usuario_id' => 'required|exists:usuarios,id',
             'animal_id' => 'required|exists:animais,id',
             'status' => ['required', Rule::in(['em_adocao', 'escolhido', 'rejeitado'])],
+            'observacao' => 'nullable|string|max:1000',
         ], [
             'usuario_id.required' => 'O usuário é obrigatório.',
             'usuario_id.exists' => 'Usuário não encontrado.',
@@ -73,6 +74,7 @@ class MatchAfinidadeController extends Controller
                     'usuario_id' => $request->usuario_id,
                     'animal_id' => $request->animal_id,
                     'status' => $request->status,
+                    'observacao' => $request->input('observacao'),
                 ]);
 
                 $match->load(['usuario', 'animal']);
@@ -120,13 +122,14 @@ class MatchAfinidadeController extends Controller
                 'usuario_id' => 'sometimes|required|exists:usuarios,id',
                 'animal_id' => 'sometimes|required|exists:animais,id',
                 'status' => ['sometimes', 'required', Rule::in(['em_adocao', 'escolhido', 'rejeitado'])],
+                'observacao' => 'nullable|string|max:1000',
             ]);
 
             if ($validator->fails()) {
                 return response()->json(['errors' => $validator->errors()], 422);
             }
 
-            $data = $request->only(['usuario_id', 'animal_id', 'status']);
+            $data = $request->only(['usuario_id', 'animal_id', 'status', 'observacao']);
 
             if (isset($data['usuario_id']) || isset($data['animal_id'])) {
                 $usuarioId = $data['usuario_id'] ?? $match->usuario_id;
@@ -211,6 +214,7 @@ class MatchAfinidadeController extends Controller
             'usuario_id' => 'required|exists:usuarios,id',
             'animal_id' => 'required|exists:animais,id',
             'status' => ['required', Rule::in(['em_adocao', 'escolhido', 'rejeitado'])],
+            'observacao' => 'nullable|string|max:1000',
         ]);
 
         if ($validator->fails()) {
@@ -234,6 +238,11 @@ class MatchAfinidadeController extends Controller
                 if ($match->wasRecentlyCreated) {
                     $newStatus = $request->status;
                     $match->status = $newStatus;
+
+                    if ($request->has('observacao')) {
+                        $match->observacao = $request->input('observacao');
+                    }
+
                     $match->save();
 
                     if ($newStatus === 'escolhido') {

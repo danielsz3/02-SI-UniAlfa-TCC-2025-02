@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\TrashController;
 use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\AuthController;
@@ -120,5 +121,12 @@ Route::middleware(['jwt.auth'])->group(function () {
         // Match Afinidades: admin com update/destroy
         Route::apiResource('match-afinidades', MatchAfinidadeController::class)->except(['index', 'show', 'store']);
         Route::post('match-afinidades/{id}/restore', [MatchAfinidadeController::class, 'restore'])->name('match-afinidades.restore');
+
+        // Lixeira genérica 
+        Route::prefix('trash/{modelName}')->group(function () {
+            Route::get('/', [TrashController::class, 'index'])->name('trash.index');
+            Route::post('/{id}/restore', [TrashController::class, 'restore'])->name('trash.restore');
+            Route::delete('/{id}/force-delete', [TrashController::class, 'forceDelete'])->name('trash.forceDelete');
+        });
     });
 });

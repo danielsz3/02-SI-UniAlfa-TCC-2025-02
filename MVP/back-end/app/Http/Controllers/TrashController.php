@@ -31,7 +31,7 @@ class TrashController extends Controller
     {
         $modelClass = $this->getModelClass($modelName);
         if (!$modelClass) {
-            abort(404, 'Model not found');
+            abort(404, 'Modelo não encontrado');
         }
 
         // Pega só os registros soft deleted
@@ -44,7 +44,7 @@ class TrashController extends Controller
     {
         $modelClass = $this->getModelClass($modelName);
         if (!$modelClass) {
-            abort(404, 'Model not found');
+            abort(404, 'Modelo não encontrado');
         }
 
         $item = $modelClass::withTrashed()->findOrFail($id);
@@ -58,7 +58,7 @@ class TrashController extends Controller
     {
         $modelClass = $this->getModelClass($modelName);
         if (!$modelClass) {
-            abort(404, 'Model not found');
+            abort(404, 'Modelo não encontrado');
         }
 
         $item = $modelClass::withTrashed()->findOrFail($id);

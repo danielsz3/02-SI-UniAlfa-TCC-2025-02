@@ -114,9 +114,6 @@ Route::middleware(['jwt.auth'])->group(function () {
         // Adoções: admin ganha update/destroy + ações extras
         Route::apiResource('adocoes', AdocaoController::class)->except(['index', 'show', 'store']);
         Route::post('adocoes/{id}/restore', [AdocaoController::class, 'restore'])->name('adocoes.restore');
-        Route::post('adocoes/{id}/aprovar', [AdocaoController::class, 'approve'])->name('adocoes.approve');
-        // Rota adicionada para negar uma adoção (admin)
-        Route::post('adocoes/{id}/negar', [AdocaoController::class, 'deny'])->name('adocoes.deny');
 
         // Match Afinidades: admin com update/destroy
         Route::apiResource('match-afinidades', MatchAfinidadeController::class)->except(['index', 'show', 'store']);

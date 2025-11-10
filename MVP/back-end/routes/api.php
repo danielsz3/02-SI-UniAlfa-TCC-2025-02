@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\TrashController;
 use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\AuthController;
@@ -113,12 +114,16 @@ Route::middleware(['jwt.auth'])->group(function () {
         // Adoções: admin ganha update/destroy + ações extras
         Route::apiResource('adocoes', AdocaoController::class)->except(['index', 'show', 'store']);
         Route::post('adocoes/{id}/restore', [AdocaoController::class, 'restore'])->name('adocoes.restore');
-        Route::post('adocoes/{id}/aprovar', [AdocaoController::class, 'approve'])->name('adocoes.approve');
-        // Rota adicionada para negar uma adoção (admin)
-        Route::post('adocoes/{id}/negar', [AdocaoController::class, 'deny'])->name('adocoes.deny');
 
         // Match Afinidades: admin com update/destroy
         Route::apiResource('match-afinidades', MatchAfinidadeController::class)->except(['index', 'show', 'store']);
         Route::post('match-afinidades/{id}/restore', [MatchAfinidadeController::class, 'restore'])->name('match-afinidades.restore');
+
+        // Lixeira genérica 
+        Route::prefix('trash/{modelName}')->group(function () {
+            Route::get('/', [TrashController::class, 'index'])->name('trash.index');
+            Route::post('/{id}/restore', [TrashController::class, 'restore'])->name('trash.restore');
+            Route::delete('/{id}/force-delete', [TrashController::class, 'forceDelete'])->name('trash.forceDelete');
+        });
     });
 });

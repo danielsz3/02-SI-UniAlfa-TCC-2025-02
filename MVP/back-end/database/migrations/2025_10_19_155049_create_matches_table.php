@@ -16,6 +16,7 @@ return new class extends Migration
             $table->unsignedBigInteger('usuario_id');
             $table->unsignedBigInteger('animal_id');
             $table->enum('status', ['em_adocao', 'escolhido', 'rejeitado'])->default('em_adocao');
+            $table->string('observacao')->nullable();
             $table->softDeletes();
             $table->timestamps();
 

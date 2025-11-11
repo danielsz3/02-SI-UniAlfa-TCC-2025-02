@@ -23,14 +23,12 @@ class TrashController extends Controller
     {
         $map = [
             'usuarios' => Usuario::class,
-            'posts' => Post::class,
             'transacoes' => Transacao::class,
             'parceiros' => Parceiro::class,
             'lares_temporarios' => LarTemporario::class,
             'eventos' => Evento::class,
             'documentos' => Documento::class,
             'animais' => Animal::class,
-            'contatos_ong' => ContatoOng::class,
         ];
 
         return $map[$modelName] ?? null;
@@ -40,14 +38,12 @@ class TrashController extends Controller
     {
         $map = [
             'usuarios' => ['nome', 'email'],
-            'posts' => ['titulo', 'conteudo'],
-            'transacoes' => ['descricao'],
+            'transacoes' => ['descricao', 'valor'],
             'parceiros' => ['nome', 'descricao'],
             'lares_temporarios' => ['nome', 'descricao'],
             'eventos' => ['titulo', 'descricao'],
             'documentos' => ['titulo', 'descricao'],
             'animais' => ['nome', 'descricao'],
-            'contatos_ong' => ['nome', 'email'],
         ];
 
         return $map[$modelName] ?? [];

@@ -90,17 +90,17 @@ class AuthController extends Controller
      * LOGIN COM GOOGLE — via ID Token (fluxo de frontend SPA)
      */
     public function googleLoginToken(Request $request): JsonResponse
-    {
-        $request->validate([
-            'idToken' => 'required|string',
-        ]);
+{
+    $request->validate([
+        'idToken' => 'required|string',
+    ]);
 
-        $client = new GoogleClient(['client_id' => env('GOOGLE_CLIENT_ID')]);
-        $payload = $client->verifyIdToken($request->idToken);
+    $client = new GoogleClient(['client_id' => env('GOOGLE_CLIENT_ID')]);
+    $payload = $client->verifyIdToken($request->idToken);
 
-        if (!$payload) {
-            return response()->json(['error' => 'Token Google inválido'], 401);
-        }
+    if (!$payload) {
+        return response()->json(['error' => 'Token Google inválido'], 401);
+    }
 
         $email = $payload['email'];
         $nome = $payload['name'] ?? $email;

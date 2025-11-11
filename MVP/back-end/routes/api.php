@@ -121,9 +121,9 @@ Route::middleware(['jwt.auth'])->group(function () {
 
         // Lixeira genérica 
         Route::prefix('trash/{modelName}')->group(function () {
-            Route::get('/trash/{modelName}', [TrashController::class, 'index']);
-            Route::post('/trash/{modelName}/{id}/restore', [TrashController::class, 'restore']);
-            Route::delete('/trash/{modelName}/{id}/force-delete', [TrashController::class, 'forceDelete']);
+            Route::get('/', [TrashController::class, 'index']); // /trash/{modelName}
+            Route::post('/{id}/restore', [TrashController::class, 'restore']); // /trash/{modelName}/{id}/restore
+            Route::delete('/{id}/force-delete', [TrashController::class, 'forceDelete']); // /trash/{modelName}/{id}/force-delete
         });
     });
 });

@@ -46,6 +46,7 @@ import { AdocaoList } from './components/adocoes/AdocaoList';
 import { AdocaoEdit } from './components/adocoes/AdocaoEdit';
 import OngEdit from './components/ong/OngEdit';
 import IntegracaoEdit from './components/integracoes/IntegracaoEdit';
+import DashboardPage from './components/dashboard/DashboardPage';
 
 
 function App() {
@@ -58,6 +59,7 @@ function App() {
       i18nProvider={i18nProvider}
       authProvider={authProvider}
       loginPage={LoginPage}
+      dashboard={DashboardPage}
     >
       <CustomRoutes>
         <Route

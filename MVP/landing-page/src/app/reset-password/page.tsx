@@ -1,14 +1,13 @@
 "use client"
 
 import { useState } from "react"
-import { Navbar } from "@/components/navbar"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-
-//enviar cpf junto para a validação de senha
+import { isValidCPF } from "@/components/forms/validators/cpf"
 
 export default function ResetPasswordPage() {
   const [email, setEmail] = useState("")
+  const [cpf, setCpf] = useState("")
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -18,6 +17,12 @@ export default function ResetPasswordPage() {
     setLoading(true)
     setError(null)
     setMessage(null)
+
+    if (!isValidCPF(cpf)) {
+      setError("CPF inválido.")
+      setLoading(false)
+      return
+    }
 
     try {
       const rawApi = process.env.NEXT_PUBLIC_API_URL
@@ -30,8 +35,7 @@ export default function ResetPasswordPage() {
           "Content-Type": "application/json",
           "Accept": "application/json"
         },
-
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, cpf }),
       })
 
       const data = await res.json().catch(() => null)
@@ -39,16 +43,21 @@ export default function ResetPasswordPage() {
       if (!res.ok) {
         if (res.status === 422 && data?.errors) {
           const firstError = Object.values(data.errors).flat()[0]
-       }
-
-        throw new Error(data?.message || `Erro ao enviar link (status ${res.status})`)
+          setError(firstError as string)
+        } else {
+          throw new Error(data?.message || `Erro ao enviar link (status ${res.status})`)
+        }
+      } else {
+        setMessage(data?.message || "Link de recuperação enviado para seu e-mail.")
+        setEmail("")
+        setCpf("")
       }
-
-      // sucesso
-      setMessage(data?.message || "Link de recuperação enviado para seu e-mail.")
-      setEmail("")
-    } catch (err: any) {
-      setError(err.message || "Erro inesperado")
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message)
+      } else {
+        setError("Erro inesperado")
+      }
     } finally {
       setLoading(false)
     }
@@ -56,7 +65,6 @@ export default function ResetPasswordPage() {
 
   return (
     <>
-      <Navbar />
       <main className="flex min-h-screen items-center justify-center">
         <div className="w-full max-w-md rounded-lg bg-white dark:bg-slate-800 shadow-lg p-8">
           <h2 className="text-2xl font-bold mb-6 text-center text-slate-900 dark:text-white">
@@ -78,6 +86,24 @@ export default function ResetPasswordPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 className="mt-1 w-full rounded border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="Digite seu e-mail"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="cpf"
+                className="block text-sm font-medium text-slate-700 dark:text-slate-200"
+              >
+                CPF
+              </label>
+              <input
+                id="cpf"
+                type="text"
+                required
+                value={cpf}
+                onChange={(e) => setCpf(e.target.value)}
+                className="mt-1 w-full rounded border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                placeholder="Digite seu CPF"
               />
             </div>
 

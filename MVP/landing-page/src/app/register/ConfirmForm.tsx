@@ -1,4 +1,4 @@
-"use client"
+'use client'
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -16,9 +16,11 @@ import { Eye, EyeOff } from "lucide-react"
 export default function ConfirmForm({
   data,
   onBack,
+  onRegisterSuccess,
 }: {
   data: any
   onBack: () => void
+  onRegisterSuccess?: () => void
 }) {
   const router = useRouter()
   const apiUrl = process.env.NEXT_PUBLIC_API_URL
@@ -139,6 +141,10 @@ export default function ConfirmForm({
       }
 
       setSuccess(true)
+
+      if (onRegisterSuccess) {
+        await onRegisterSuccess()
+      }
     } catch (err: any) {
       setGlobalError(err.message || "Erro ao cadastrar usuário")
     } finally {
@@ -191,7 +197,6 @@ export default function ConfirmForm({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {/* Dados pessoais */}
           <TableRow>
             <TableCell>Nome</TableCell>
             <TableCell>{data.nome}</TableCell>
@@ -251,7 +256,6 @@ export default function ConfirmForm({
             </TableCell>
           </TableRow>
 
-          {/* Endereço */}
           <TableRow>
             <TableCell>CEP</TableCell>
             <TableCell>{data.cep}</TableCell>
@@ -281,7 +285,6 @@ export default function ConfirmForm({
             <TableCell>{data.estado}</TableCell>
           </TableRow>
 
-          {/* Preferências */}
           <TableRow>
             <TableCell>Tamanho do Pet</TableCell>
             <TableCell>{data.tamanhoPet}</TableCell>

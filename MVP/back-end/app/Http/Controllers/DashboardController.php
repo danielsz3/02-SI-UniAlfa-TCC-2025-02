@@ -7,6 +7,7 @@ use App\Models\Usuario;
 use App\Models\Animal;
 use App\Models\Adocao;
 use App\Models\Evento;
+use App\Models\Transacao;
 use Carbon\Carbon;
 
 class DashboardController extends Controller
@@ -33,9 +34,9 @@ class DashboardController extends Controller
         // =====================
         $adocoesTotal = Adocao::count();
 
-        $adocoesConcluidas = Adocao::where('status', 'aprovado')->count();
-        $adocoesEmAberto   = Adocao::where('status', 'em_aprovacao')->count();
-        $adocoesNegadas    = Adocao::where('status', 'negado')->count();
+        $adocoesConcluidas = Adocao::whereBetween('created_at', [$start, $end])->where('status', 'aprovado')->count();
+        $adocoesEmAberto   = Adocao::whereBetween('created_at', [$start, $end])->where('status', 'em_aprovacao')->count();
+        $adocoesNegadas    = Adocao::whereBetween('created_at', [$start, $end])->where('status', 'negado')->count();
 
         $adocoesPeriodo = Adocao::whereBetween('created_at', [$start, $end])->count();
         $taxaConversao = Usuario::count() > 0
@@ -98,8 +99,18 @@ class DashboardController extends Controller
         ]);
     }
 
-    public function show(Request $request, $id)
+    public function transacoes(Request $request)
     {
-        //
+        $start = $request->query('start_date')
+            ? Carbon::parse($request->query('start_date'))->startOfDay()
+            : now()->subMonth()->startOfDay();
+
+        $end = $request->query('end_date')
+            ? Carbon::parse($request->query('end_date'))->endOfDay()
+            : now()->endOfDay();
+
+        $transacoes = Transacao::whereBetween('data', [$start, $end])->get();
+
+        return response()->json($transacoes);
     }
 }

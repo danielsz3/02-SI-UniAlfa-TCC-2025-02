@@ -8,6 +8,7 @@ import { GoogleOAuthProvider } from "@react-oauth/google"
 type User = any | null
 
 type AuthContextType = {
+  token: null
   user: User
   login: (userObj: any, token?: string, redirectTo?: string) => void
   logout: (redirectTo?: string) => void

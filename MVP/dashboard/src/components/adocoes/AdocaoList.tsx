@@ -1,4 +1,4 @@
-import { DataTable, List, SelectInput } from 'react-admin';
+import { DataTable, List, SelectInput, DateInput } from 'react-admin';
 
 const filters = [
     <SelectInput
@@ -8,9 +8,20 @@ const filters = [
         choices={[
             { id: 'em_aprovacao', name: 'Em Aberto' },
             { id: 'aprovado', name: 'Aprovado' }
+            
         ]}
-        alwaysOn
-    />
+        alwaysOn 
+    />,
+    <DateInput
+                label="Criado a partir de"
+                source="created_at_from"
+                alwaysOn
+            />,
+            <DateInput
+                label="Criado até"
+                source="created_at_to"
+                alwaysOn
+            />,
 ];
 export const AdocaoList = () => (
     <List filters={filters}>

@@ -203,7 +203,7 @@ export default function AffinityCarousel({ userId }: Props) {
           {animais.map((animal, index) => (
             <CarouselItem
               key={animal.animal.id}
-              className="w-full pl-4 basis-full sm:basis-1/2"
+              className="w-full pl-4 basis-full sm:basis-1/2 xl:basis-1/3"
             >
               <div
                 aria-hidden={index !== selectedIndex}

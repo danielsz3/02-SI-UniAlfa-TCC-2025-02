@@ -75,6 +75,7 @@ Route::middleware(['jwt.auth'])->group(function () {
     Route::middleware(['role:admin'])->group(function () {
 
         Route::get('/dashboard', [DashboardController::class, 'index']);
+        Route::get('/dashboard/transacoes', [DashboardController::class, 'transacoes']);
 
         // Usuários: admin tem CRUD completo (exceto ‘store’ se preferir manter público)
         Route::apiResource('usuarios', UsuarioController::class)->except(['show', 'store', 'update']);

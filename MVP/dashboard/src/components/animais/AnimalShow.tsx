@@ -4,14 +4,18 @@ import {
     Tab,
     TextField,
     DateField,
-    ImageField,
+    SelectField,
     useRecordContext,
     ReferenceManyField,
-    SelectField,
     SimpleList,
+    TopToolbar,
+    EditButton,
+    ListButton,
 } from "react-admin";
-import { Card, CardContent, Typography, Box } from "@mui/material";
+import { Card, CardContent, Typography, Box, Grid, Dialog, DialogContent, IconButton } from "@mui/material";
 import { FaEye } from "react-icons/fa";
+import { Key, useState } from "react";
+import CloseIcon from '@mui/icons-material/Close';
 
 const CastracaoInfo = () => {
     const record = useRecordContext();
@@ -98,11 +102,85 @@ const Aside = () => {
     );
 };
 
+const ImageDialog = ({ open, onClose, imageUrl }) => {
+    return (
+        <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+            <DialogContent sx={{ position: 'relative', p: 0 }}>
+                <IconButton
+                    aria-label="close"
+                    onClick={onClose}
+                    sx={{
+                        position: 'absolute',
+                        right: 8,
+                        top: 8,
+                        color: (theme) => theme.palette.grey[500],
+                        backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                        '&:hover': {
+                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                        },
+                    }}
+                >
+                    <CloseIcon />
+                </IconButton>
+                <img src={imageUrl} alt="Visualização da Imagem" style={{ width: '100%', height: 'auto', display: 'block' }} />
+            </DialogContent>
+        </Dialog>
+    );
+};
+
+const Gallery = ({ images }) => {
+    const [openDialog, setOpenDialog] = useState(false);
+    const [selectedImage, setSelectedImage] = useState('');
+
+    const handleImageClick = (imageUrl) => {
+        setSelectedImage(imageUrl);
+        setOpenDialog(true);
+    };
+
+    const handleCloseDialog = () => {
+        setOpenDialog(false);
+        setSelectedImage('');
+    };
+
+    return (
+        <>
+            <Grid container spacing={1} sx={{ width: "100%" }}>
+                {images?.map((img) => (
+                    <Grid size={{ xs: 6, sm: 6 }} key={img.id}>
+                        <img
+                            src={img.src}
+                            alt={img.title}
+                            style={{
+                                width: '100%',
+                                height: '170px',
+                                objectFit: 'cover',
+                                borderRadius: 4,
+                                cursor: 'pointer',
+                            }}
+                            onClick={() => handleImageClick(img.src)}
+                        />
+                    </Grid>
+                ))}
+            </Grid>
+            <ImageDialog open={openDialog} onClose={handleCloseDialog} imageUrl={selectedImage} />
+        </>
+    );
+};
+
+const AnimalShowActions = () => (
+    <TopToolbar>
+        <EditButton />
+        <ListButton label="Voltar" />
+    </TopToolbar>
+);
+
 const AnimalShow = () => (
     <Show
         title="Detalhes do Animal"
+        actions={<AnimalShowActions />}
         sx={{
-            maxWidth: 700, margin: '0 auto',
+            width: { xs: '100%', sm: 600, md: 800 },            
+            margin: { sm: 0, md: '0 auto' }, mt: 2,
             '& .RaShow-card': {
                 boxShadow: 'none',
             },
@@ -133,7 +211,6 @@ const AnimalShow = () => (
                             <CardContent sx={{ px: 0, py: 0 }}>
                                 <TabbedShowLayout>
                                     <Tab label="Informações">
-                                        <TextField source="id" label="ID" />
                                         <TextField source="nome" label="Nome" />
                                         <DateField source="data_nascimento" label="Data de Nascimento" />
 
@@ -162,21 +239,7 @@ const AnimalShow = () => (
                                     </Tab>
 
                                     <Tab label="Galeria">
-                                        <ImageField
-                                            source="imagens"
-                                            label="Imagens do Animal"
-                                            src="src"
-                                            title="title"
-                                            sx={{
-                                                '& img': {
-                                                    width: 150,
-                                                    height: 150,
-                                                    objectFit: 'cover',
-                                                    borderRadius: 4,
-                                                    marginRight: 1,
-                                                },
-                                            }}
-                                        />
+                                        <Gallery images={record?.imagens} />
                                     </Tab>
 
                                     <Tab label="Perfil">

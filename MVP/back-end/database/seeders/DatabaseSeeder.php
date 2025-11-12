@@ -61,9 +61,9 @@ class DatabaseSeeder extends Seeder
 
         $this->call([
             UsuarioSeeder::class,
+            LarTempSeeder::class,
             AnimalSeeder::class,
             AdocaoSeeder::class,
-            LarTempSeeder::class,
             TransacaoSeeder::class,
             EventoSeeder::class,
             MatchSeeder::class,

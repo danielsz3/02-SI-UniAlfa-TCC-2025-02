@@ -77,10 +77,10 @@ const OngEdit = (props: EditProps) => {
             resource="ongs"
             title="Editar ONG"
             redirect='edit'
-            sx={{ width: '100%', maxWidth: 600, margin: '0 auto', mt: 2 }}
-
+            sx={{
+                maxWidth: { xs: '100%', sm: 600, md: 800 }, margin: { sm: 0, md: '0 auto' }, mt: 2
+            }}
         >
-
             <TabbedForm
                 toolbar={
                     <Toolbar>

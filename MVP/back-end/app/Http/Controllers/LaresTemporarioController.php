@@ -235,9 +235,9 @@ class LaresTemporarioController extends Controller
             'imagens' => 'nullable|array',
         ];
 
-        if ($request->hasFile('imagens')) {
-            $rules['imagens.*'] = 'file|image|mimes:jpeg,png,jpg,webp|max:10240';
-        }
+        // if ($request->hasFile('imagens')) {
+        //     $rules['imagens.*'] = 'file|image|mimes:jpeg,png,jpg,webp|max:10240';
+        // }
 
         $validator = Validator::make($request->all(), $rules, [
             'nome.required' => 'O nome é obrigatório.',

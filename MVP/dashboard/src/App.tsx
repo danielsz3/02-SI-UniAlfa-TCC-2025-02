@@ -48,6 +48,7 @@ import OngEdit from './components/ong/OngEdit';
 import IntegracaoEdit from './components/integracoes/IntegracaoEdit';
 import AnimalShow from './components/animais/AnimalShow';
 import DashboardPage from './components/dashboard/DashboardPage';
+import LarTempShow from './components/lar_temporarios/LarTempShow';
 
 
 function App() {
@@ -126,6 +127,7 @@ function App() {
         list={LarTempList}
         create={LarTempCreate}
         edit={LarTempEdit}
+        show={LarTempShow}
       />
       <Resource
         options={{ label: "Adoções" }}

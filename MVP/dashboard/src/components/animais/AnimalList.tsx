@@ -44,20 +44,20 @@ const filters = [
     <CustomDatePicker past future label="Criação até" source="created_at_to" />,
 ]
 
-const chipTipos = {
+export const chipTipos = {
     disponivel: { label: 'Disponível', bgCor: '#ffffff00', textCor: '#ffffff00' },
     adotado: { label: 'Adotado', bgCor: '#9c27b0', textCor: '#fff' },
     em_adocao: { label: 'Em Adoção', bgCor: '#425a8fff', textCor: '#fff' },
     em_aprovacao: { label: 'Anúnciado', bgCor: '#296b2c', textCor: '#fff' },
 }
 
-const tamanhos = [
+export const tamanhos = [
     { id: 'pequeno', name: 'Pequeno' },
     { id: 'medio', name: 'Médio' },
     { id: 'grande', name: 'Grande' },
 ]
 
-type Situacao = keyof typeof chipTipos;
+export type Situacao = keyof typeof chipTipos;
 
 const formatadorDeAnimais = (data: RaRecord[]) => {
     return data.map(record => ({

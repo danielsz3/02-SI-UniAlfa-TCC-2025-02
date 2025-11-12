@@ -22,6 +22,7 @@ import { Link } from 'react-router-dom'
 import { useCreatePath } from 'react-admin'
 import { formatarDiferencaData } from "../../utils/formatDate"
 import { JSX } from 'react/jsx-runtime'
+import CustomDatePicker from '../datepicker/customDatePicker'
 
 const CARD_HEIGHT = 250;
 
@@ -40,6 +41,8 @@ const filters = [
         ]}
         alwaysOn
     />,
+    <CustomDatePicker past future label="Criação de" source="created_at_from" />,
+    <CustomDatePicker past future label="Criação até" source="created_at_to" />,
 ]
 
 const chipTipos = {

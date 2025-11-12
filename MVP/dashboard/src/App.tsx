@@ -47,6 +47,7 @@ import { AdocaoEdit } from './components/adocoes/AdocaoEdit';
 import OngEdit from './components/ong/OngEdit';
 import IntegracaoEdit from './components/integracoes/IntegracaoEdit';
 import AnimalShow from './components/animais/AnimalShow';
+import DashboardPage from './components/dashboard/DashboardPage';
 
 
 function App() {
@@ -59,6 +60,7 @@ function App() {
       i18nProvider={i18nProvider}
       authProvider={authProvider}
       loginPage={LoginPage}
+      dashboard={DashboardPage}
     >
       <CustomRoutes>
         <Route

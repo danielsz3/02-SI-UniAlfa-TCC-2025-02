@@ -1,4 +1,4 @@
-import { ChipField, DataTable, FunctionField, List, SelectInput, TextField, TextInput } from 'react-admin';
+import { ChipField, DataTable, FunctionField, List, SelectInput, TextField, TextInput, DateInput } from 'react-admin';
 
 const calculateAge = (dataNascimento: string | number | Date) => {
     if (!dataNascimento) return null;
@@ -31,6 +31,16 @@ const formatPhone = (phone: string) => {
 
 const filters = [
     <TextInput label="Nome" source="nome" size="small" alwaysOn />,
+    <DateInput
+                label="Criado a partir de"
+                source="created_at_from"
+                alwaysOn
+            />,
+            <DateInput
+                label="Criado até"
+                source="created_at_to"
+                alwaysOn
+            />,
     <SelectInput
         label="Situação"
         source="situacao"

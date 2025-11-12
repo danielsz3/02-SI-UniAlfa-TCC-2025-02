@@ -10,6 +10,7 @@ import { FormInput } from '@/components/forms/inputs/FormInput'
 import { FormSelect } from '@/components/forms/inputs/FormSelect'
 import CepField from '@/components/forms/inputs/CepField'
 import TextField from '@/components/forms/inputs/TextField'
+import NotToken from '@/components/NotToken'
 
 type Endereco = {
     id?: number
@@ -214,6 +215,7 @@ export default function LarTemporarioForm({
     }
 
     return (
+        <NotToken>
         <main className="min-h-screen pt-24 bg-muted/30">
             <div className="max-w-3xl mx-auto px-4">
                 <Card>
@@ -369,5 +371,6 @@ export default function LarTemporarioForm({
                 </Card>
             </div>
         </main>
+        </NotToken>
     )
 }

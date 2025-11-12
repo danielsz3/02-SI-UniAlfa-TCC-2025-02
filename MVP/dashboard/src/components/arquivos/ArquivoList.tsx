@@ -2,6 +2,7 @@ import {
     List,
     TextInput,
     useListContext,
+    DateInput
 } from 'react-admin';
 import { Link } from 'react-router-dom';
 import { Grid, Card, CardContent, Typography, Box, CardActions, IconButton } from '@mui/material';
@@ -35,6 +36,16 @@ const fileTypeStyles = {
 const filters = [
     <TextInput label="Título" source="titulo" size="small" alwaysOn />,
     <TextInput label="Categoria" source="categoria" size="small" />,
+    <DateInput
+        label="Criado a partir de"
+        source="created_at_from"
+        alwaysOn
+    />,
+    <DateInput
+        label="Criado até"
+        source="created_at_to"
+        alwaysOn
+    />,
 ];
 
 /**
@@ -46,9 +57,9 @@ const getIconAndBackgroundForFileType = (filename: string | { src: string }): { 
     const defaultStyle = fileTypeStyles.default;
     let style = defaultStyle;
 
-    const extension = typeof filename === 'string' 
-    ? filename.split('.').pop()?.toLowerCase() 
-    : filename.src.split('.').pop()?.toLowerCase();
+    const extension = typeof filename === 'string'
+        ? filename.split('.').pop()?.toLowerCase()
+        : filename.src.split('.').pop()?.toLowerCase();
 
     style = fileTypeStyles[extension as keyof typeof fileTypeStyles] || defaultStyle;
 
@@ -162,7 +173,7 @@ export const ArquivoList = () => (
     <List
         filters={filters}
         title="Documentos"
-        sort={{field: 'created_at', order: 'DESC'}}
+        sort={{ field: 'created_at', order: 'DESC' }}
         // Estilos para remover a sombra padrão da lista do React-Admin
         sx={{
             '& .RaList-content': {

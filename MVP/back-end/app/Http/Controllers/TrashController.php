@@ -2,69 +2,121 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Animal;
+use App\Models\ContatoOng;
+use App\Models\Documento;
+use App\Models\Evento;
+use App\Models\LarTemporario;
+use App\Models\Parceiro;
+use App\Models\Post;
+use App\Models\Transacao;
+use App\Models\Usuario;
 use Illuminate\Http\Request;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Str;
+use Illuminate\Http\JsonResponse;
+use App\Traits\SearchIndex;
 
 class TrashController extends Controller
 {
-    // Recebe o nome do model via rota, ex: 'users', 'posts'
-    protected function getModelClass($modelName)
+    use SearchIndex;
+
+    protected function getModelClass(string $modelName): ?string
     {
-        // Mapeie os nomes das rotas para os namespaces dos seus models
         $map = [
-            'usuarios' => \App\Models\Usuario::class,
-            'posts' => \App\Models\Post::class,
-            'transacoes' => \App\Models\Transacao::class,
-            'parceiros' => \App\Models\Parceiro::class,
-            'lares_temporarios' => \App\Models\LarTemporario::class,
-            'eventos' => \App\Models\Evento::class,
-            'documentos' => \App\Models\Documento::class,
-            'animais' => \App\Models\Animal::class,
-            'contatos_ong' => \App\Models\ContatoOng::class,
+            'usuarios' => Usuario::class,
+            'transacoes' => Transacao::class,
+            'parceiros' => Parceiro::class,
+            'lares_temporarios' => LarTemporario::class,
+            'eventos' => Evento::class,
+            'documentos' => Documento::class,
+            'animais' => Animal::class,
         ];
 
         return $map[$modelName] ?? null;
     }
 
-    public function index($modelName)
+    protected function getLikeFields(string $modelName): array
     {
-        $modelClass = $this->getModelClass($modelName);
-        if (!$modelClass) {
-            abort(404, 'Modelo não encontrado');
-        }
+        $map = [
+            'usuarios' => ['nome', 'email'],
+            'transacoes' => ['descricao', 'valor'],
+            'parceiros' => ['nome', 'descricao'],
+            'lares_temporarios' => ['nome', 'descricao'],
+            'eventos' => ['titulo', 'descricao'],
+            'documentos' => ['titulo', 'descricao'],
+            'animais' => ['nome', 'descricao'],
+        ];
 
-        // Pega só os registros soft deleted
-        $trashed = $modelClass::onlyTrashed()->get();
-
-        return view('trash.index', compact('trashed', 'modelName'));
+        return $map[$modelName] ?? [];
     }
 
-    public function restore($modelName, $id)
+    /**
+     * Listar itens deletados (soft deleted) com filtros, paginação e ordenação
+     */
+    public function index(Request $request, string $modelName): JsonResponse
     {
         $modelClass = $this->getModelClass($modelName);
         if (!$modelClass) {
-            abort(404, 'Modelo não encontrado');
+            return response()->json(['error' => 'Modelo não encontrado'], 404);
         }
 
-        $item = $modelClass::withTrashed()->findOrFail($id);
-        $item->restore();
+        try {
+            $query = $modelClass::onlyTrashed();
+            $likeFields = $this->getLikeFields($modelName);
 
-        return redirect()->route('trash.index', $modelName)
-            ->with('success', 'Item restaurado com sucesso!');
+            return $this->SearchIndex($request, $query, $modelName, $likeFields);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Erro ao listar itens deletados', 'message' => $e->getMessage()], 500);
+        }
     }
 
-    public function forceDelete($modelName, $id)
+    /**
+     * Restaurar item deletado
+     */
+    public function restore(string $modelName, int $id): JsonResponse
     {
         $modelClass = $this->getModelClass($modelName);
         if (!$modelClass) {
-            abort(404, 'Modelo não encontrado');
+            return response()->json(['error' => 'Modelo não encontrado'], 404);
         }
 
-        $item = $modelClass::withTrashed()->findOrFail($id);
-        $item->forceDelete();
+        try {
+            $item = $modelClass::withTrashed()->find($id);
+            if (!$item) {
+                return response()->json(['error' => 'Item não encontrado'], 404);
+            }
+            if (!$item->trashed()) {
+                return response()->json(['error' => 'Item já está ativo'], 400);
+            }
 
-        return redirect()->route('trash.index', $modelName)
-            ->with('success', 'Item deletado permanentemente!');
+            $item->restore();
+
+            return response()->json(['message' => 'Item restaurado com sucesso', 'item' => $item], 200);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Erro ao restaurar item', 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Deletar item permanentemente
+     */
+    public function forceDelete(string $modelName, int $id): JsonResponse
+    {
+        $modelClass = $this->getModelClass($modelName);
+        if (!$modelClass) {
+            return response()->json(['error' => 'Modelo não encontrado'], 404);
+        }
+
+        try {
+            $item = $modelClass::withTrashed()->find($id);
+            if (!$item) {
+                return response()->json(['error' => 'Item não encontrado'], 404);
+            }
+
+            $item->forceDelete();
+
+            return response()->json(['message' => 'Item deletado permanentemente'], 200);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Erro ao deletar item permanentemente', 'message' => $e->getMessage()], 500);
+        }
     }
 }

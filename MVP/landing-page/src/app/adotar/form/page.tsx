@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator"
 import { Checkbox } from "@/components/ui/checkbox"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
+import NotToken from "@/components/NotToken"
 
 type RoutineOption =
   | "home_office"
@@ -143,7 +144,7 @@ export default function AdocaoFormPage() {
       const json = decodeURIComponent(
         atob(payloadB64)
           .split('')
-          .map(function(c) { return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2) })
+          .map(function (c) { return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2) })
           .join('')
       )
       return JSON.parse(json)
@@ -265,231 +266,233 @@ export default function AdocaoFormPage() {
   }, [step])
 
   return (
-    <main className="min-h-screen pt-24 pb-16">
-      <div className="container mx-auto px-4 max-w-2xl">
-        <h1 className="text-center text-2xl font-bold mb-4">Formulário de Adoção</h1>
+    <NotToken>
+      <main className="min-h-screen pt-24 pb-16">
+        <div className="container mx-auto px-4 max-w-2xl">
+          <h1 className="text-center text-2xl font-bold mb-4">Formulário de Adoção</h1>
 
-        <div className="bg-card rounded-lg border text-foreground p-4 shadow-sm">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-12 h-12 bg-muted rounded flex items-center justify-center">
-              <span className="text-sm text-muted-foreground">📷</span>
-            </div>
-            <div>
-              <div className="font-semibold">{animalName ?? "Animal"}</div>
-              <div className="text-sm text-muted-foreground">Informe detalhes para a solicitação</div>
-            </div>
-            <div className="ml-auto text-sm">
-              <Badge variant="secondary">Passo {step} de 3</Badge>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-center mb-4">{stepDots}</div>
-
-          <form onSubmit={handleSubmit}>
-            {step === 1 && (
-              <section className="space-y-4">
-                <h2 className="text-lg font-semibold">1. Sobre Você, sua Família e sua Rotina</h2>
-
-                <div>
-                  <Label>Com quem você mora?</Label>
-                  <RadioGroup value={qtdPessoasCasa} onValueChange={(v: string) => setQtdPessoasCasa(v)} className="grid gap-2 mt-2">
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value="sozinho" id="qtd-sozinho" />
-                      <Label htmlFor="qtd-sozinho" className="ml-2">Sozinho</Label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value="uma_pessoa" id="qtd-uma" />
-                      <Label htmlFor="qtd-uma" className="ml-2">1 pessoa</Label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value="duas_pessoas" id="qtd-duas" />
-                      <Label htmlFor="qtd-duas" className="ml-2">2 pessoas</Label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value="tres_pessoas" id="qtd-tres" />
-                      <Label htmlFor="qtd-tres" className="ml-2">3 pessoas</Label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value="quatro_ou_mais" id="qtd-quatro" />
-                      <Label htmlFor="qtd-quatro" className="ml-2">4 ou mais</Label>
-                    </div>
-                  </RadioGroup>
-                  {validationErrors.qtdPessoasCasa && <p className="text-sm text-destructive mt-1">{validationErrors.qtdPessoasCasa.join(", ")}</p>}
-                </div>
-
-                <div>
-                  <Label>Possui filhos?</Label>
-                  <RadioGroup value={possuiFilhos} onValueChange={(v: string) => setPossuiFilhos(v)} className="flex gap-4 mt-2">
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value="true" id="filhos-sim" />
-                      <Label htmlFor="filhos-sim" className="ml-2">Sim</Label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value="false" id="filhos-nao" />
-                      <Label htmlFor="filhos-nao" className="ml-2">Não</Label>
-                    </div>
-                  </RadioGroup>
-                  {validationErrors.possuiFilhos && <p className="text-sm text-destructive mt-1">{validationErrors.possuiFilhos.join(", ")}</p>}
-                </div>
-
-                <div>
-                  <Label>Sobre sua rotina (marque as que se aplicam):</Label>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
-                    {routineOptions.map((opt) => (
-                      <label key={opt.key} className="flex items-center gap-2">
-                        <Checkbox
-                          id={`rotina-${opt.key}`}
-                          checked={sobreRotina.includes(opt.key)}
-                          onCheckedChange={(checked) => {
-                            const isChecked = !!checked
-                            if (isChecked) setSobreRotina((p) => [...p, opt.key])
-                            else setSobreRotina((p) => p.filter((k) => k !== opt.key))
-                          }}
-                        />
-                        <Label htmlFor={`rotina-${opt.key}`} className="ml-2 text-sm">{opt.label}</Label>
-                      </label>
-                    ))}
-                  </div>
-                  {validationErrors.sobre_rotina && <p className="text-sm text-destructive mt-1">{validationErrors.sobre_rotina.join(", ")}</p>}
-                </div>
-
-                <div className="flex justify-between items-center">
-                  <div />
-                  <div className="flex gap-2">
-                    <Button variant="ghost" onClick={() => { setAnimalId(""); router.back() }} type="button">Cancelar</Button>
-                    <Button onClick={handleNext} type="button">Próximo ›</Button>
-                  </div>
-                </div>
-              </section>
-            )}
-
-            {step === 2 && (
-              <section className="space-y-4">
-                <h2 className="text-lg font-semibold">2. Segurança da Casa</h2>
-
-                <div>
-                  <Label>Acesso à rua - Janelas:</Label>
-                  <RadioGroup value={acessoRuaJanelas} onValueChange={(v: string) => setAcessoRuaJanelas(v)} className="grid gap-2 mt-2">
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value="janelas_telas_sem_acesso_rua" id="jan-1" />
-                      <Label htmlFor="jan-1" className="ml-2">Janelas teladas, sem acesso à rua</Label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value="janelas_sem_telas" id="jan-2" />
-                      <Label htmlFor="jan-2" className="ml-2">As janelas não são teladas</Label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value="janelas_sem_telas_instalarei" id="jan-3" />
-                      <Label htmlFor="jan-3" className="ml-2">Janelas não teladas, mas pretendo instalar em breve</Label>
-                    </div>
-                  </RadioGroup>
-                  {validationErrors.acesso_rua_janelas && <p className="text-sm text-destructive mt-1">{validationErrors.acesso_rua_janelas.join(", ")}</p>}
-                </div>
-
-                <div>
-                  <Label>Acesso à rua - Portões e Muros:</Label>
-                  <RadioGroup value={acessoRuaPortoesMuros} onValueChange={(v: string) => setAcessoRuaPortoesMuros(v)} className="grid gap-2 mt-2">
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value="impedem_escape" id="pm-1" />
-                      <Label htmlFor="pm-1" className="ml-2">Os portões e muros impedem o escape do animal</Label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value="permitem_acesso_rua" id="pm-2" />
-                      <Label htmlFor="pm-2" className="ml-2">Os portões e muros permitem que o animal acesse a rua</Label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value="serao_adaptados" id="pm-3" />
-                      <Label htmlFor="pm-3" className="ml-2">Portões e muros serão adaptados para impedir o acesso</Label>
-                    </div>
-                  </RadioGroup>
-                  {validationErrors.acesso_rua_portoes_muros && <p className="text-sm text-destructive mt-1">{validationErrors.acesso_rua_portoes_muros.join(", ")}</p>}
-                </div>
-
-                <div className="flex justify-between items-center">
-                  <Button variant="ghost" onClick={handlePrev} type="button">‹ Anterior</Button>
-                  <div className="flex gap-2">
-                    <Button variant="ghost" onClick={() => { setAnimalId(""); router.back() }} type="button">Cancelar</Button>
-                    <Button onClick={handleNext} type="button">Próximo ›</Button>
-                  </div>
-                </div>
-              </section>
-            )}
-
-            {step === 3 && (
-              <section className="space-y-4">
-                <h2 className="text-lg font-semibold">3. Condições Finais e Acordo</h2>
-
-                <div>
-                  <Label>Condições Econômicas (Renda familiar mensal):</Label>
-                  <RadioGroup value={rendaFamiliar} onValueChange={(v: string) => setRendaFamiliar(v)} className="grid gap-2 mt-2">
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value="acima_2_sm" id="r-1" />
-                      <Label htmlFor="r-1" className="ml-2">Acima de 2 salários mínimos</Label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value="abaixo_2_sm" id="r-2" />
-                      <Label htmlFor="r-2" className="ml-2">Abaixo de 2 salários mínimos</Label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value="outro" id="r-3" />
-                      <Label htmlFor="r-3" className="ml-2">Outro</Label>
-                    </div>
-                  </RadioGroup>
-                  {validationErrors.renda_familiar && <p className="text-sm text-destructive mt-1">{validationErrors.renda_familiar.join(", ")}</p>}
-                </div>
-
-                <div>
-                  <label className="flex items-start gap-2">
-                    <Checkbox
-                      id="aceita-termos"
-                      checked={aceitaTermos}
-                      onCheckedChange={(checked) => setAceitaTermos(!!checked)}
-                    />
-                    <div>
-                      <div className="font-medium">Aceite e Permissão</div>
-                      <div className="text-sm text-muted-foreground">Todos que moram comigo estão de acordo com a adoção.</div>
-                    </div>
-                  </label>
-                  {validationErrors.aceita_termos && <p className="text-sm text-destructive mt-1">{validationErrors.aceita_termos.join(", ")}</p>}
-                </div>
-
-                <Separator />
-
-                <div className="flex justify-between items-center">
-                  <Button variant="ghost" onClick={handlePrev} type="button">‹ Anterior</Button>
-                  <div className="flex items-center gap-2">
-                    <Button variant="ghost" onClick={() => { setAnimalId(""); router.back() }} type="button">Cancelar</Button>
-                    <Button type="submit" onClick={handleSubmit} disabled={submitting}>
-                      {submitting ? "Enviando..." : "Salvar"}
-                    </Button>
-                  </div>
-                </div>
-              </section>
-            )}
-          </form>
-
-          <div className="mt-4">
-            {errorMessage && <p className="text-sm text-destructive">{errorMessage}</p>}
-            {Object.keys(validationErrors).length > 0 && (
-              <div className="mt-2">
-                {Object.entries(validationErrors).map(([k, v]) => (
-                  <p key={k} className="text-sm text-destructive">{Array.isArray(v) ? v.join(" ") : v}</p>
-                ))}
+          <div className="bg-card rounded-lg border text-foreground p-4 shadow-sm">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-12 h-12 bg-muted rounded flex items-center justify-center">
+                <span className="text-sm text-muted-foreground">📷</span>
               </div>
+              <div>
+                <div className="font-semibold">{animalName ?? "Animal"}</div>
+                <div className="text-sm text-muted-foreground">Informe detalhes para a solicitação</div>
+              </div>
+              <div className="ml-auto text-sm">
+                <Badge variant="secondary">Passo {step} de 3</Badge>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-center mb-4">{stepDots}</div>
+
+            <form onSubmit={handleSubmit}>
+              {step === 1 && (
+                <section className="space-y-4">
+                  <h2 className="text-lg font-semibold">1. Sobre Você, sua Família e sua Rotina</h2>
+
+                  <div>
+                    <Label>Com quem você mora?</Label>
+                    <RadioGroup value={qtdPessoasCasa} onValueChange={(v: string) => setQtdPessoasCasa(v)} className="grid gap-2 mt-2">
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem value="sozinho" id="qtd-sozinho" />
+                        <Label htmlFor="qtd-sozinho" className="ml-2">Sozinho</Label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem value="uma_pessoa" id="qtd-uma" />
+                        <Label htmlFor="qtd-uma" className="ml-2">1 pessoa</Label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem value="duas_pessoas" id="qtd-duas" />
+                        <Label htmlFor="qtd-duas" className="ml-2">2 pessoas</Label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem value="tres_pessoas" id="qtd-tres" />
+                        <Label htmlFor="qtd-tres" className="ml-2">3 pessoas</Label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem value="quatro_ou_mais" id="qtd-quatro" />
+                        <Label htmlFor="qtd-quatro" className="ml-2">4 ou mais</Label>
+                      </div>
+                    </RadioGroup>
+                    {validationErrors.qtdPessoasCasa && <p className="text-sm text-destructive mt-1">{validationErrors.qtdPessoasCasa.join(", ")}</p>}
+                  </div>
+
+                  <div>
+                    <Label>Possui filhos?</Label>
+                    <RadioGroup value={possuiFilhos} onValueChange={(v: string) => setPossuiFilhos(v)} className="flex gap-4 mt-2">
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem value="true" id="filhos-sim" />
+                        <Label htmlFor="filhos-sim" className="ml-2">Sim</Label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem value="false" id="filhos-nao" />
+                        <Label htmlFor="filhos-nao" className="ml-2">Não</Label>
+                      </div>
+                    </RadioGroup>
+                    {validationErrors.possuiFilhos && <p className="text-sm text-destructive mt-1">{validationErrors.possuiFilhos.join(", ")}</p>}
+                  </div>
+
+                  <div>
+                    <Label>Sobre sua rotina (marque as que se aplicam):</Label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
+                      {routineOptions.map((opt) => (
+                        <label key={opt.key} className="flex items-center gap-2">
+                          <Checkbox
+                            id={`rotina-${opt.key}`}
+                            checked={sobreRotina.includes(opt.key)}
+                            onCheckedChange={(checked) => {
+                              const isChecked = !!checked
+                              if (isChecked) setSobreRotina((p) => [...p, opt.key])
+                              else setSobreRotina((p) => p.filter((k) => k !== opt.key))
+                            }}
+                          />
+                          <Label htmlFor={`rotina-${opt.key}`} className="ml-2 text-sm">{opt.label}</Label>
+                        </label>
+                      ))}
+                    </div>
+                    {validationErrors.sobre_rotina && <p className="text-sm text-destructive mt-1">{validationErrors.sobre_rotina.join(", ")}</p>}
+                  </div>
+
+                  <div className="flex justify-between items-center">
+                    <div />
+                    <div className="flex gap-2">
+                      <Button variant="ghost" onClick={() => { setAnimalId(""); router.back() }} type="button">Cancelar</Button>
+                      <Button onClick={handleNext} type="button">Próximo ›</Button>
+                    </div>
+                  </div>
+                </section>
+              )}
+
+              {step === 2 && (
+                <section className="space-y-4">
+                  <h2 className="text-lg font-semibold">2. Segurança da Casa</h2>
+
+                  <div>
+                    <Label>Acesso à rua - Janelas:</Label>
+                    <RadioGroup value={acessoRuaJanelas} onValueChange={(v: string) => setAcessoRuaJanelas(v)} className="grid gap-2 mt-2">
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem value="janelas_telas_sem_acesso_rua" id="jan-1" />
+                        <Label htmlFor="jan-1" className="ml-2">Janelas teladas, sem acesso à rua</Label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem value="janelas_sem_telas" id="jan-2" />
+                        <Label htmlFor="jan-2" className="ml-2">As janelas não são teladas</Label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem value="janelas_sem_telas_instalarei" id="jan-3" />
+                        <Label htmlFor="jan-3" className="ml-2">Janelas não teladas, mas pretendo instalar em breve</Label>
+                      </div>
+                    </RadioGroup>
+                    {validationErrors.acesso_rua_janelas && <p className="text-sm text-destructive mt-1">{validationErrors.acesso_rua_janelas.join(", ")}</p>}
+                  </div>
+
+                  <div>
+                    <Label>Acesso à rua - Portões e Muros:</Label>
+                    <RadioGroup value={acessoRuaPortoesMuros} onValueChange={(v: string) => setAcessoRuaPortoesMuros(v)} className="grid gap-2 mt-2">
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem value="impedem_escape" id="pm-1" />
+                        <Label htmlFor="pm-1" className="ml-2">Os portões e muros impedem o escape do animal</Label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem value="permitem_acesso_rua" id="pm-2" />
+                        <Label htmlFor="pm-2" className="ml-2">Os portões e muros permitem que o animal acesse a rua</Label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem value="serao_adaptados" id="pm-3" />
+                        <Label htmlFor="pm-3" className="ml-2">Portões e muros serão adaptados para impedir o acesso</Label>
+                      </div>
+                    </RadioGroup>
+                    {validationErrors.acesso_rua_portoes_muros && <p className="text-sm text-destructive mt-1">{validationErrors.acesso_rua_portoes_muros.join(", ")}</p>}
+                  </div>
+
+                  <div className="flex justify-between items-center">
+                    <Button variant="ghost" onClick={handlePrev} type="button">‹ Anterior</Button>
+                    <div className="flex gap-2">
+                      <Button variant="ghost" onClick={() => { setAnimalId(""); router.back() }} type="button">Cancelar</Button>
+                      <Button onClick={handleNext} type="button">Próximo ›</Button>
+                    </div>
+                  </div>
+                </section>
+              )}
+
+              {step === 3 && (
+                <section className="space-y-4">
+                  <h2 className="text-lg font-semibold">3. Condições Finais e Acordo</h2>
+
+                  <div>
+                    <Label>Condições Econômicas (Renda familiar mensal):</Label>
+                    <RadioGroup value={rendaFamiliar} onValueChange={(v: string) => setRendaFamiliar(v)} className="grid gap-2 mt-2">
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem value="acima_2_sm" id="r-1" />
+                        <Label htmlFor="r-1" className="ml-2">Acima de 2 salários mínimos</Label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem value="abaixo_2_sm" id="r-2" />
+                        <Label htmlFor="r-2" className="ml-2">Abaixo de 2 salários mínimos</Label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem value="outro" id="r-3" />
+                        <Label htmlFor="r-3" className="ml-2">Outro</Label>
+                      </div>
+                    </RadioGroup>
+                    {validationErrors.renda_familiar && <p className="text-sm text-destructive mt-1">{validationErrors.renda_familiar.join(", ")}</p>}
+                  </div>
+
+                  <div>
+                    <label className="flex items-start gap-2">
+                      <Checkbox
+                        id="aceita-termos"
+                        checked={aceitaTermos}
+                        onCheckedChange={(checked) => setAceitaTermos(!!checked)}
+                      />
+                      <div>
+                        <div className="font-medium">Aceite e Permissão</div>
+                        <div className="text-sm text-muted-foreground">Todos que moram comigo estão de acordo com a adoção.</div>
+                      </div>
+                    </label>
+                    {validationErrors.aceita_termos && <p className="text-sm text-destructive mt-1">{validationErrors.aceita_termos.join(", ")}</p>}
+                  </div>
+
+                  <Separator />
+
+                  <div className="flex justify-between items-center">
+                    <Button variant="ghost" onClick={handlePrev} type="button">‹ Anterior</Button>
+                    <div className="flex items-center gap-2">
+                      <Button variant="ghost" onClick={() => { setAnimalId(""); router.back() }} type="button">Cancelar</Button>
+                      <Button type="submit" onClick={handleSubmit} disabled={submitting}>
+                        {submitting ? "Enviando..." : "Salvar"}
+                      </Button>
+                    </div>
+                  </div>
+                </section>
+              )}
+            </form>
+
+            <div className="mt-4">
+              {errorMessage && <p className="text-sm text-destructive">{errorMessage}</p>}
+              {Object.keys(validationErrors).length > 0 && (
+                <div className="mt-2">
+                  {Object.entries(validationErrors).map(([k, v]) => (
+                    <p key={k} className="text-sm text-destructive">{Array.isArray(v) ? v.join(" ") : v}</p>
+                  ))}
+                </div>
+              )}
+              {successMessage && <p className="text-sm text-green-600">{successMessage}</p>}
+            </div>
+          </div>
+
+          <div className="mt-4 text-center text-sm text-muted-foreground">
+            <p>Você está solicitando a adoção do animal: {animalId ? <strong>{animalId}</strong> : "Nenhum animal selecionado"}</p>
+            {!animalId && (
+              <p className="mt-2">
+                Ou <Link href="/adotar">volte para a listagem</Link> e escolha um animal.
+              </p>
             )}
-            {successMessage && <p className="text-sm text-green-600">{successMessage}</p>}
           </div>
         </div>
-
-        <div className="mt-4 text-center text-sm text-muted-foreground">
-          <p>Você está solicitando a adoção do animal: {animalId ? <strong>{animalId}</strong> : "Nenhum animal selecionado"}</p>
-          {!animalId && (
-            <p className="mt-2">
-              Ou <Link href="/adotar">volte para a listagem</Link> e escolha um animal.
-            </p>
-          )}
-        </div>
-      </div>
-    </main>
+      </main>
+    </NotToken>
   )
 }

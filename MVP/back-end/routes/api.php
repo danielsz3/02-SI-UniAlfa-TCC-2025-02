@@ -19,6 +19,8 @@ use App\Http\Controllers\PostController;
 use App\Http\Controllers\IntegracaoController;
 use App\Http\Controllers\AdocaoController;
 use App\Http\Controllers\MatchAfinidadeController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\RelatorioController;
 
 /**
  * ROTAS PÚBLICAS
@@ -73,6 +75,9 @@ Route::middleware(['jwt.auth'])->group(function () {
      */
     Route::middleware(['role:admin'])->group(function () {
 
+        Route::get('/dashboard', [DashboardController::class, 'index']);
+        Route::get('/dashboard/transacoes', [DashboardController::class, 'transacoes']);
+
         // Usuários: admin tem CRUD completo (exceto ‘store’ se preferir manter público)
         Route::apiResource('usuarios', UsuarioController::class)->except(['show', 'store', 'update']);
         Route::post('usuarios/{id}/restore', [UsuarioController::class, 'restore'])->name('usuarios.restore');
@@ -119,11 +124,17 @@ Route::middleware(['jwt.auth'])->group(function () {
         Route::apiResource('match-afinidades', MatchAfinidadeController::class)->except(['index', 'show', 'store']);
         Route::post('match-afinidades/{id}/restore', [MatchAfinidadeController::class, 'restore'])->name('match-afinidades.restore');
 
-        // Lixeira genérica 
+        // Lixeira genérica
         Route::prefix('trash/{modelName}')->group(function () {
-            Route::get('/', [TrashController::class, 'index'])->name('trash.index');
-            Route::post('/{id}/restore', [TrashController::class, 'restore'])->name('trash.restore');
-            Route::delete('/{id}/force-delete', [TrashController::class, 'forceDelete'])->name('trash.forceDelete');
+            Route::get('/', [TrashController::class, 'index']); // /trash/{modelName}
+            Route::post('/{id}/restore', [TrashController::class, 'restore']); // /trash/{modelName}/{id}/restore
+            Route::delete('/{id}/force-delete', [TrashController::class, 'forceDelete']); // /trash/{modelName}/{id}/force-delete
+        });
+
+        Route::prefix('relatorios')->group(function () {
+            Route::get('/adocoes', [RelatorioController::class, 'adocoes']);
+            Route::get('/usuarios', [RelatorioController::class, 'usuarios']);
+            Route::get('/pets', [RelatorioController::class, 'pets']);
         });
     });
 });

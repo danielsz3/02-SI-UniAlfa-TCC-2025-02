@@ -2,6 +2,7 @@ import {
     List,
     TextInput,
     useListContext,
+    DateInput,
 } from 'react-admin';
 import { Link } from 'react-router-dom';
 import { Grid, Card, CardContent, Typography, Box, Button, Chip } from '@mui/material';
@@ -11,6 +12,16 @@ import { FaWhatsapp, FaInstagram } from "react-icons/fa";
 // Filtros
 const filters = [
     <TextInput label="Serviço" source="service" size="small" alwaysOn />,
+    <DateInput
+                label="Criado a partir de"
+                source="created_at_from"
+                alwaysOn
+            />,
+            <DateInput
+                label="Criado até"
+                source="created_at_to"
+                alwaysOn
+            />,
 ];
 
 // Configurações dos serviços

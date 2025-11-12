@@ -61,3 +61,4 @@ MVP/back-end/storage/app/public/documentos/
 /MVP/back-end/storage
 *.log
 MVP/back-end/storage/logs/laravel.log
+MVP/back-end/env2.txt

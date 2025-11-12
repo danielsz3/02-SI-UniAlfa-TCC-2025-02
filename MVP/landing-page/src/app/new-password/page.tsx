@@ -2,15 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Navbar } from "@/components/navbar";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import NotToken from "@/components/NotToken";
 
 export default function NewPasswordPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // pegar params (decode por segurança)
   const rawToken = searchParams?.get("token") || "";
   const rawEmail = searchParams?.get("email") || "";
   const token = rawToken ? decodeURIComponent(rawToken) : "";
@@ -25,28 +24,24 @@ export default function NewPasswordPage() {
   const [email, setEmail] = useState(emailFromQuery);
 
   useEffect(() => {
-    // Se não houver token ou e-mail, mostra erro imediatamente
+
     if (!token) {
       setError("Token não fornecido na URL.");
       setValidToken(false);
+      router.push("/reset-password")
       return;
     }
     if (!emailFromQuery) {
-      // é possível permitir que usuário preencha o email manualmente,
-      // aqui assumimos que o email vem na URL; se preferir, permita digitar
       setError("E-mail não fornecido na URL.");
       setValidToken(false);
       return;
     }
 
-    // se token e email existem, assumimos válido (o backend vai validar de fato ao submeter)
     setError(null);
     setValidToken(true);
   }, [token, emailFromQuery]);
 
   function validatePasswordClientSide(pw: string) {
-    // Replicar regras mínimas do backend:
-    // mínimo 8, ao menos 1 letra maiúscula, 1 dígito e 1 caractere especial
     if (pw.length < 8) return "A senha deve ter ao menos 8 caracteres.";
     if (!/[A-Z]/.test(pw)) return "A senha deve conter ao menos uma letra maiúscula.";
     if (!/\d/.test(pw)) return "A senha deve conter ao menos um número.";
@@ -80,9 +75,8 @@ export default function NewPasswordPage() {
     setLoading(true);
 
     try {
-      // garantir que NEXT_PUBLIC_API_URL aponta para algo como "http://localhost:8000/api"
-      const apiBase = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "http://localhost:8000/api";
 
+      const apiBase = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "http://localhost:8000/api";
       const res = await fetch(`${apiBase}/reset-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -97,9 +91,8 @@ export default function NewPasswordPage() {
       const data = await res.json().catch(() => null);
 
       if (!res.ok) {
-        // backend pode retornar erros de validação detalhados
         if (data?.errors) {
-          // se for array/object de erros do Validator, mostrar a primeira mensagem útil
+
           const first = Object.values(data.errors)[0];
           setError(Array.isArray(first) ? first[0] : String(first));
         } else if (data?.message) {
@@ -111,7 +104,7 @@ export default function NewPasswordPage() {
       }
 
       setSuccess(true);
-      // opcional: redirecionar depois
+
       setTimeout(() => router.push("/login"), 1500);
     } catch (err: any) {
       setError(err.message || "Erro de rede");
@@ -123,7 +116,6 @@ export default function NewPasswordPage() {
   if (success) {
     return (
       <>
-        <Navbar />
         <main className="flex min-h-screen items-center justify-center">
           <div className="w-full max-w-md rounded-lg bg-white dark:bg-slate-800 shadow-lg p-8 text-center">
             <h2 className="text-2xl font-bold mb-6 text-slate-900 dark:text-white">
@@ -139,8 +131,7 @@ export default function NewPasswordPage() {
   }
 
   return (
-    <>
-      <Navbar />
+    <NotToken>
       <main className="flex min-h-screen items-center justify-center">
         <div className="w-full max-w-md rounded-lg bg-white dark:bg-slate-800 shadow-lg p-8">
           <h2 className="text-2xl font-bold mb-6 text-center text-slate-900 dark:text-white">
@@ -203,6 +194,6 @@ export default function NewPasswordPage() {
           )}
         </div>
       </main>
-    </>
+    </NotToken>
   );
 }

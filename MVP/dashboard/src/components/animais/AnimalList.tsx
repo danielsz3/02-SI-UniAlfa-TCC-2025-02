@@ -72,7 +72,7 @@ const AnimalGrid = () => {
             {data.map((record) => (
                 <Grid key={record.id} size={{ xs: 12, lg: 3, md: 6, sm: 6 }} >
                     <Link
-                        to={createPath({ resource: 'animais', id: record.id, type: 'edit' })}
+                        to={createPath({ resource: 'animais', id: record.id, type: 'show' })}
                         style={{ textDecoration: 'none' }}
                     >
                         <Card

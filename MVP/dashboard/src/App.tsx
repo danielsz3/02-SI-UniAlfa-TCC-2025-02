@@ -46,6 +46,7 @@ import { AdocaoList } from './components/adocoes/AdocaoList';
 import { AdocaoEdit } from './components/adocoes/AdocaoEdit';
 import OngEdit from './components/ong/OngEdit';
 import IntegracaoEdit from './components/integracoes/IntegracaoEdit';
+import AnimalShow from './components/animais/AnimalShow';
 import DashboardPage from './components/dashboard/DashboardPage';
 
 
@@ -83,6 +84,7 @@ function App() {
         icon={PetsIcon}
         list={AnimalList}
         edit={AnimalEdit}
+        show={AnimalShow}
         create={AnimalCreate}
       />
       <Resource

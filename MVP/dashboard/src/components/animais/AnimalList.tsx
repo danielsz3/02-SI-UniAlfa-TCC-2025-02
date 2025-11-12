@@ -6,6 +6,7 @@ import {
     SelectInput,
     Pagination,
     PaginationProps,
+    DateInput,
 } from 'react-admin'
 import {
     Grid,
@@ -27,6 +28,8 @@ const CARD_HEIGHT = 250;
 
 const filters = [
     <TextInput label="Nome" source="nome" size="small" alwaysOn />,
+    <DateInput label="Criação de" source="created_at_from" size="small" alwaysOn />,
+    <DateInput label="Criação até" source="created_at_to" size="small" alwaysOn />,
     <SelectInput
         label="Situação"
         source="situacao"
@@ -63,7 +66,7 @@ const AnimalGrid = () => {
     const createPath = useCreatePath()
 
     if (isLoading || !data) return null
-    
+
     return (
         <Grid container spacing={3} sx={{ p: 2, backgroundColor: (theme) => theme.palette.background.default }}>
             {data.map((record) => (
@@ -80,7 +83,6 @@ const AnimalGrid = () => {
                                 borderRadius: 2,
                             }}
                         >
-                           
                             <Box
                                 sx={{
                                     position: 'absolute',
@@ -147,39 +149,41 @@ const AnimalGrid = () => {
     )
 }
 
-const Pag = (props: JSX.IntrinsicAttributes & PaginationProps) => <Pagination rowsPerPageOptions={[12, 24, 48, 120]} {...props} />;
+const Pag = (props: JSX.IntrinsicAttributes & PaginationProps) => (
+    <Pagination rowsPerPageOptions={[12, 24, 48, 120]} {...props} />
+);
 
 const AnimalList = () => {
     const theme = useTheme()
     const isSmall = useMediaQuery(theme.breakpoints.down('sm'))
 
     return (
-        <>
-            <List
-                pagination={<Pag />}
-                filters={filters}
-                sort={{ field: 'created_at', order: 'DESC' }}
-                sx={{
-                    '& .RaList-content': {
-                        boxShadow: 'none',
-                    },
-                }}
-            >
-                {isSmall ? (
-                    <SimpleList
-                        leftAvatar={(record) =>
-                            record.imagens.caminho ||
-                            import.meta.env.VITE_API_URL + '/imagens/' + record.imagens[0]?.caminho
-                        }
-                        primaryText={(record) => record.nome + ' - ' + tamanhos.find((tamanho) => tamanho.id === record.tamanho)?.name}
-                        tertiaryText={(record) => chipTipos[record.situacao as Situacao]?.label ?? 'Indefinido'}
-                        secondaryText={(record) => `${formatarDiferencaData(record.data_nascimento)}`}
-                    />
-                ) : (
-                    <AnimalGrid />
-                )}
-            </List>
-        </>
+        <List
+            pagination={<Pag />}
+            filters={filters}
+            sort={{ field: 'created_at', order: 'DESC' }}
+            sx={{
+                '& .RaList-content': {
+                    boxShadow: 'none',
+                },
+            }}
+        >
+            {isSmall ? (
+                <SimpleList
+                    leftAvatar={(record) =>
+                        record.imagens.caminho ||
+                        import.meta.env.VITE_API_URL + '/imagens/' + record.imagens[0]?.caminho
+                    }
+                    primaryText={(record) =>
+                        record.nome + ' - ' + tamanhos.find((tamanho) => tamanho.id === record.tamanho)?.name
+                    }
+                    tertiaryText={(record) => chipTipos[record.situacao as Situacao]?.label ?? 'Indefinido'}
+                    secondaryText={(record) => `${formatarDiferencaData(record.data_nascimento)}`}
+                />
+            ) : (
+                <AnimalGrid />
+            )}
+        </List>
     )
 }
 

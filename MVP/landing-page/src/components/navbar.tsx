@@ -168,7 +168,7 @@ function RightActions({
             <DropdownMenuSeparator />
 
             <DropdownMenuItem asChild>
-              <Link href="/perfil" className="flex items-center gap-2">
+              <Link href="/perfil/editar" className="flex items-center gap-2">
                 <User className="h-4 w-4" />
                 Perfil
               </Link>
@@ -177,8 +177,10 @@ function RightActions({
             <DropdownMenuSeparator />
 
             <DropdownMenuItem className="text-red-600 focus:text-red-600" onClick={onLogout}>
-              <LogOut className="h-4 w-4 mr-2" />
-              Sair
+              <div className="flex items-center gap-2">
+                <LogOut className="h-4 w-4" />
+                Sair
+              </div>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

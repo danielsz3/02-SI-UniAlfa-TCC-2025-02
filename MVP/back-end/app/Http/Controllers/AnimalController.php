@@ -265,7 +265,7 @@ class AnimalController extends Controller
                 return response()->json($fresh, 200);
             });
         } catch (\Exception $e) {
-            Log::error('Erro ao atualizar animal: ' . $e->getMessage(), ['id' => $id, 'exception' => $e, 'payload' => $request->except('imagens')]);
+            Log::error('Erro ao atualizar animal: ' . $e->getMessage(), ['id' => ($animal->id ?? null), 'exception' => $e, 'payload' => $request->except('imagens')]);
             return response()->json([
                 'error' => 'Não foi possível atualizar o animal',
                 'message' => config('app.debug') ? $e->getMessage() : 'Erro interno do servidor'

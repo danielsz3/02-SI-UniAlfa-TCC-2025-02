@@ -3,6 +3,7 @@ import {
     useListContext,
     SimpleList,
     TextInput,
+    DateInput,
 } from 'react-admin'
 import {
     Grid,
@@ -20,6 +21,16 @@ const CARD_HEIGHT = 250;
 
 const filters = [
     <TextInput label="Nome" source="nome" size="small" alwaysOn />,
+    <DateInput
+        label="Criado a partir de"
+        source="created_at_from"
+        alwaysOn
+    />,
+    <DateInput
+        label="Criado até"
+        source="created_at_to"
+        alwaysOn
+    />,
 ];
 
 const ParceiroGrid = () => {
@@ -29,19 +40,28 @@ const ParceiroGrid = () => {
     if (isLoading || !data) return null
 
     return (
-        <Grid container spacing={3}
+        <Grid
+            container
+            spacing={3}
             sx={{
                 p: 2,
                 backgroundColor: (theme) => theme.palette.background.default,
             }}
         >
             {data.map((record) => (
-                <Grid key={record.id} size={{ xs: 12, xl: 3, lg: 4, md: 6, sm: 6 }} >
+                <Grid key={record.id} size={{ xs: 12, xl: 3, lg: 4, md: 6, sm: 6 }}>
                     <Link
                         to={createPath({ resource: 'parceiros', id: record.id, type: 'edit' })}
                         style={{ textDecoration: 'none' }}
                     >
-                        <Card sx={{ position: 'relative', height: CARD_HEIGHT, overflow: 'hidden', borderRadius: 2 }}>
+                        <Card
+                            sx={{
+                                position: 'relative',
+                                height: CARD_HEIGHT,
+                                overflow: 'hidden',
+                                borderRadius: 2,
+                            }}
+                        >
                             <Box
                                 sx={{
                                     position: 'absolute',
@@ -49,7 +69,10 @@ const ParceiroGrid = () => {
                                     left: 0,
                                     width: '100%',
                                     height: '100%',
-                                    backgroundImage: `url(${record.imagem.src || import.meta.env.VITE_API_URL + '/imagens/' + record.imagem})`,
+                                    backgroundImage: `url(${
+                                        record.imagem?.src ||
+                                        import.meta.env.VITE_API_URL + '/imagens/' + record.imagem
+                                    })`,
                                     backgroundSize: 'cover',
                                     backgroundPosition: 'center',
                                 }}
@@ -60,7 +83,8 @@ const ParceiroGrid = () => {
                                     bottom: 0,
                                     width: '100%',
                                     color: 'white',
-                                    background: 'linear-gradient(to top, rgba(0,0,0,0.7),rgba(0,0,0,0.7),rgba(0,0,0,0.7), rgba(255, 255, 255, 0))',
+                                    background:
+                                        'linear-gradient(to top, rgba(0,0,0,0.7),rgba(0,0,0,0.7),rgba(0,0,0,0.7), rgba(255, 255, 255, 0))',
                                     padding: 2,
                                 }}
                             >
@@ -81,7 +105,8 @@ const ParceiroList = () => {
     const isSmall = useMediaQuery(theme.breakpoints.down('sm'))
 
     return (
-        <List filters={filters}
+        <List
+            filters={filters}
             sx={{
                 '& .RaList-content': {
                     boxShadow: 'none',

@@ -4,6 +4,7 @@ import {
     SimpleList,
     TextInput,
     SelectInput,
+    DateInput,
 } from 'react-admin'
 import {
     Grid,
@@ -22,6 +23,16 @@ const CARD_HEIGHT = 250;
 
 const filters = [
     <TextInput label="Título" source="titulo" size="small" alwaysOn />,
+    <DateInput
+            label="Criado a partir de"
+            source="created_at_from"
+            alwaysOn
+        />,
+        <DateInput
+            label="Criado até"
+            source="created_at_to"
+            alwaysOn
+        />,
 ]
 
 

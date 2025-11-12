@@ -1,10 +1,11 @@
-"use client"
+'use client'
 
 import { useState, useEffect } from "react"
 import PersonalForm from "./PersonalForm"
 import AddressForm from "./AddressForm"
 import PreferencesForm from "./PreferencesForm"
 import ConfirmForm from "./ConfirmForm"
+import { useRouter } from "next/navigation" // Corrigido para next/navigation
 
 interface FormData {
     nome?: string
@@ -21,7 +22,14 @@ interface FormData {
     espaco?: string
 }
 
+async function handleRedirectAfterAuth(router: ReturnType<typeof useRouter>) {
+    const redirectTo = sessionStorage.getItem('redirectAfterLogin') || '/'
+    sessionStorage.removeItem('redirectAfterLogin')
+    router.replace(redirectTo)
+}
+
 export default function RegisterPage() {
+    const router = useRouter()
     const [step, setStep] = useState(1)
     const [formData, setFormData] = useState<FormData>({
         imagemPreviewUrl: null,
@@ -31,10 +39,8 @@ export default function RegisterPage() {
         espaco: "",
     })
 
-    // Estado separado para o arquivo File da imagem (PersonalForm)
     const [imagemFile, setImagemFile] = useState<File | null>(null)
 
-    // Atualiza o previewUrl sempre que imagemFile mudar
     useEffect(() => {
         if (imagemFile) {
             const url = URL.createObjectURL(imagemFile)
@@ -47,7 +53,6 @@ export default function RegisterPage() {
     }, [imagemFile])
 
     function nextStep(data: Partial<FormData> & { imagem?: File | null }) {
-        // Se veio imagem File, atualiza o estado separado
         if (data.imagem) {
             setImagemFile(data.imagem)
             delete data.imagem
@@ -58,6 +63,11 @@ export default function RegisterPage() {
 
     function prevStep() {
         setStep(s => s - 1)
+    }
+
+    // Exemplo: função para ser chamada após o registro bem-sucedido
+    async function onRegisterSuccess() {
+        await handleRedirectAfterAuth(router)
     }
 
     return (
@@ -77,7 +87,13 @@ export default function RegisterPage() {
                 {step === 3 && (
                     <PreferencesForm onNext={nextStep} onBack={prevStep} defaultValues={formData} />
                 )}
-                {step === 4 && <ConfirmForm data={formData} onBack={prevStep} />}
+                {step === 4 && (
+                    <ConfirmForm
+                        data={formData}
+                        onBack={prevStep}
+                        onRegisterSuccess={onRegisterSuccess} // Passe essa prop para ConfirmForm
+                    />
+                )}
             </main>
         </>
     )

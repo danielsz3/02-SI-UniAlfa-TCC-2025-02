@@ -1,9 +1,7 @@
 import {
     List,
     useListContext,
-    SimpleList,
     TextInput,
-    SelectInput,
     DateInput,
 } from 'react-admin'
 import {
@@ -11,28 +9,30 @@ import {
     Card,
     CardContent,
     Typography,
-    useTheme,
-    useMediaQuery,
     Box,
     Chip,
 } from '@mui/material'
 import { Link } from 'react-router-dom'
 import { useCreatePath } from 'react-admin'
+import CustomDatePicker from '../datepicker/customDatePicker';
 
 const CARD_HEIGHT = 250;
 
 const filters = [
     <TextInput label="Título" source="titulo" size="small" alwaysOn />,
-    <DateInput
-            label="Criado a partir de"
-            source="created_at_from"
-            alwaysOn
-        />,
-        <DateInput
-            label="Criado até"
-            source="created_at_to"
-            alwaysOn
-        />,
+    <CustomDatePicker
+        label="Criado a partir de"
+        source="created_at_from"
+        alwaysOn
+        past
+    />,
+    <CustomDatePicker
+        label="Criado até"
+        source="created_at_to"
+        alwaysOn
+        past
+        future
+    />,
 ]
 
 
@@ -144,16 +144,14 @@ const EventoList = () => {
         <>
             <List
                 filters={filters}
-                sort={{field: 'data_inicio', order: 'DESC'}}
+                sort={{ field: 'data_inicio', order: 'DESC' }}
                 sx={{
                     '& .RaList-content': {
                         boxShadow: 'none',
                     },
                 }}
             >
-
                 <EventoGrid />
-
             </List>
         </>
     )

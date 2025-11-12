@@ -1,7 +1,17 @@
-import { ChipField, DataTable, DateField, FunctionField, List, NumberField, NumberInput } from 'react-admin';
+import { ChipField, DataTable, DateField, FunctionField, List, NumberField, NumberInput, DateInput } from 'react-admin';
 
 const filters = [
     <NumberInput label="Valor" source="valor" size="small" alwaysOn />,
+    <DateInput
+                label="Criado a partir de"
+                source="created_at_from"
+                alwaysOn
+            />,
+            <DateInput
+                label="Criado até"
+                source="created_at_to"
+                alwaysOn
+            />,
 ];
 export const TransacaoList = () => (
     <List filters={filters}>

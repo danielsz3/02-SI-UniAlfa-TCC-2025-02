@@ -6,7 +6,7 @@ import {
     SelectInput,
     Pagination,
     PaginationProps,
-    DateInput,
+    RaRecord,
 } from 'react-admin'
 import {
     Grid,
@@ -23,13 +23,12 @@ import { useCreatePath } from 'react-admin'
 import { formatarDiferencaData } from "../../utils/formatDate"
 import { JSX } from 'react/jsx-runtime'
 import CustomDatePicker from '../datepicker/customDatePicker'
+import { CustomListActions } from '../ExportActions'
 
 const CARD_HEIGHT = 250;
 
 const filters = [
     <TextInput label="Nome" source="nome" size="small" alwaysOn />,
-    <DateInput label="Criação de" source="created_at_from" size="small" alwaysOn />,
-    <DateInput label="Criação até" source="created_at_to" size="small" alwaysOn />,
     <SelectInput
         label="Situação"
         source="situacao"
@@ -60,6 +59,21 @@ const tamanhos = [
 
 type Situacao = keyof typeof chipTipos;
 
+const formatadorDeAnimais = (data: RaRecord[]) => {
+    return data.map(record => ({
+        'Data de criação': new Date(record.created_at).toLocaleDateString(),
+        'Nome': record.nome,
+        'Data de nascimento': new Date(record.data_nascimento).toLocaleDateString(),
+        'Idade': formatarDiferencaData(record.data_nascimento),
+        'Descrição': record.descricao,
+        "Tipo": record.tipo_animal,
+        'Tamanho': record.tamanho,
+        'Sexo': record.sexo,
+        'Situação': chipTipos[record.situacao as Situacao]?.label ?? 'Indefinido',
+        "lar Temporário": record.lar_temporario?.nome ?? 'N/A',
+        "Usuário criador": record.usuario?.nome ?? 'N/A',
+    }));
+};
 
 const AnimalGrid = () => {
     const { data, isLoading } = useListContext()
@@ -150,7 +164,7 @@ const AnimalGrid = () => {
 }
 
 const Pag = (props: JSX.IntrinsicAttributes & PaginationProps) => (
-    <Pagination rowsPerPageOptions={[12, 24, 48, 120]} {...props} />
+    <Pagination rowsPerPageOptions={[12, 24, 48, 120]}  {...props} />
 );
 
 const AnimalList = () => {
@@ -160,8 +174,13 @@ const AnimalList = () => {
     return (
         <List
             pagination={<Pag />}
+            perPage={12}
             filters={filters}
             sort={{ field: 'created_at', order: 'DESC' }}
+            actions={<CustomListActions
+                formatter={formatadorDeAnimais}
+                nomeArquivo="export_animais"
+            />}
             sx={{
                 '& .RaList-content': {
                     boxShadow: 'none',

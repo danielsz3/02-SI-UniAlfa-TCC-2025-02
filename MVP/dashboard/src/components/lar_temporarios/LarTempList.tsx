@@ -1,4 +1,6 @@
-import { ChipField, DataTable, FunctionField, List, SelectInput, TextField, TextInput, DateInput } from 'react-admin';
+import { ChipField, DataTable, FunctionField, List, SelectInput, TextInput, RaRecord } from 'react-admin';
+import CustomDatePicker from '../datepicker/customDatePicker';
+import { CustomListActions } from '../ExportActions';
 
 const calculateAge = (dataNascimento: string | number | Date) => {
     if (!dataNascimento) return null;
@@ -22,36 +24,60 @@ const formatPhone = (phone: string) => {
     if (digits.length === 11) {
         return digits.replace(/^(\d{2})(\d{1})(\d{4})(\d{4})$/, '($1) $2$3-$4');
     }
-    
+
     if (digits.length === 10) {
         return digits.replace(/^(\d{2})(\d{4})(\d{4})$/, '($1) $2-$3');
     }
     return phone;
 };
 
+const formatadorDeLares = (data: RaRecord[]) => {
+    return data.map(record => ({
+        "Data Criação": new Date(record.created_at).toLocaleString(),
+        "Situação": record.situacao,
+        "Nome": record.nome,
+        "Idade": calculateAge(record.data_nascimento),
+        "Data de nascimento": new Date(record.data_nascimento).toLocaleDateString(),
+        "telefone": formatPhone(record.telefone),
+        "Endereço": [
+            record.endereco?.logradouro,
+            record.endereco?.numero,
+            record.endereco?.bairro,
+            record.endereco?.cidade,
+            record.endereco?.uf
+        ].filter(part => !!part).join(', ') || 'N/A',
+        "Experiência": record.experiencia
+    }));
+};
+
 const filters = [
     <TextInput label="Nome" source="nome" size="small" alwaysOn />,
-    <DateInput
-                label="Criado a partir de"
-                source="created_at_from"
-                alwaysOn
-            />,
-            <DateInput
-                label="Criado até"
-                source="created_at_to"
-                alwaysOn
-            />,
     <SelectInput
         label="Situação"
         source="situacao"
         size="small"
         choices={[{ id: 'ativo', name: 'Ativo' }, { id: 'inativo', name: 'Inativo' }]}
     />,
+    <CustomDatePicker
+        label="Criado a partir de"
+        source="created_at_from"
+        past
+    />,
+    <CustomDatePicker
+        label="Criado até"
+        source="created_at_to"
+        future
+        past
+    />,
 ];
 export const LarTempList = () => (
     <List
         filters={filters}
         sort={{ field: 'created_at', order: 'DESC' }}
+        actions={<CustomListActions
+            formatter={formatadorDeLares}
+            nomeArquivo="export_lares"
+        />}
     >
         <DataTable rowClick="edit">
             <DataTable.Col source="created_at" label="Criação">
@@ -77,20 +103,20 @@ export const LarTempList = () => (
                 <FunctionField
                     render={(record) => {
                         const parts = [
-                            record.endereco.logradouro,
-                            record.endereco.numero,
-                            record.endereco.bairro,
-                            record.endereco.cidade,
-                            record.endereco.uf
+                            record.endereco?.logradouro,
+                            record.endereco?.numero,
+                            record.endereco?.bairro,
+                            record.endereco?.cidade,
+                            record.endereco?.uf
                         ];
-                        
+
                         // Filtra partes vazias (null, undefined, "") e junta com vírgula
                         const address = parts.filter(part => !!part).join(', ');
                         return address || 'N/A';
                     }}
                 />
             </DataTable.Col>
-            
+
             <DataTable.Col label="Situação" >
                 <FunctionField
                     render={(record) => {

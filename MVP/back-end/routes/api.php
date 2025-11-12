@@ -20,6 +20,7 @@ use App\Http\Controllers\IntegracaoController;
 use App\Http\Controllers\AdocaoController;
 use App\Http\Controllers\MatchAfinidadeController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\RelatorioController;
 
 /**
  * ROTAS PÚBLICAS
@@ -128,6 +129,12 @@ Route::middleware(['jwt.auth'])->group(function () {
             Route::get('/', [TrashController::class, 'index']); // /trash/{modelName}
             Route::post('/{id}/restore', [TrashController::class, 'restore']); // /trash/{modelName}/{id}/restore
             Route::delete('/{id}/force-delete', [TrashController::class, 'forceDelete']); // /trash/{modelName}/{id}/force-delete
+        });
+
+        Route::prefix('relatorios')->group(function () {
+            Route::get('/adocoes', [RelatorioController::class, 'adocoes']);
+            Route::get('/usuarios', [RelatorioController::class, 'usuarios']);
+            Route::get('/pets', [RelatorioController::class, 'pets']);
         });
     });
 });

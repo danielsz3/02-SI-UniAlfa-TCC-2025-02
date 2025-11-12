@@ -20,6 +20,53 @@ export const i18nProvider = polyglotI18nProvider(locale => messages[locale], 'pt
 const baseTheme = deepmerge(defaultTheme, {
 
     components: {
+        MuiCssBaseline: {
+            styleOverrides: {
+                '*::-webkit-scrollbar': {
+                    width: '8px',
+                    height: '8px',
+                },
+                '*::-webkit-scrollbar-track': {
+                    background: '#f0f0f0',
+                    borderRadius: '4px',
+                },
+                '*::-webkit-scrollbar-thumb': {
+                    background: '#337ab7',
+                    borderRadius: '4px',
+                    border: '2px solid #f0f0f0',
+                },
+                '*::-webkit-scrollbar-thumb:hover': {
+                    background: '#23527c', 
+                },
+
+                '*': {
+                    scrollbarWidth: 'thin',
+                    scrollbarColor: '#337ab7 #f0f0f0',
+                },
+
+                body: {
+                    scrollbarWidth: 'thin',
+                    scrollbarColor: '#337ab7 #f0f0f0',
+                    '&::-webkit-scrollbar': {
+                        width: '8px',
+                        height: '8px',
+                    },
+                    '&::-webkit-scrollbar-track': {
+                        background: '#f0f0f0',
+                        borderRadius: '4px',
+                    },
+                    '&::-webkit-scrollbar-thumb': {
+                        background: '#337ab7',
+                        borderRadius: '4px',
+                        border: '2px solid #f0f0f0',
+                    },
+                    '&::-webkit-scrollbar-thumb:hover': {
+                        background: '#23527c',
+                    },
+                }
+            },
+        },
+
         MuiTextField: {
             defaultProps: {
                 variant: 'outlined' as const,

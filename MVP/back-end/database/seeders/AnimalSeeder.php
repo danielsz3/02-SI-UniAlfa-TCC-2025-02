@@ -40,6 +40,8 @@ class AnimalSeeder extends Seeder
                 'deleted_at' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
+                "lar_temporario_id" => $faker->numberBetween(1, 10),
+                "fica_usuario" => $faker->boolean(50) ? 1 : 0
             ]);
 
             DB::table('imagens_animais')->insert([

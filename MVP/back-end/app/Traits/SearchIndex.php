@@ -42,8 +42,13 @@ trait SearchIndex
 
                 if (in_array($field, $likeFields)) {
                     $query->where($field, 'like', '%' . $value . '%');
+                
                 } else {
-                    $query->where($field, $value);
+                    if (is_array($value)) {
+                        $query->whereIn($field, $value);
+                    } else {
+                        $query->where($field, $value);
+                    }
                 }
             }
 

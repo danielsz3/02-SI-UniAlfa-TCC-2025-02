@@ -916,3 +916,55 @@
 #55 C:\\Users\\joaox\\OneDrive\\Área de Trabalho\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\resources\\server.php(23): require_once('C:\\\\Users\\\\joaox\\\\...')
 #56 {main}
 ","payload":{"id":54,"usuario_id":51,"animal_id":46,"status":"aprovado","qtd_pessoas_casa":"sozinho","possui_filhos":true,"sobre_rotina":["home_office","muitas_visitas"],"acesso_rua_janelas":"janelas_sem_telas","acesso_rua_portoes_muros":"serao_adaptados","renda_familiar":"outro","deleted_at":null,"created_at":"2025-11-12T14:56:16.000000Z","updated_at":"2025-11-12T14:56:16.000000Z","usuario":{"id":51,"nome":"Admin","email":"admin@admin.com","cpf":"00000000000","data_nascimento":"2000-01-01T00:00:00.000000Z","telefone":"11999999999","role":"admin","imagem":null,"deleted_at":null,"created_at":"2025-11-09T04:09:39.000000Z","updated_at":"2025-11-09T04:09:39.000000Z"},"animal":{"id":46,"nome":"Mariane","sexo":"femea","data_nascimento":"1984-03-21T00:00:00.000000Z","castrado":0,"vale_castracao":0,"descricao":"Nihil dignissimos omnis debitis totam rerum qui. Facere tenetur eaque sit cum aspernatur id dolor voluptatem. Soluta ipsa a dolor.","situacao":"disponivel","tipo_animal":"outro","nivel_energia":"alta","tamanho":"medio","tempo_necessario":"pouco_tempo","ambiente_ideal":"area_pequena","usuario_id":8,"lar_temporario_id":null,"deleted_at":null,"created_at":"2025-11-09T04:09:40.000000Z","updated_at":"2025-11-09T04:09:40.000000Z","imagens":[{"id":46,"animal_id":46,"caminho":"animais/animal-01.jpg","nome_original":null,"width":null,"height":null,"deleted_at":null,"created_at":"2025-11-09T04:09:40.000000Z","updated_at":"2025-11-09T04:09:40.000000Z"}]}}} 
+[2025-11-12 22:21:00] local.ERROR: Class "Barryvdh\DomPDF\ServiceProvider" not found {"exception":"[object] (Error(code: 0): Class \"Barryvdh\\DomPDF\\ServiceProvider\" not found at C:\\TCC\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Application.php:961)
+[stacktrace]
+#0 C:\\TCC\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Application.php(893): Illuminate\\Foundation\\Application->resolveProvider('Barryvdh\\\\DomPDF...')
+#1 C:\\TCC\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\ProviderRepository.php(74): Illuminate\\Foundation\\Application->register('Barryvdh\\\\DomPDF...')
+#2 C:\\TCC\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Application.php(871): Illuminate\\Foundation\\ProviderRepository->load(Array)
+#3 C:\\TCC\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Bootstrap\\RegisterProviders.php(37): Illuminate\\Foundation\\Application->registerConfiguredProviders()
+#4 C:\\TCC\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Application.php(342): Illuminate\\Foundation\\Bootstrap\\RegisterProviders->bootstrap(Object(Illuminate\\Foundation\\Application))
+#5 C:\\TCC\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Console\\Kernel.php(473): Illuminate\\Foundation\\Application->bootstrapWith(Array)
+#6 C:\\TCC\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Console\\Kernel.php(195): Illuminate\\Foundation\\Console\\Kernel->bootstrap()
+#7 C:\\TCC\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Application.php(1235): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#8 C:\\TCC\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\artisan(16): Illuminate\\Foundation\\Application->handleCommand(Object(Symfony\\Component\\Console\\Input\\ArgvInput))
+#9 {main}
+"} 
+[2025-11-12 22:41:00] local.ERROR: Class "Barryvdh\DomPDF\ServiceProvider" not found {"exception":"[object] (Error(code: 0): Class \"Barryvdh\\DomPDF\\ServiceProvider\" not found at C:\\TCC\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Application.php:961)
+[stacktrace]
+#0 C:\\TCC\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Application.php(893): Illuminate\\Foundation\\Application->resolveProvider('Barryvdh\\\\DomPDF...')
+#1 C:\\TCC\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\ProviderRepository.php(74): Illuminate\\Foundation\\Application->register('Barryvdh\\\\DomPDF...')
+#2 C:\\TCC\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Application.php(871): Illuminate\\Foundation\\ProviderRepository->load(Array)
+#3 C:\\TCC\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Bootstrap\\RegisterProviders.php(37): Illuminate\\Foundation\\Application->registerConfiguredProviders()
+#4 C:\\TCC\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Application.php(342): Illuminate\\Foundation\\Bootstrap\\RegisterProviders->bootstrap(Object(Illuminate\\Foundation\\Application))
+#5 C:\\TCC\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Console\\Kernel.php(473): Illuminate\\Foundation\\Application->bootstrapWith(Array)
+#6 C:\\TCC\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Console\\Kernel.php(195): Illuminate\\Foundation\\Console\\Kernel->bootstrap()
+#7 C:\\TCC\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Application.php(1235): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#8 C:\\TCC\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\artisan(16): Illuminate\\Foundation\\Application->handleCommand(Object(Symfony\\Component\\Console\\Input\\ArgvInput))
+#9 {main}
+"} 
+[2025-11-13 02:41:30] local.ERROR: Class "Barryvdh\DomPDF\ServiceProvider" not found {"exception":"[object] (Error(code: 0): Class \"Barryvdh\\DomPDF\\ServiceProvider\" not found at C:\\TCC\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\ProviderRepository.php:205)
+[stacktrace]
+#0 C:\\TCC\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\ProviderRepository.php(141): Illuminate\\Foundation\\ProviderRepository->createProvider('Barryvdh\\\\DomPDF...')
+#1 C:\\TCC\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\ProviderRepository.php(60): Illuminate\\Foundation\\ProviderRepository->compileManifest(Array)
+#2 C:\\TCC\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Application.php(871): Illuminate\\Foundation\\ProviderRepository->load(Array)
+#3 C:\\TCC\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Bootstrap\\RegisterProviders.php(37): Illuminate\\Foundation\\Application->registerConfiguredProviders()
+#4 C:\\TCC\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Application.php(342): Illuminate\\Foundation\\Bootstrap\\RegisterProviders->bootstrap(Object(Illuminate\\Foundation\\Application))
+#5 C:\\TCC\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Console\\Kernel.php(473): Illuminate\\Foundation\\Application->bootstrapWith(Array)
+#6 C:\\TCC\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Console\\Kernel.php(195): Illuminate\\Foundation\\Console\\Kernel->bootstrap()
+#7 C:\\TCC\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Application.php(1235): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#8 C:\\TCC\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\artisan(16): Illuminate\\Foundation\\Application->handleCommand(Object(Symfony\\Component\\Console\\Input\\ArgvInput))
+#9 {main}
+"} 
+[2025-11-13 02:43:15] local.ERROR: Class "Barryvdh\DomPDF\ServiceProvider" not found {"exception":"[object] (Error(code: 0): Class \"Barryvdh\\DomPDF\\ServiceProvider\" not found at C:\\TCC\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\ProviderRepository.php:205)
+[stacktrace]
+#0 C:\\TCC\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\ProviderRepository.php(141): Illuminate\\Foundation\\ProviderRepository->createProvider('Barryvdh\\\\DomPDF...')
+#1 C:\\TCC\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\ProviderRepository.php(60): Illuminate\\Foundation\\ProviderRepository->compileManifest(Array)
+#2 C:\\TCC\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Application.php(871): Illuminate\\Foundation\\ProviderRepository->load(Array)
+#3 C:\\TCC\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Bootstrap\\RegisterProviders.php(37): Illuminate\\Foundation\\Application->registerConfiguredProviders()
+#4 C:\\TCC\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Application.php(342): Illuminate\\Foundation\\Bootstrap\\RegisterProviders->bootstrap(Object(Illuminate\\Foundation\\Application))
+#5 C:\\TCC\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Console\\Kernel.php(473): Illuminate\\Foundation\\Application->bootstrapWith(Array)
+#6 C:\\TCC\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Console\\Kernel.php(195): Illuminate\\Foundation\\Console\\Kernel->bootstrap()
+#7 C:\\TCC\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Application.php(1235): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#8 C:\\TCC\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\artisan(16): Illuminate\\Foundation\\Application->handleCommand(Object(Symfony\\Component\\Console\\Input\\ArgvInput))
+#9 {main}
+"} 

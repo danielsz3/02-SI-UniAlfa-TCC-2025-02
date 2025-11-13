@@ -11,10 +11,12 @@ import {
     TopToolbar,
     EditButton,
     ListButton,
+    Link,
 } from "react-admin";
-import { Card, CardContent, Typography, Box, Grid, Dialog, DialogContent, IconButton } from "@mui/material";
+import { Card, CardContent, Typography, Box, Grid, Dialog, DialogContent, IconButton, Button } from "@mui/material";
 import { FaEye } from "react-icons/fa";
 import { Key, useState } from "react";
+import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import CloseIcon from '@mui/icons-material/Close';
 
 const CastracaoInfo = () => {
@@ -50,18 +52,32 @@ const Aside = () => {
             {/* --- Adoções Relacionadas --- */}
             <Card sx={{ px: 0 }}>
                 <CardContent sx={{ px: 0 }}>
-                    <Typography variant="body1" sx={{ px: 2 }}>
-                        Adoções Relacionadas
-                    </Typography>
-
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Typography variant="body1" sx={{ px: 2 }}>
+                            Adoções Relacionadas
+                        </Typography>
+                        <Button
+                            variant="outlined"
+                            size="small"
+                            sx={{ mr: 2 }}
+                            endIcon={<NavigateNextIcon />}
+                        >
+                            <Link
+                                to={`/adocoes?filter=${encodeURIComponent(JSON.stringify({ "animal_id": record.id }))}`}
+                                sx={{ textDecoration: 'none', color: 'primary.main' }}
+                            >
+                                Ver todas
+                            </Link>
+                        </Button>
+                    </Box>
                     <ReferenceManyField
                         reference="adocoes"
                         target="animal_id"
                         sort={{ field: "created_at", order: "DESC" }}
-                        perPage={5}
+                        perPage={10}
                     >
                         <SimpleList
-                            rightIcon={(record) => <FaEye size={18} key={record} />}
+                            rightIcon={() => <FaEye size={18} style={{ marginTop: '0.5rem', marginLeft: '2rem', color: '#337ab7' }} />}
                             leftAvatar={(record) =>
                                 record.usuario?.imagem
                                     ? import.meta.env.VITE_API_URL + '/imagens/' + record.usuario.imagem
@@ -179,8 +195,8 @@ const AnimalShow = () => (
         title="Detalhes do Animal"
         actions={<AnimalShowActions />}
         sx={{
-            width: { xs: '100%', sm: 600, md: 800 },            
-            margin: { sm: 0, md: '0 auto' }, mt: 2,
+            width: { xs: '100%', md: 800 },
+            margin: '0 auto',
             '& .RaShow-card': {
                 boxShadow: 'none',
             },

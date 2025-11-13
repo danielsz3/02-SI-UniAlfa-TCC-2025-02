@@ -98,8 +98,8 @@ const MenuExportacao = ({ formatter, nomeArquivo }: MenuExportacaoProps) => {
                 open={open}
                 onClose={handleClose}
             >
-                <MenuItem onClick={handleExportXLSX}>Como XLSX (Excel)</MenuItem>
-                <MenuItem onClick={handleExportPDF}>Como PDF</MenuItem>
+                <MenuItem onClick={handleExportXLSX}>XLSX (Excel)</MenuItem>
+                <MenuItem onClick={handleExportPDF}>PDF</MenuItem>
             </Menu>
         </>
     );

@@ -56,7 +56,6 @@ return [
         /*
         * Third-Party Service Providers...
         */
-        Barryvdh\DomPDF\ServiceProvider::class,
         Laravel\Sanctum\SanctumServiceProvider::class,
     ],
 

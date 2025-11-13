@@ -1,4 +1,4 @@
-import { Box, Card, CardContent, Dialog, DialogContent, Grid, IconButton, Theme, Typography } from '@mui/material';
+import { Box, Button, Card, CardContent, Dialog, DialogContent, Grid, IconButton, Theme, Typography } from '@mui/material';
 import {
     Show,
     TabbedShowLayout,
@@ -16,14 +16,15 @@ import {
     useRecordContext,
     ReferenceManyField,
     SimpleList,
-    FunctionField
+    FunctionField,
+    Link
 } from 'react-admin';
 import { FaEye } from 'react-icons/fa';
 import { chipTipos, Situacao, tamanhos } from '../animais/AnimalList';
 import { formatarDiferencaData } from "../../utils/formatDate";
 import CloseIcon from '@mui/icons-material/Close';
 import { useState } from 'react';
-
+import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 
 /**
  * Define as ações que aparecem no topo da página de visualização.
@@ -51,19 +52,34 @@ const Aside = () => {
         >
             <Card sx={{ px: 0 }}>
                 <CardContent sx={{ px: 0 }}>
-                    <Typography variant="body1" sx={{ px: 2 }}>
-                        Animais neste Lar
-                    </Typography>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Typography variant="body1" sx={{ px: 2 }}>
+                            Animais neste Lar
+                        </Typography>
+                        <Button
+                            variant="outlined"
+                            size="small"
+                            sx={{ mr: 2 }}
+                            endIcon={<NavigateNextIcon />}
+                        >
+                            <Link
+                                to={`/animais?filter=${encodeURIComponent(JSON.stringify({ "lar_temporario_id": record.id }))}`}
+                                sx={{ textDecoration: 'none', color: 'primary.main' }}
+                            >
+                                Ver todos
+                            </Link>
+                        </Button>
+                    </Box>
 
                     <ReferenceManyField
                         reference="animais"
                         target="lar_temporario_id"
-                        filter={{ situacao: ["disponivel","em_adocao","em_aprovacao"]}}
+                        filter={{ situacao: ["disponivel", "em_adocao", "em_aprovacao"] }}
                         sort={{ field: "created_at", order: "DESC" }}
                         perPage={100}
                     >
                         <SimpleList
-                            rightIcon={() => <FaEye size={18} style={{ marginTop: '2rem', marginLeft: '1rem', color: '#337ab7' }} />}
+                            rightIcon={() => <FaEye size={18} style={{ marginTop: '2rem', marginLeft: '2rem', color: '#337ab7' }} />}
                             leftAvatar={(record) =>
                                 record.imagens.caminho ||
                                 import.meta.env.VITE_API_URL + '/imagens/' + record.imagens[0]?.caminho
@@ -223,7 +239,7 @@ const LarTempShow = (props: ShowProps) => {
                                                 source="Experiência"
                                                 label="Experiência com animais (opcional)"
                                             />
-                                            
+
                                             <FunctionField
                                                 label="Endereço"
                                                 render={(record) => {

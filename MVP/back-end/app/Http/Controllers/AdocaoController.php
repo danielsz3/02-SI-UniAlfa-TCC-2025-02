@@ -49,7 +49,11 @@ class AdocaoController extends Controller
         $validator = Validator::make($request->all(), [
             'animal_id' => 'required|exists:animais,id',
             'qtd_pessoas_casa' => ['required', Rule::in([
-                'sozinho', 'uma_pessoa', 'duas_pessoas', 'tres_pessoas', 'quatro_ou_mais'
+                'sozinho',
+                'uma_pessoa',
+                'duas_pessoas',
+                'tres_pessoas',
+                'quatro_ou_mais'
             ])],
             'possui_filhos' => 'required|boolean',
             'sobre_rotina' => 'required|array|min:1',
@@ -182,130 +186,143 @@ class AdocaoController extends Controller
     }
 
     public function update(Request $request, $id): JsonResponse
-{
-    try {
-        $adocao = Adocao::find($id);
+    {
+        try {
+            $adocao = Adocao::find($id);
 
-        if (!$adocao) {
-            return response()->json(['error' => 'Adoção não encontrada'], 404);
-        }
-
-        $validator = Validator::make($request->all(), [
-            'qtd_pessoas_casa' => ['sometimes', 'required', Rule::in([
-                'sozinho', 'uma_pessoa', 'duas_pessoas', 'tres_pessoas', 'quatro_ou_mais'
-            ])],
-            'possui_filhos' => 'sometimes|required|boolean',
-            'sobre_rotina' => 'sometimes|required|array|min:1',
-            'sobre_rotina.*' => [Rule::in([
-                'home_office',
-                'ninguem_fica_em_casa_dia',
-                'gente_em_casa_dia',
-                'muitas_visitas',
-                'eventos_frequentes',
-                'ruidos_vizinhanca'
-            ])],
-            'acesso_rua_janelas' => ['sometimes', 'required', Rule::in([
-                'janelas_telas_sem_acesso_rua',
-                'janelas_sem_telas',
-                'janelas_sem_telas_instalarei'
-            ])],
-            'acesso_rua_portoes_muros' => ['sometimes', 'required', Rule::in([
-                'impedem_escape',
-                'permitem_acesso_rua',
-                'serao_adaptados'
-            ])],
-            'renda_familiar' => ['sometimes', 'required', Rule::in(['acima_2_sm', 'abaixo_2_sm', 'outro'])],
-            'aceita_termos' => 'sometimes|required|accepted',
-            'status' => ['sometimes', 'required', Rule::in(['em_aprovacao', 'aprovado', 'negado'])],
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
-
-        return DB::transaction(function () use ($request, $adocao) {
-            $data = $request->only([
-                'qtd_pessoas_casa',
-                'possui_filhos',
-                'sobre_rotina',
-                'acesso_rua_janelas',
-                'acesso_rua_portoes_muros',
-                'renda_familiar',
-                'aceita_termos',
-                'status',
-            ]);
-
-            // Se sobre_rotina foi enviado, garantir que seja array
-            if (array_key_exists('sobre_rotina', $data)) {
-                $sobreRotina = $data['sobre_rotina'];
-                if (is_string($sobreRotina)) {
-                    $decoded = json_decode($sobreRotina, true);
-                    if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-                        $sobreRotina = $decoded;
-                    } else {
-                        $sobreRotina = array_values(array_filter(array_map('trim', explode(',', $sobreRotina))));
-                    }
-                }
-                if (!is_array($sobreRotina)) {
-                    $sobreRotina = (array) $sobreRotina;
-                }
-                $data['sobre_rotina'] = $sobreRotina;
+            if (!$adocao) {
+                return response()->json(['error' => 'Adoção não encontrada'], 404);
             }
 
-            $statusAnterior = $adocao->status;
-            $adocao->update($data);
+            $validator = Validator::make($request->all(), [
+                'qtd_pessoas_casa' => ['sometimes', 'required', Rule::in([
+                    'sozinho',
+                    'uma_pessoa',
+                    'duas_pessoas',
+                    'tres_pessoas',
+                    'quatro_ou_mais'
+                ])],
+                'possui_filhos' => 'sometimes|required|boolean',
+                'sobre_rotina' => 'sometimes|required|array|min:1',
+                'sobre_rotina.*' => [Rule::in([
+                    'home_office',
+                    'ninguem_fica_em_casa_dia',
+                    'gente_em_casa_dia',
+                    'muitas_visitas',
+                    'eventos_frequentes',
+                    'ruidos_vizinhanca'
+                ])],
+                'acesso_rua_janelas' => ['sometimes', 'required', Rule::in([
+                    'janelas_telas_sem_acesso_rua',
+                    'janelas_sem_telas',
+                    'janelas_sem_telas_instalarei'
+                ])],
+                'acesso_rua_portoes_muros' => ['sometimes', 'required', Rule::in([
+                    'impedem_escape',
+                    'permitem_acesso_rua',
+                    'serao_adaptados'
+                ])],
+                'renda_familiar' => ['sometimes', 'required', Rule::in(['acima_2_sm', 'abaixo_2_sm', 'outro'])],
+                'aceita_termos' => 'sometimes|required|accepted',
+                'status' => ['sometimes', 'required', Rule::in(['em_aprovacao', 'aprovado', 'negado'])],
+            ]);
 
-            // Se o status mudou, atualizar o match e o status do animal
-            if (isset($data['status']) && $data['status'] !== $statusAnterior) {
-                $match = MatchAfinidade::where('usuario_id', $adocao->usuario_id)
-                    ->where('animal_id', $adocao->animal_id)
-                    ->first();
+            if ($validator->fails()) {
+                return response()->json(['errors' => $validator->errors()], 422);
+            }
 
-                if ($match) {
-                    $match->status = $data['status'] === 'aprovado' ? 'escolhido' : ($data['status'] === 'negado' ? 'rejeitado' : $match->status);
-                    $match->observacao = "Status da adoção alterado para: " . $data['status'];
-                    $match->save();
+            return DB::transaction(function () use ($request, $adocao) {
+                $data = $request->only([
+                    'qtd_pessoas_casa',
+                    'possui_filhos',
+                    'sobre_rotina',
+                    'acesso_rua_janelas',
+                    'acesso_rua_portoes_muros',
+                    'renda_familiar',
+                    'aceita_termos',
+                    'status',
+                ]);
+
+                // Se sobre_rotina foi enviado, garantir que seja array
+                if (array_key_exists('sobre_rotina', $data)) {
+                    $sobreRotina = $data['sobre_rotina'];
+                    if (is_string($sobreRotina)) {
+                        $decoded = json_decode($sobreRotina, true);
+                        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                            $sobreRotina = $decoded;
+                        } else {
+                            $sobreRotina = array_values(array_filter(array_map('trim', explode(',', $sobreRotina))));
+                        }
+                    }
+                    if (!is_array($sobreRotina)) {
+                        $sobreRotina = (array) $sobreRotina;
+                    }
+                    $data['sobre_rotina'] = $sobreRotina;
                 }
 
-                $animal = $adocao->animal;
-                if ($animal) {
-                    if ($data['status'] === 'aprovado') {
-                        $animal->situacao = 'adotado';
-                        $animal->fica_usuario = true;
-                        $animal->save();
+                $statusAnterior = $adocao->status;
+                $adocao->update($data);
 
-                        // Cancelar outras adoções abertas para o mesmo animal feitas por outros usuários
-                        Adocao::where('animal_id', $animal->id)
-                            ->where('id', '!=', $adocao->id)
-                            ->whereIn('status', ['em_aprovacao', 'em_analise', 'em_adocao']) // ajuste conforme seus status "abertos"
-                            ->update(['status' => 'negado']);
-                    } elseif ($data['status'] === 'negado') {
-                        $existeAprovada = Adocao::where('animal_id', $animal->id)
-                            ->where('status', 'aprovado')
-                            ->exists();
+                // Se o status mudou, atualizar o match e o status do animal
+                if (isset($data['status']) && $data['status'] !== $statusAnterior) {
+                    $match = MatchAfinidade::where('usuario_id', $adocao->usuario_id)
+                        ->where('animal_id', $adocao->animal_id)
+                        ->first();
 
-                        if (!$existeAprovada) {
-                            $animal->situacao = 'disponivel';
+                    if ($match) {
+                        $match->status = $data['status'] === 'aprovado' ? 'escolhido' : ($data['status'] === 'negado' ? 'rejeitado' : $match->status);
+                        $match->observacao = "Status da adoção alterado para: " . $data['status'];
+                        $match->save();
+                    }
+
+                    $animal = $adocao->animal;
+                    if ($animal) {
+                        if ($data['status'] === 'aprovado') {
+                            $animal->situacao = 'adotado';
+                            $animal->fica_usuario = true;
                             $animal->save();
+
+                            // Cancelar outras adoções abertas para o mesmo animal feitas por outros usuários
+                            Adocao::where('animal_id', $animal->id)
+                                ->where('id', '!=', $adocao->id)
+                                ->whereIn('status', ['em_aprovacao', 'em_analise', 'em_adocao']) // ajuste conforme seus status "abertos"
+                                ->update(['status' => 'negado']);
+
+                            // Atualizar os matches dos outros usuários para 'rejeitado'
+                            MatchAfinidade::where('animal_id', $animal->id)
+                                ->where('usuario_id', '!=', $adocao->usuario_id)
+                                ->whereIn('status', ['em_adocao', 'escolhido']) // considere os status que precisam ser rejeitados
+                                ->update([
+                                    'status' => 'rejeitado',
+                                    'observacao' => 'Match rejeitado automaticamente após adoção aprovada para outro usuário.'
+                                ]);
+                        } elseif ($data['status'] === 'negado') {
+                            $existeAprovada = Adocao::where('animal_id', $animal->id)
+                                ->where('status', 'aprovado')
+                                ->exists();
+
+                            if (!$existeAprovada) {
+                                $animal->situacao = 'disponivel';
+                                $animal->save();
+                            }
                         }
                     }
                 }
-            }
 
-            return response()->json($adocao->fresh(['usuario', 'animal.imagens']), 200);
-        });
-    } catch (\Exception $e) {
-        Log::error('Erro ao atualizar adoção: ' . $e->getMessage(), [
-            'id' => $adocao->id,
-            'exception' => $e,
-            'payload' => $request->except(['aceita_termos'])
-        ]);
-        return response()->json([
-            'error' => 'Não foi possível atualizar a adoção',
-            'message' => $e->getMessage()
-        ], 500);
+                return response()->json($adocao->fresh(['usuario', 'animal.imagens']), 200);
+            });
+        } catch (\Exception $e) {
+            Log::error('Erro ao atualizar adoção: ' . $e->getMessage(), [
+                'id' => $adocao->id,
+                'exception' => $e,
+                'payload' => $request->except(['aceita_termos'])
+            ]);
+            return response()->json([
+                'error' => 'Não foi possível atualizar a adoção',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
-}
     public function destroy($id): JsonResponse
     {
         try {

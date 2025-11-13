@@ -320,6 +320,18 @@ const CategoryTable: FC<CategoryTableProps> = ({ data, title }) => {
         return totalReceitas - totalDespesas;
     }, [totalReceitas, totalDespesas]);
 
+    // --- Contagem de Transacoes por Categoria ---
+    const transactionsByCategory = useMemo(() => {
+        return sortedData.reduce((map, current) => {
+            const categoria = current.categoria;
+            const count = (map[categoria] || 0) + 1;
+            return {
+                ...map,
+                [categoria]: count,
+            };
+        }, {} as { [key: string]: number });
+    }, [sortedData]);
+
     // --- Fim da Lógica de Ordenação ---
 
     return (
@@ -391,6 +403,9 @@ const CategoryTable: FC<CategoryTableProps> = ({ data, title }) => {
                                     >
                                         {formatCurrency(row.resultado)}
                                     </TableCell>
+                                    <TableCell align="right" sx={{ fontWeight: 'bold' }}>
+                                        {transactionsByCategory[row.categoria] || 0}
+                                    </TableCell>
                                 </TableRow>
                             ))}
 
@@ -412,6 +427,9 @@ const CategoryTable: FC<CategoryTableProps> = ({ data, title }) => {
                                     }}
                                 >
                                     {formatCurrency(totalResultado)}
+                                </TableCell>
+                                <TableCell align="right" sx={{ fontWeight: 'bold' }}>
+                                    {transactionsByCategory.total || 0}
                                 </TableCell>
                             </TableRow>
 

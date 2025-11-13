@@ -12,11 +12,11 @@ import MenuUsuario from '../components/users/MenuUsuario';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import AutoGraphIcon from '@mui/icons-material/AutoGraph';
 
-const MinhaAppBar: React.FC<AppBarProps> = (props) => (
-    <AppBar {...props} userMenu={<MenuUsuario />} />
+const MinhaAppBar = (props: AppBarProps) => (
+    <AppBar {...props} userMenu={<MenuUsuario />}  />
 );
 
-const CustomMenu: React.FC<MenuProps> = (props) => (
+const CustomMenu = (props: MenuProps) => (
     <Menu {...props}>
         <MenuItemLink 
             to="/"
@@ -33,7 +33,7 @@ const CustomMenu: React.FC<MenuProps> = (props) => (
     </Menu>
 );
 
-const Layout: React.FC<LayoutProps> = (props) => (
+const Layout = (props: LayoutProps) => (
     <LayoutRa {...props} appBar={MinhaAppBar} menu={CustomMenu} />
 );
 

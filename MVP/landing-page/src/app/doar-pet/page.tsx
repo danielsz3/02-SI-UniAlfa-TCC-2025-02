@@ -23,6 +23,7 @@ export default function DoarPage() {
     tamanho: "",
     tempo_necessario: "",
     ambiente_ideal: "",
+    fica_usuario: "",
     imagens: [] as File[],
   })
   const [preview, setPreview] = useState<string[]>([])
@@ -82,58 +83,69 @@ export default function DoarPage() {
     setPreview(newFiles.map((file) => URL.createObjectURL(file)))
   }
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setImageError(null)
+const handleSubmit = async e => {
+  e.preventDefault()
+  setLoading(true)
 
-    try {
-      if (formData.imagens.length > MAX_FILES) {
-        throw new Error(`Máximo de ${MAX_FILES} imagens permitido.`)
-      }
-      for (const f of formData.imagens) {
-        if (!ACCEPTED_TYPES.includes(f.type)) throw new Error("Formato de imagem inválido.")
-        if (f.size > MAX_SIZE_BYTES) throw new Error("Cada imagem deve ter no máximo 10 MB.")
-      }
+  try {
+    const data = new FormData()
 
-      const data = new FormData()
-      data.append("nome", formData.nome)
-      data.append("sexo", formData.sexo)
-      data.append("tipo_animal", formData.tipo_animal)
-      data.append("status", "em_aprovacao")
-
-      if (formData.data_nascimento) data.append("data_nascimento", formData.data_nascimento)
-      if (formData.castrado) data.append("castrado", formData.castrado)
-      if (formData.vale_castracao) data.append("vale_castracao", formData.vale_castracao)
-      if (formData.descricao) data.append("descricao", formData.descricao)
-      if (formData.nivel_energia) data.append("nivel_energia", formData.nivel_energia)
-      if (formData.tamanho) data.append("tamanho", formData.tamanho)
-      if (formData.tempo_necessario) data.append("tempo_necessario", formData.tempo_necessario)
-      if (formData.ambiente_ideal) data.append("ambiente_ideal", formData.ambiente_ideal)
-
-      formData.imagens.forEach((img) => data.append("imagens[]", img, img.name))
-
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/animais`, {
-        method: "POST",
-        body: data,
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
-        },
-      })
-
-      if (!res.ok) {
-        const errorData = await res.json()
-        throw new Error(errorData.message || "Falha ao criar o animal")
-      }
-
-      router.push("/adotar")
-    } catch (error: any) {
-      console.error("Erro ao criar anúncio:", error)
-      setImageError(error.message || "Não foi possível criar o anúncio. Tente novamente.")
-    } finally {
-      setLoading(false)
+    const userId = getUserIdFromToken()
+    if (!userId) {
+      setImageError("Usuário não encontrado. Faça login novamente.")
+      return
     }
+
+    data.append("usuario_id", String(userId))
+    data.append("nome", formData.nome)
+    data.append("sexo", formData.sexo)
+    data.append("tipo_animal", formData.tipo_animal)
+
+    if (formData.data_nascimento) data.append("data_nascimento", formData.data_nascimento)
+    if (formData.castrado) data.append("castrado", formData.castrado)
+    if (formData.vale_castracao) data.append("vale_castracao", formData.vale_castracao)
+    if (formData.descricao) data.append("descricao", formData.descricao)
+    if (formData.nivel_energia) data.append("nivel_energia", formData.nivel_energia)
+    if (formData.tamanho) data.append("tamanho", formData.tamanho)
+    if (formData.tempo_necessario) data.append("tempo_necessario", formData.tempo_necessario)
+    if (formData.ambiente_ideal) data.append("ambiente_ideal", formData.ambiente_ideal)
+    if (formData.fica_usuario) data.append("fica_usuario", formData.fica_usuario)
+
+    formData.imagens.forEach(img => data.append("imagens[]", img))
+
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/animais`, {
+      method: "POST",
+      body: data,
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token") || ""}`
+      }
+    })
+
+    if (!res.ok) {
+      const errorData = await res.json()
+      throw new Error(errorData.message || "Falha ao criar o animal")
+    }
+
+    router.push("/adotar")
+  } catch (error) {
+    setImageError(error.message || "Não foi possível criar o anúncio.")
+  } finally {
+    setLoading(false)
   }
+}
+
+  function getUserIdFromToken() {
+  const token = localStorage.getItem("token")
+  if (!token) return null
+
+  try {
+    const payload = token.split(".")[1]
+    const decoded = JSON.parse(atob(payload))
+    return decoded.id || decoded.user_id || decoded.sub || null
+  } catch (error) {
+    return null
+  }
+}
 
   return (
     <>
@@ -249,6 +261,17 @@ export default function DoarPage() {
                     ]}
                     onValueChange={handleSelect("ambiente_ideal")}
                   />
+
+                  <FormSelect
+                    label="O animal pode ficar com você até ser adotado?"
+                    required
+                    options={[
+                      { value: "1", label: "Sim" },
+                      { value: "0", label: "Não" },
+                    ]}
+                    onValueChange={handleSelect("fica_usuario")}
+                  />
+
                 </div>
 
                 <div className="space-y-2">

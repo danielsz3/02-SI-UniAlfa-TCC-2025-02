@@ -8,7 +8,6 @@ import { GoogleOAuthProvider } from "@react-oauth/google"
 type User = any | null
 
 type AuthContextType = {
-  token: null
   user: User
   login: (userObj: any, token?: string, redirectTo?: string) => void
   logout: (redirectTo?: string) => void
@@ -27,34 +26,58 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User>(null)
   const router = useRouter()
 
+  const camposObrigatorios = ["cpf", "data_nascimento", "telefone"]
+
+  function verificarCadastroIncompleto(u: any) {
+    if (!u) return false
+    return camposObrigatorios.some(c => !u[c] || u[c] === "")
+  }
+
   useEffect(() => {
     try {
       const raw = localStorage.getItem("user")
-      setUser(raw ? JSON.parse(raw) : null)
+      const parsed = raw ? JSON.parse(raw) : null
+      setUser(parsed)
+
+      if (parsed && verificarCadastroIncompleto(parsed)) {
+        if (!window.location.pathname.startsWith("/perfil/editar")) {
+          router.replace("/perfil/editar")
+        }
+      }
     } catch {
       setUser(null)
     }
   }, [])
 
   useEffect(() => {
-    const onLogin = (e: Event) => {
-      const detail = (e as CustomEvent).detail
+    const onLogin = e => {
+      const detail = e.detail
       if (detail) {
         setUser(detail)
         localStorage.setItem("user", JSON.stringify(detail))
+
+        if (verificarCadastroIncompleto(detail)) {
+          router.replace("/perfil/editar")
+          return
+        }
+
+        router.replace("/")
       } else {
         const raw = localStorage.getItem("user")
         setUser(raw ? JSON.parse(raw) : null)
       }
     }
+
     const onLogout = () => {
       setUser(null)
       localStorage.removeItem("user")
       localStorage.removeItem("token")
+      router.replace("/login")
     }
 
     window.addEventListener("auth:login", onLogin)
     window.addEventListener("auth:logout", onLogout)
+
     return () => {
       window.removeEventListener("auth:login", onLogin)
       window.removeEventListener("auth:logout", onLogout)
@@ -64,7 +87,12 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   function refreshUserFromStorage() {
     try {
       const raw = localStorage.getItem("user")
-      setUser(raw ? JSON.parse(raw) : null)
+      const parsed = raw ? JSON.parse(raw) : null
+      setUser(parsed)
+
+      if (parsed && verificarCadastroIncompleto(parsed)) {
+        router.replace("/perfil/editar")
+      }
     } catch {
       setUser(null)
     }
@@ -74,7 +102,14 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     if (token) localStorage.setItem("token", token)
     if (userObj) localStorage.setItem("user", JSON.stringify(userObj))
     setUser(userObj ?? null)
+
     window.dispatchEvent(new CustomEvent("auth:login", { detail: userObj }))
+
+    if (verificarCadastroIncompleto(userObj)) {
+      router.replace("/perfil/editar")
+      return
+    }
+
     router.replace(redirectTo)
   }
 

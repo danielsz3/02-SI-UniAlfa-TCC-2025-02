@@ -12,7 +12,6 @@ class AdocaoSeeder extends Seeder
     {
         $faker = Faker::create();
 
-        // Arrays com os valores possíveis dos enums, baseado na sua tabela
         $statusOptions = ['em_aprovacao', 'aprovado'];
         $qtdPessoasCasaOptions = ['sozinho', 'uma_pessoa', 'duas_pessoas', 'tres_pessoas', 'quatro_ou_mais'];
         $acessoRuaJanelasOptions = [
@@ -28,10 +27,10 @@ class AdocaoSeeder extends Seeder
         $rendaFamiliarOptions = ['acima_2_sm', 'abaixo_2_sm', 'outro'];
 
         for ($i = 0; $i < 50; $i++) {
-            $animalId = $i + 1; // garante IDs únicos de 1 a 50
+            $animalId = $i + 1;
 
             DB::table('adocoes')->insert([
-                'usuario_id' => 1,
+                'usuario_id' => $faker->numberBetween(5, 15),
                 'animal_id' => $animalId,
                 'status' => $faker->randomElement($statusOptions),
                 'qtd_pessoas_casa' => $faker->randomElement($qtdPessoasCasaOptions),

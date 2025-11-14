@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Endereco;
 use Illuminate\Database\Seeder;
 use App\Models\Usuario;
 use App\Models\PreferenciaUsuario;
@@ -21,7 +22,7 @@ class UsuarioSeeder extends Seeder
         $estilosVida = ['baixa', 'moderada', 'alta'];
         $espacosCasa = ['area_pequena', 'area_media', 'area_externa'];
 
-        for ($i = 0; $i < 10; $i++) {
+        for ($i = 0; $i < 15; $i++) {
             $usuario = Usuario::create([
                 'nome' => $faker->name(),
                 'email' => $faker->unique()->safeEmail(),
@@ -30,6 +31,17 @@ class UsuarioSeeder extends Seeder
                 'cpf' => $faker->numerify('###########'), // 11 dígitos
                 'data_nascimento' => $faker->date('Y-m-d', '2005-01-01'), // usuários com no máximo 18 anos
                 'telefone' => $faker->numerify('11#########'), // formato telefone com DDD
+            ]);
+
+            Endereco::create([
+                'id_usuario' => $usuario->id,
+                'logradouro' => $faker->streetName(),
+                'cidade' => $faker->city(),
+                'uf' => 'BR',
+                'cep' => $faker->numerify('########'),
+                'bairro' => $faker->secondaryAddress(),
+                'complemento' => $faker->secondaryAddress(),
+                'numero' => $faker->buildingNumber(),
             ]);
 
             // 2. Cria as preferências para o usuário recém-criado

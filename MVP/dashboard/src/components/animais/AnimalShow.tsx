@@ -12,12 +12,21 @@ import {
     EditButton,
     ListButton,
     Link,
+    DeleteWithConfirmButton,
+    Loading,
 } from "react-admin";
 import { Card, CardContent, Typography, Box, Grid, Dialog, DialogContent, IconButton, Button } from "@mui/material";
 import { FaEye } from "react-icons/fa";
 import { Key, useState } from "react";
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import CloseIcon from '@mui/icons-material/Close';
+
+interface ImageDialogProps {
+    open: boolean;
+    onClose: () => void;
+    imageUrl: string;
+}
+
 
 const CastracaoInfo = () => {
     const record = useRecordContext();
@@ -45,8 +54,7 @@ const Aside = () => {
             flexDirection="column"
             gap={2}
             sx={{
-                width: { xs: '100%' },
-                maxWidth: { xs: '100%', md: 300 },
+                width: { xs: '100%', md: 370 },
             }}
         >
             {/* --- Adoções Relacionadas --- */}
@@ -118,9 +126,9 @@ const Aside = () => {
     );
 };
 
-const ImageDialog = ({ open, onClose, imageUrl }) => {
+const ImageDialog = ({ open, onClose, imageUrl }: ImageDialogProps) => {
     return (
-        <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+        <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
             <DialogContent sx={{ position: 'relative', p: 0 }}>
                 <IconButton
                     aria-label="close"
@@ -129,10 +137,10 @@ const ImageDialog = ({ open, onClose, imageUrl }) => {
                         position: 'absolute',
                         right: 8,
                         top: 8,
-                        color: (theme) => theme.palette.grey[500],
-                        backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                        color: (theme) => theme.palette.primary.contrastText,
+                        backgroundColor: 'primary.main',
                         '&:hover': {
-                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                            backgroundColor: 'primary.dark',
                         },
                     }}
                 >
@@ -168,7 +176,7 @@ const Gallery = ({ images }) => {
                             alt={img.title}
                             style={{
                                 width: '100%',
-                                height: '170px',
+                                height: '100%',
                                 objectFit: 'cover',
                                 borderRadius: 4,
                                 cursor: 'pointer',
@@ -184,7 +192,14 @@ const Gallery = ({ images }) => {
 };
 
 const AnimalShowActions = () => (
-    <TopToolbar>
+    <TopToolbar
+        sx={{
+            backgroundColor: '#fafafb !important',
+        }}
+    >
+        <DeleteWithConfirmButton 
+        successMessage="Animal excluído"
+        />
         <EditButton />
         <ListButton label="Voltar" />
     </TopToolbar>
@@ -202,7 +217,7 @@ const AnimalShow = () => (
             },
         }}
         render={({ record, error, isPending }) => {
-            if (isPending) return <p>Loading...</p>;
+            if (isPending) return <Loading />;
             if (error) return <p>Error: {error.message}</p>;
             if (!record) return <p>No record found</p>;
 

@@ -17,7 +17,9 @@ import {
     ReferenceManyField,
     SimpleList,
     FunctionField,
-    Link
+    Link,
+    useReference,
+    Loading
 } from 'react-admin';
 import { FaEye } from 'react-icons/fa';
 import { chipTipos, Situacao, tamanhos } from '../animais/AnimalList';
@@ -25,13 +27,24 @@ import { formatarDiferencaData } from "../../utils/formatDate";
 import CloseIcon from '@mui/icons-material/Close';
 import { useState } from 'react';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
+import InboxIcon from '@mui/icons-material/Inbox';
+
+interface ImageDialogProps {
+    open: boolean;
+    onClose: () => void;
+    imageUrl: string;
+}
 
 /**
  * Define as ações que aparecem no topo da página de visualização.
  * Inclui um botão para "Editar" e um para "Voltar" (que leva à lista).
  */
 const LarTempShowActions = () => (
-    <TopToolbar>
+    <TopToolbar
+        sx={{
+            backgroundColor: '#fafafb !important',
+        }}
+    >
         <EditButton />
         <ListButton label="Voltar" />
     </TopToolbar>
@@ -56,19 +69,20 @@ const Aside = () => {
                         <Typography variant="body1" sx={{ px: 2 }}>
                             Animais neste Lar
                         </Typography>
-                        <Button
-                            variant="outlined"
-                            size="small"
-                            sx={{ mr: 2 }}
-                            endIcon={<NavigateNextIcon />}
-                        >
-                            <Link
-                                to={`/animais?filter=${encodeURIComponent(JSON.stringify({ "lar_temporario_id": record.id }))}`}
-                                sx={{ textDecoration: 'none', color: 'primary.main' }}
+                        
+                            <Button
+                                variant="outlined"
+                                size="small"
+                                sx={{ mr: 2 }}
+                                endIcon={<NavigateNextIcon />}
                             >
-                                Ver todos
-                            </Link>
-                        </Button>
+                                <Link
+                                    to={`/animais?filter=${encodeURIComponent(JSON.stringify({ "lar_temporario_id": record.id }))}`}
+                                    sx={{ textDecoration: 'none', color: 'primary.main' }}
+                                >
+                                    Ver todos
+                                </Link>
+                            </Button>
                     </Box>
 
                     <ReferenceManyField
@@ -79,6 +93,14 @@ const Aside = () => {
                         perPage={100}
                     >
                         <SimpleList
+                            empty={
+                                <Box textAlign="center" m={4}>
+                                    <InboxIcon fontSize="large" color="disabled" />
+                                    <Typography variant="h6">
+                                        Nenhum item aqui ainda.
+                                    </Typography>
+                                </Box>
+                            }
                             rightIcon={() => <FaEye size={18} style={{ marginTop: '2rem', marginLeft: '2rem', color: '#337ab7' }} />}
                             leftAvatar={(record) =>
                                 record.imagens.caminho ||
@@ -98,9 +120,9 @@ const Aside = () => {
     );
 };
 
-const ImageDialog = ({ open, onClose, imageUrl }) => {
+const ImageDialog = ({ open, onClose, imageUrl }: ImageDialogProps) => {
     return (
-        <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+        <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
             <DialogContent sx={{ position: 'relative', p: 0 }}>
                 <IconButton
                     aria-label="close"
@@ -187,7 +209,7 @@ const LarTempShow = (props: ShowProps) => {
                 },
             }}
             render={({ record, error, isPending }) => {
-                if (isPending) return <p>Loading...</p>;
+                if (isPending) return <Loading/>;
                 if (error) return <p>Error: {error.message}</p>;
                 if (!record) return <p>No record found</p>;
 

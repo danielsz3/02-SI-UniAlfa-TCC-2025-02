@@ -18,7 +18,7 @@ const AnimalSuggestionOption = () => {
     if (!record) return null;
 
     return (
-        <Box component="span" sx={{ display: 'flex', alignItems: 'center' }}>
+        <Box component="span" sx={{ display: 'flex', alignItems: 'center', fontSize: 14 }}>
             <Avatar
                 src={`${import.meta.env.VITE_API_URL}/imagens/${record.imagens[0]?.caminho}`}
                 alt={record.nome}
@@ -33,7 +33,7 @@ const UserSuggestionOption = () => {
     const record = useRecordContext();
     if (!record) return null;
     return (
-        <Box component="span" sx={{ display: 'flex', alignItems: 'center' }}>
+        <Box component="span" sx={{ display: 'flex', alignItems: 'center', fontSize: 14 }}>
             <Avatar src={`${import.meta.env.VITE_API_URL}/imagens/${record.imagem}`} alt={record.nome} sx={{ mr: 1, width: 24, height: 24 }} />
             {record.nome}
         </Box>
@@ -54,17 +54,19 @@ const filters = [
         ]}
         alwaysOn
     />,
-    <ReferenceInput source="usuario_id" reference="usuarios" alwaysOn>
+    <ReferenceInput source="animal_id" reference="animais" alwaysOn>
         <AutocompleteInput
-            label="Adotante"
-            optionText={<UserSuggestionOption />}
+            sx={{ minWidth: 200 }}
+            label="Animal"
+            optionText={<AnimalSuggestionOption />}
             inputText={(record) => record.nome}
         />
     </ReferenceInput>,
-    <ReferenceInput source="animal_id" reference="animais" alwaysOn>
+    <ReferenceInput source="usuario_id" reference="usuarios" alwaysOn>
         <AutocompleteInput
-            label="Animal"
-            optionText={<AnimalSuggestionOption />}
+            sx={{ minWidth: 250 }}
+            label="Adotante"
+            optionText={<UserSuggestionOption />}
             inputText={(record) => record.nome}
         />
     </ReferenceInput>,
@@ -88,6 +90,7 @@ const Pag = (props: JSX.IntrinsicAttributes & PaginationProps) => (
 export const AdocaoList = () => (
     <List
         filters={filters}
+        sort={{ field: 'created_at', order: 'DESC' }}
         actions={<CustomListActions
             formatter={formatadorDeAdocoes}
             nomeArquivo="export_adocoes"
@@ -95,10 +98,7 @@ export const AdocaoList = () => (
         perPage={20}
         pagination={<Pag />}
     >
-        <DataTable rowClick="edit"
-            sort={{ field: 'created_at', order: 'DESC' }}
-            size='medium'
-        >
+        <DataTable rowClick="edit">
             <DataTable.Col source="id" />
             <DataTable.Col source="usuario" disableSort label="Adotante">
                 <FunctionField

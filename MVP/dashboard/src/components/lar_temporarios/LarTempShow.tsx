@@ -25,7 +25,7 @@ import { FaEye } from 'react-icons/fa';
 import { chipTipos, Situacao, tamanhos } from '../animais/AnimalList';
 import { formatarDiferencaData } from "../../utils/formatDate";
 import CloseIcon from '@mui/icons-material/Close';
-import { useState } from 'react';
+import { SetStateAction, useState } from 'react';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import InboxIcon from '@mui/icons-material/Inbox';
 
@@ -146,11 +146,11 @@ const ImageDialog = ({ open, onClose, imageUrl }: ImageDialogProps) => {
     );
 };
 
-const Gallery = ({ images }) => {
+const Gallery = ({ images }: { images: any[] }) => {
     const [openDialog, setOpenDialog] = useState(false);
     const [selectedImage, setSelectedImage] = useState('');
 
-    const handleImageClick = (imageUrl) => {
+    const handleImageClick = (imageUrl: SetStateAction<string>) => {
         setSelectedImage(imageUrl);
         setOpenDialog(true);
     };

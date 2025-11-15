@@ -57,6 +57,7 @@ export default function PreferencesForm({ onNext, onBack, defaultValues }: Prefe
       </h2>
 
       <div className="space-y-8">
+        {/* QUESTÃO 1 - Tamanho do Pet */}
         <div>
           <Label className="text-base font-semibold block mb-1">
             1. Que tamanho de pet você prefere?
@@ -70,19 +71,19 @@ export default function PreferencesForm({ onNext, onBack, defaultValues }: Prefe
             onValueChange={(v) => setForm({ ...form, tamanhoPet: v })}
             options={[
               {
-                value: "pequeno",
+                value: "pequeno", // ✅ OK - já está correto
                 id: "tamanho-pequeno",
                 title: "Pequeno",
                 description: "Pets que cabem no colo, fáceis de carregar (até 10kg).",
               },
               {
-                value: "medio",
+                value: "medio", // ✅ OK - já está correto
                 id: "tamanho-medio",
                 title: "Médio",
                 description: "Pets nem muito grandes nem muito pequenos (10-25kg).",
               },
               {
-                value: "grande",
+                value: "grande", // ✅ OK - já está correto
                 id: "tamanho-grande",
                 title: "Grande",
                 description: "Pets grandes que precisam de mais espaço (acima de 25kg).",
@@ -95,6 +96,7 @@ export default function PreferencesForm({ onNext, onBack, defaultValues }: Prefe
           )}
         </div>
 
+        {/* QUESTÃO 2 - Tempo Disponível */}
         <div>
           <Label className="text-base font-semibold block mb-1">
             2. Quanto tempo você tem disponível para cuidar do seu pet?
@@ -108,23 +110,23 @@ export default function PreferencesForm({ onNext, onBack, defaultValues }: Prefe
             onValueChange={(v) => setForm({ ...form, tempoCuidar: v })}
             options={[
               {
-                value: "pouco",
+                value: "pouco_tempo", // ✅ CORRIGIDO: era "pouco"
                 id: "tempo-pouco",
                 title: "Pouco",
-                description: "Prefiro pets mais independentes que não precisem de atenção.",
+                description: "Prefiro pets mais independentes que não precisem de atenção constante.",
               },
               {
-                value: "moderado",
+                value: "tempo_moderado", // ✅ CORRIGIDO: era "moderado"
                 id: "tempo-moderado",
                 title: "Moderado",
                 description:
                   "Posso dedicar algumas horas para passeios, brincadeiras e cuidados.",
               },
               {
-                value: "muito",
+                value: "muito_tempo", // ✅ CORRIGIDO: era "muito"
                 id: "tempo-muito",
                 title: "Muito",
-                description: "Tenho bastante tempo livre e gosto de me dedicar ao meu pet",
+                description: "Tenho bastante tempo livre e gosto de me dedicar ao meu pet.",
               },
             ]}
             columns={3}
@@ -134,6 +136,7 @@ export default function PreferencesForm({ onNext, onBack, defaultValues }: Prefe
           )}
         </div>
 
+        {/* QUESTÃO 3 - Estilo de Vida */}
         <div>
           <Label className="text-base font-semibold block mb-1">
             3. Qual dessas opções descreve melhor seu estilo de vida?
@@ -147,20 +150,20 @@ export default function PreferencesForm({ onNext, onBack, defaultValues }: Prefe
             onValueChange={(v) => setForm({ ...form, estiloVida: v })}
             options={[
               {
-                value: "tranquila",
+                value: "baixa", // ✅ CORRIGIDO: era "tranquila"
                 id: "vida-tranquila",
                 title: "Tranquila",
                 description: "Meu tempo livre é para descansar e recarregar as energias.",
               },
               {
-                value: "equilibrado",
+                value: "moderada", // ✅ CORRIGIDO: era "equilibrado"
                 id: "vida-equilibrado",
                 title: "Equilibrado",
                 description:
                   "Intercalo períodos de atividade com momentos de descanso.",
               },
               {
-                value: "acao",
+                value: "alta", // ✅ CORRIGIDO: era "acao"
                 id: "vida-acao",
                 title: "Sempre em ação",
                 description:
@@ -174,6 +177,7 @@ export default function PreferencesForm({ onNext, onBack, defaultValues }: Prefe
           )}
         </div>
 
+        {/* QUESTÃO 4 - Espaço da Casa */}
         <div>
           <Label className="text-base font-semibold block mb-1">
             4. Como é o espaço da sua casa?
@@ -185,24 +189,24 @@ export default function PreferencesForm({ onNext, onBack, defaultValues }: Prefe
             onValueChange={(v) => setForm({ ...form, espaco: v })}
             options={[
               {
-                value: "pequeno",
+                value: "area_pequena", // ✅ CORRIGIDO: era "pequeno"
                 id: "espaco-pequeno",
                 title: "Pequeno",
                 description: "Apartamento pequeno ou casa sem quintal/jardim.",
               },
               {
-                value: "area_interna",
+                value: "area_media", // ✅ CORRIGIDO: era "area_interna"
                 id: "espaco-interno",
                 title: "Área interna",
                 description:
-                  "Casa ou apartamento espaçoso, mas sem área externa própria",
+                  "Casa ou apartamento espaçoso, mas sem área externa própria.",
               },
               {
-                value: "quintal",
+                value: "area_externa", // ✅ CORRIGIDO: era "quintal"
                 id: "espaco-quintal",
                 title: "Quintal",
                 description:
-                  "Tenho quintal, jardim ou espaço ao ar livre para o pet brincar",
+                  "Tenho quintal, jardim ou espaço ao ar livre para o pet brincar.",
               },
             ]}
             columns={3}

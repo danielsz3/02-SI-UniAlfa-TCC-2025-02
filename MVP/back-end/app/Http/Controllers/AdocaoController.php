@@ -158,7 +158,7 @@ class AdocaoController extends Controller
             // Verifica se já existe um match ativo para este usuário e animal
             $match = MatchAfinidade::where('usuario_id', $user->id)
                 ->where('animal_id', $animal->id)
-                ->whereIn('status', ['em_adocao', 'escolhido', 'em_aprovacao']) // Ajuste os status conforme necessário
+                ->whereIn('status', ['em_adocao', 'escolhido', 'rejeitado', 'finalizado']) // Ajuste os status conforme necessário
                 ->first();
 
             if ($match) {
@@ -167,10 +167,11 @@ class AdocaoController extends Controller
                 $match->save();
 
                 // Atualiza ou cria a adoção com status 'em_adocao'
-                $adocao = Adocao::updateOrCreate(
-                    ['usuario_id' => $user->id, 'animal_id' => $animal->id],
+                $adocao = Adocao::create(
                     [
-                        'status' => 'em_adocao',
+                        'animal_id' => $animal->id,
+                        'usuario_id' => $user->id,
+                        'status' => 'em_aprovacao',
                         'qtd_pessoas_casa' => $request->qtd_pessoas_casa,
                         'possui_filhos' => $request->possui_filhos,
                         'sobre_rotina' => $request->input('sobre_rotina'),

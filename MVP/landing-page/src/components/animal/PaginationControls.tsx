@@ -4,6 +4,12 @@
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { ChevronsLeft } from 'lucide-react';
+import { ChevronsRight } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
+
+
 
 // --- Componente interno PageSizeSelect ---
 interface PageSizeSelectProps {
@@ -53,10 +59,14 @@ export function PaginationControls({
           <PageSizeSelect {...{ perPage, pageSizeOptions, onPageSizeChange }} />
         </div>
         <div className="ml-auto flex items-center gap-2">
-          <Button variant="outline" onClick={() => onPageChange(1)} disabled={currentPage <= 1 || loading}>Primeira</Button>
-          <Button variant="outline" onClick={() => onPageChange(Math.max(1, currentPage - 1))} disabled={currentPage <= 1 || loading}>Anterior</Button>
+          <Button variant="outline" onClick={() => onPageChange(1)} disabled={currentPage <= 1 || loading}>
+            <ChevronsLeft />
+          </Button>
+          <Button variant="outline" onClick={() => onPageChange(Math.max(1, currentPage - 1))} disabled={currentPage <= 1 || loading}>
+            <ChevronLeft />
+          </Button>
           <Badge variant="secondary">Página {currentPage}</Badge>
-          <Button variant="outline" onClick={() => onPageChange(currentPage + 1)} disabled={loading}>Próxima</Button>
+          <Button variant="outline" onClick={() => onPageChange(currentPage + 1)} disabled={loading}><ChevronRight /></Button>
         </div>
       </div>
     )
@@ -89,8 +99,8 @@ export function PaginationControls({
       <div className="flex-1 flex justify-center">
         {/* full pagination para telas sm+ */}
         <div className="hidden sm:flex items-center gap-2 flex-wrap">
-          <Button variant="outline" onClick={() => onPageChange(1)} disabled={current <= 1 || loading}>Primeira</Button>
-          <Button variant="outline" onClick={() => onPageChange(Math.max(1, current - 1))} disabled={current <= 1 || loading}>Anterior</Button>
+          <Button variant="outline" onClick={() => onPageChange(1)} disabled={current <= 1 || loading}><ChevronsLeft /></Button>
+          <Button variant="outline" onClick={() => onPageChange(Math.max(1, current - 1))} disabled={current <= 1 || loading}><ChevronLeft /></Button>
 
           {buttons.map((b, idx) =>
             b === "ellipsis" ? (
@@ -106,8 +116,10 @@ export function PaginationControls({
             )
           )}
 
-          <Button variant="outline" onClick={() => onPageChange(Math.min(total, current + 1))} disabled={current >= total || loading}>Próxima</Button>
-          <Button variant="outline" onClick={() => onPageChange(total)} disabled={current >= total || loading}>Última</Button>
+          <Button variant="outline" onClick={() => onPageChange(Math.min(total, current + 1))} disabled={current >= total || loading}><ChevronRight /></Button>
+          <Button variant="outline" onClick={() => onPageChange(total)} disabled={current >= total || loading}>
+            <ChevronsRight />
+          </Button>
         </div>
 
         {/* compact pagination para xs */}

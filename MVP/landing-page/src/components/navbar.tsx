@@ -23,11 +23,18 @@ import {
     X as CloseIcon,
     HeartHandshake,
     HandHeart,
+    PawPrint,
 } from "lucide-react"
 import Image from "next/image"
 import { useAuth } from "@/components/Providers"
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000/api"
+
+interface User {
+    nome?: string;
+    email?: string;
+    imagem?: string;
+}
 
 async function apiLogout(token) {
     try {
@@ -137,7 +144,7 @@ function CenterNav() {
     )
 }
 
-function RightActions({ loading, onLogout, user }) {
+function RightActions({ loading, onLogout, user }: { loading: boolean, onLogout: () => void, user: User }) {
     return (
         <div className="flex items-center gap-3">
             <ThemeToggle />
@@ -149,8 +156,8 @@ function RightActions({ loading, onLogout, user }) {
                     <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon">
                             <Avatar className="h-8 w-8">
-                                <AvatarImage src={user.avatarUrl || undefined} alt={user.name ?? "Usuário"} />
-                                <AvatarFallback>{user.name?.[0]?.toUpperCase() || "U"}</AvatarFallback>
+                                <AvatarImage src={`${API_BASE}/imagens/${user.imagem}`} alt={user.nome ?? "Usuário"} />
+                                <AvatarFallback>{user.nome?.[0]?.toUpperCase() || "U"}</AvatarFallback>
                             </Avatar>
                         </Button>
                     </DropdownMenuTrigger>
@@ -158,7 +165,7 @@ function RightActions({ loading, onLogout, user }) {
                     <DropdownMenuContent align="end" className="w-56">
                         <DropdownMenuLabel>
                             <div className="flex flex-col">
-                                <span className="font-medium truncate">{user.name ?? "Usuário"}</span>
+                                <span className="font-medium truncate">{user.nome ?? "Usuário"}</span>
                                 <span className="text-xs text-muted-foreground truncate">{user.email ?? ""}</span>
                             </div>
                         </DropdownMenuLabel>
@@ -166,9 +173,16 @@ function RightActions({ loading, onLogout, user }) {
                         <DropdownMenuSeparator />
 
                         <DropdownMenuItem asChild>
-                            <Link href="/perfil/editar" className="flex items-center gap-2">
+                            <Link href="/perfil/editar" className="flex items-center gap-2 cursor-pointer">
                                 <User className="h-4 w-4" />
                                 Perfil
+                            </Link>
+                        </DropdownMenuItem>
+
+                        <DropdownMenuItem asChild>
+                            <Link href="/painel-adotante" className="flex items-center gap-2 cursor-pointer">
+                                <PawPrint className="h-4 w-4" />
+                                Painel do adotante
                             </Link>
                         </DropdownMenuItem>
 
@@ -178,8 +192,8 @@ function RightActions({ loading, onLogout, user }) {
                             onClick={onLogout}
                             className="text-red-600 focus:text-red-600 cursor-pointer"
                         >
-                            <div className="flex items-center gap-2">
-                                <LogOut className="h-4 w-4" />
+                            <div className="flex items-center gap-2 hover:text-white size-full">
+                                <LogOut className="h-4 w-4 hover:text-red-500" />
                                 <span>Sair</span>
                             </div>
                         </DropdownMenuItem>

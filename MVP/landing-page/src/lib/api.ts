@@ -1,3 +1,5 @@
+import { toast } from "sonner"
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? ''
 
 function decodeToken(token: string): any {
@@ -26,10 +28,19 @@ function isTokenExpired(token: string): boolean {
 export function getToken(): string | null {
     if (typeof window === 'undefined') return null
     const token = localStorage.getItem('token')
-    if (token && isTokenExpired(token)) {
-        clearAuthData(false)
+
+    if (!token) {
+        clearAuthData(true)
+        toast.error('Voce precisa estar autenticado, faça o login.')
         return null
     }
+
+    if (isTokenExpired(token)) {
+        clearAuthData(true)
+        toast.error('Token expirado, faça o login novamente.')
+        return null
+    }
+
     return token
 }
 

@@ -6,6 +6,8 @@ import { Card } from '@/components/ui/card';
 import { calcularIdade } from '@/lib/animal-utils';
 import { AnimalDetailModal } from '@/components/animal/AnimalDetailModal';
 import { Animal } from '@/types';
+import { getToken } from '@/lib/api';
+import { Eye } from 'lucide-react';
 
 // --- Constantes e Tipos ---
 
@@ -29,7 +31,8 @@ type StatusFilter = 'em_adocao' | 'escolhido' | 'rejeitado' | 'finalizado';
 // --- Serviço de API Centralizado ---
 
 const apiService = {
-  getToken: () => (typeof window !== 'undefined' ? localStorage.getItem(TOKEN_KEY) : null),
+  
+  getToken: () =>getToken(),
 
   /**
    * Pega o ID do usuário logado diretamente do localStorage.
@@ -269,7 +272,7 @@ const MatchItemCard = React.memo(({ item, onSee }: MatchItemCardProps) => {
               size='icon'
               onClick={onSee}
             >
-              Ver
+              <Eye />
             </Button>
           </div>
         </div>

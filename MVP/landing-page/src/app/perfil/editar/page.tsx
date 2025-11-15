@@ -15,7 +15,7 @@ const legendClass = "text-sm text-gray-600 dark:text-gray-400 mb-4"
 const API = process.env.NEXT_PUBLIC_API_BASE_URL
 
 export default function EditarPerfilPage() {
-  const { user, setUser } = useAuth()
+  const { user } = useAuth()
   const router = useRouter()
 
   const [form, setForm] = useState({
@@ -129,7 +129,7 @@ export default function EditarPerfilPage() {
 
       if (res.ok) {
         const updated = await res.json()
-        setUser(updated)
+        // Update succeeded; navigate home (auth context can be refreshed elsewhere if needed)
         router.push("/")
       } else {
         const errorText = await res.text()

@@ -39,92 +39,153 @@ class AdocaoController extends Controller
         }
     }
 
-    public function store(Request $request): JsonResponse
-    {
-        $user = $request->user();
-        if (!$user) {
-            return response()->json(['error' => 'Usuário não autenticado'], 401);
-        }
+   public function store(Request $request): JsonResponse
+{
+    $user = $request->user();
+    if (!$user) {
+        return response()->json(['error' => 'Usuário não autenticado'], 401);
+    }
 
-        $validator = Validator::make($request->all(), [
-            'animal_id' => 'required|exists:animais,id',
-            'qtd_pessoas_casa' => ['required', Rule::in([
-                'sozinho',
-                'uma_pessoa',
-                'duas_pessoas',
-                'tres_pessoas',
-                'quatro_ou_mais'
-            ])],
-            'possui_filhos' => 'required|boolean',
-            'sobre_rotina' => 'required|array|min:1',
-            'sobre_rotina.*' => [Rule::in([
-                'home_office',
-                'ninguem_fica_em_casa_dia',
-                'gente_em_casa_dia',
-                'muitas_visitas',
-                'eventos_frequentes',
-                'ruidos_vizinhanca'
-            ])],
-            'acesso_rua_janelas' => ['required', Rule::in([
-                'janelas_telas_sem_acesso_rua',
-                'janelas_sem_telas',
-                'janelas_sem_telas_instalarei'
-            ])],
-            'acesso_rua_portoes_muros' => ['required', Rule::in([
-                'impedem_escape',
-                'permitem_acesso_rua',
-                'serao_adaptados'
-            ])],
-            'renda_familiar' => ['required', Rule::in(['acima_2_sm', 'abaixo_2_sm', 'outro'])],
-            'aceita_termos' => 'required|accepted',
-        ], [
-            'animal_id.required' => 'O animal é obrigatório.',
-            'animal_id.exists' => 'Animal não encontrado.',
-            'qtd_pessoas_casa.required' => 'Informe com quantas pessoas você mora.',
-            'possui_filhos.required' => 'Informe se possui filhos.',
-            'sobre_rotina.required' => 'Selecione ao menos uma opção sobre sua rotina.',
-            'acesso_rua_janelas.required' => 'Informe sobre o acesso à rua pelas janelas.',
-            'acesso_rua_portoes_muros.required' => 'Informe sobre portões e muros.',
-            'renda_familiar.required' => 'Informe a renda familiar.',
-            'aceita_termos.required' => 'Você precisa aceitar os termos.',
-        ]);
+    $validator = Validator::make($request->all(), [
+        'animal_id' => 'required|exists:animais,id',
+        'qtd_pessoas_casa' => ['required', Rule::in([
+            'sozinho',
+            'uma_pessoa',
+            'duas_pessoas',
+            'tres_pessoas',
+            'quatro_ou_mais'
+        ])],
+        'possui_filhos' => 'required|boolean',
+        'sobre_rotina' => 'required|array|min:1',
+        'sobre_rotina.*' => [Rule::in([
+            'home_office',
+            'ninguem_fica_em_casa_dia',
+            'gente_em_casa_dia',
+            'muitas_visitas',
+            'eventos_frequentes',
+            'ruidos_vizinhanca'
+        ])],
+        'acesso_rua_janelas' => ['required', Rule::in([
+            'janelas_telas_sem_acesso_rua',
+            'janelas_sem_telas',
+            'janelas_sem_telas_instalarei'
+        ])],
+        'acesso_rua_portoes_muros' => ['required', Rule::in([
+            'impedem_escape',
+            'permitem_acesso_rua',
+            'serao_adaptados'
+        ])],
+        'renda_familiar' => ['required', Rule::in(['acima_2_sm', 'abaixo_2_sm', 'outro'])],
+        'aceita_termos' => 'required|accepted',
+    ], [
+        'animal_id.required' => 'O animal é obrigatório.',
+        'animal_id.exists' => 'Animal não encontrado.',
+        'qtd_pessoas_casa.required' => 'Informe com quantas pessoas você mora.',
+        'possui_filhos.required' => 'Informe se possui filhos.',
+        'sobre_rotina.required' => 'Selecione ao menos uma opção sobre sua rotina.',
+        'acesso_rua_janelas.required' => 'Informe sobre o acesso à rua pelas janelas.',
+        'acesso_rua_portoes_muros.required' => 'Informe sobre portões e muros.',
+        'renda_familiar.required' => 'Informe a renda familiar.',
+        'aceita_termos.required' => 'Você precisa aceitar os termos.',
+    ]);
 
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
-
-        try {
-            $animal = Animal::find($request->animal_id);
-
-            if (!$animal) {
-                return response()->json(['error' => 'Animal não encontrado.'], 404);
-            }
-
-            // Bloquear adoção se animal já foi adotado
-            if ($animal->situacao === 'adotado') {
-                return response()->json([
-                    'error' => 'Este animal já foi adotado e não pode receber novas solicitações.'
-                ], 422);
-            }
-
-            // Bloquear o anunciante/dono de adotar o próprio animal
-            if ($animal->usuario && $animal->usuario->id == $user->id) {
-                return response()->json([
-                    'error' => 'Não é permitido adotar um animal que você mesmo anunciou.'
-                ], 422);
-            }
-
-            $existe = Adocao::where('usuario_id', $user->id)
-                ->where('animal_id', $request->animal_id)
+    // Validação extra para impedir duplicidade (inclui registros soft-deleted)
+    $validator->after(function ($validator) use ($request, $user) {
+        if ($request->filled('animal_id') && $user) {
+            $exists = Adocao::withTrashed()
+                ->where('usuario_id', $user->id)
+                ->where('animal_id', $request->input('animal_id'))
                 ->exists();
+            if ($exists) {
+                $validator->errors()->add('animal_id', 'Você já fez uma solicitação para este animal anteriormente.');
+            }
+        }
+    });
 
-            if ($existe) {
-                return response()->json([
-                    'error' => 'Já existe uma solicitação de adoção para este animal por este usuário.'
-                ], 422);
+    if ($validator->fails()) {
+        return response()->json(['errors' => $validator->errors()], 422);
+    }
+
+    try {
+        $animal = Animal::find($request->animal_id);
+
+        if (!$animal) {
+            return response()->json(['error' => 'Animal não encontrado.'], 404);
+        }
+
+        if ($animal->situacao === 'adotado') {
+            return response()->json([
+                'error' => 'Este animal já foi adotado e não pode receber novas solicitações.'
+            ], 422);
+        }
+
+        if ($animal->usuario && $animal->usuario->id == $user->id) {
+            return response()->json([
+                'error' => 'Não é permitido adotar um animal que você mesmo anunciou.'
+            ], 422);
+        }
+
+        return DB::transaction(function () use ($request, $user, $animal) {
+            // Revalida dentro da transação para evitar condição de corrida
+            $existingAdocao = Adocao::withTrashed()
+                ->where('usuario_id', $user->id)
+                ->where('animal_id', $animal->id)
+                ->first();
+
+            if ($existingAdocao) {
+                // Se existe e está deletado, restaura e atualiza; se existe ativo, retorna erro
+                if ($existingAdocao->trashed()) {
+                    $existingAdocao->restore();
+                    $existingAdocao->update([
+                        'status' => 'em_aprovacao',
+                        'qtd_pessoas_casa' => $request->qtd_pessoas_casa,
+                        'possui_filhos' => $request->possui_filhos,
+                        'sobre_rotina' => $request->input('sobre_rotina'),
+                        'acesso_rua_janelas' => $request->acesso_rua_janelas,
+                        'acesso_rua_portoes_muros' => $request->acesso_rua_portoes_muros,
+                        'renda_familiar' => $request->renda_familiar,
+                        'aceita_termos' => $request->aceita_termos,
+                    ]);
+                    $existingAdocao->load(['usuario', 'animal.imagens']);
+                    return response()->json($existingAdocao, 200);
+                } else {
+                    return response()->json([
+                        'error' => 'Você já fez uma solicitação para este animal anteriormente.'
+                    ], 422);
+                }
             }
 
-            return DB::transaction(function () use ($request, $user, $animal) {
+            // Verifica se já existe um match ativo para este usuário e animal
+            $match = MatchAfinidade::where('usuario_id', $user->id)
+                ->where('animal_id', $animal->id)
+                ->whereIn('status', ['em_adocao', 'escolhido', 'em_aprovacao']) // Ajuste os status conforme necessário
+                ->first();
+
+            if ($match) {
+                // Se já existe match ativo, atualiza status do match e da adoção para 'em_adocao'
+                $match->status = 'em_adocao';
+                $match->save();
+
+                // Atualiza ou cria a adoção com status 'em_adocao'
+                $adocao = Adocao::updateOrCreate(
+                    ['usuario_id' => $user->id, 'animal_id' => $animal->id],
+                    [
+                        'status' => 'em_adocao',
+                        'qtd_pessoas_casa' => $request->qtd_pessoas_casa,
+                        'possui_filhos' => $request->possui_filhos,
+                        'sobre_rotina' => $request->input('sobre_rotina'),
+                        'acesso_rua_janelas' => $request->acesso_rua_janelas,
+                        'acesso_rua_portoes_muros' => $request->acesso_rua_portoes_muros,
+                        'renda_familiar' => $request->renda_familiar,
+                        'aceita_termos' => $request->aceita_termos,
+                    ]
+                );
+
+                $adocao->load(['usuario', 'animal.imagens']);
+
+                return response()->json($adocao, 200);
+            } else {
+                // Se não existe match, cria a adoção com status 'em_aprovacao'
                 $sobreRotina = $request->input('sobre_rotina', []);
                 if (is_string($sobreRotina)) {
                     $decoded = json_decode($sobreRotina, true);
@@ -140,7 +201,7 @@ class AdocaoController extends Controller
 
                 $adocao = Adocao::create([
                     'usuario_id' => $user->id,
-                    'animal_id' => $request->animal_id,
+                    'animal_id' => $animal->id,
                     'status' => 'em_aprovacao',
                     'qtd_pessoas_casa' => $request->qtd_pessoas_casa,
                     'possui_filhos' => $request->possui_filhos,
@@ -151,24 +212,30 @@ class AdocaoController extends Controller
                     'aceita_termos' => $request->aceita_termos,
                 ]);
 
-                // NÃO altera o status do animal aqui para permitir múltiplas adoções simultâneas
+                // Cria o match com status 'em_adocao'
+                $match = MatchAfinidade::create([
+                    'usuario_id' => $user->id,
+                    'animal_id' => $animal->id,
+                    'status' => 'em_adocao',
+                    'observacao' => 'Match criado automaticamente após solicitação de adoção.',
+                ]);
 
                 $adocao->load(['usuario', 'animal.imagens']);
 
                 return response()->json($adocao, 201);
-            });
-        } catch (\Exception $e) {
-            Log::error('Erro ao criar adoção: ' . $e->getMessage(), [
-                'exception' => $e,
-                'payload' => $request->except(['aceita_termos'])
-            ]);
-            return response()->json([
-                'error' => 'Não foi possível criar a solicitação de adoção',
-                'message' => $e->getMessage()
-            ], 500);
-        }
+            }
+        });
+    } catch (\Exception $e) {
+        Log::error('Erro ao criar adoção: ' . $e->getMessage(), [
+            'exception' => $e,
+            'payload' => $request->except(['aceita_termos'])
+        ]);
+        return response()->json([
+            'error' => 'Não foi possível criar a solicitação de adoção',
+            'message' => $e->getMessage()
+        ], 500);
     }
-
+}
     public function show($id): JsonResponse
     {
         try {

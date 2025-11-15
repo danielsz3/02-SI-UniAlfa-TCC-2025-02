@@ -51,13 +51,13 @@ export default function AdotarPageClient() {
         const start = (page - 1) * effectivePer
         const end = page * effectivePer - 1
 
-        const filterObj: Record<string, string> = { situacao: "disponivel" }
-        if (tipoAnimal && tipoAnimal !== "all") filterObj.tipo_animal = tipoAnimal
-        if (sexo && sexo !== "all") filterObj.sexo = sexo
+        const filterObj: Record<string,string[]> = { situacao: ["disponivel","em_adocao"] }
+        if (tipoAnimal && tipoAnimal !== "all") filterObj.tipo_animal = [tipoAnimal]
+        if (sexo && sexo !== "all") filterObj.sexo = [sexo]
         if (ageRange !== "any") {
             const { from, to } = ageRangeToBirthdateRange(ageRange)
-            if (from) filterObj.data_nascimento_from = from
-            if (to) filterObj.data_nascimento_to = to
+            if (from) filterObj.data_nascimento_from = [from]
+            if (to) filterObj.data_nascimento_to = [to]
         }
 
         const params = new URLSearchParams()

@@ -131,7 +131,7 @@ export default function NewPasswordPage() {
   }
 
   return (
-    <NotToken>
+    
       <main className="flex min-h-screen items-center justify-center">
         <div className="w-full max-w-md rounded-lg bg-white dark:bg-slate-800 shadow-lg p-8">
           <h2 className="text-2xl font-bold mb-6 text-center text-slate-900 dark:text-white">
@@ -194,6 +194,5 @@ export default function NewPasswordPage() {
           )}
         </div>
       </main>
-    </NotToken>
   );
 }

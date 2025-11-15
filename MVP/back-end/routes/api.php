@@ -130,11 +130,5 @@ Route::middleware(['jwt.auth'])->group(function () {
             Route::post('/{id}/restore', [TrashController::class, 'restore']); // /trash/{modelName}/{id}/restore
             Route::delete('/{id}/force-delete', [TrashController::class, 'forceDelete']); // /trash/{modelName}/{id}/force-delete
         });
-
-        Route::prefix('relatorios')->group(function () {
-            Route::get('/adocoes', [RelatorioController::class, 'adocoes']);
-            Route::get('/usuarios', [RelatorioController::class, 'usuarios']);
-            Route::get('/pets', [RelatorioController::class, 'pets']);
-        });
     });
 });

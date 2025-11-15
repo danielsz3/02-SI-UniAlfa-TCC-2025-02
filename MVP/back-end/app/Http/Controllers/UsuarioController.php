@@ -70,10 +70,11 @@ class UsuarioController extends Controller
             'endereco.cidade' => 'nullable|string|max:100',
             'endereco.uf' => 'nullable|string|max:2',
 
+            // Validação das preferências conforme migration
             'preferencias' => 'nullable|array',
             'preferencias.tamanho_pet' => 'nullable|string|in:pequeno,medio,grande',
             'preferencias.tempo_disponivel' => 'nullable|string|in:pouco_tempo,tempo_moderado,muito_tempo',
-            'preferencias.estilo_vida' => 'nullable|string|in:vida_tranquila,ritmo_equilibrado,sempre_em_acao',
+            'preferencias.estilo_vida' => 'nullable|string|in:baixa,moderada,alta',
             'preferencias.espaco_casa' => 'nullable|string|in:area_pequena,area_media,area_externa',
         ], [
             'nome.required' => 'O nome é obrigatório.',
@@ -111,6 +112,12 @@ class UsuarioController extends Controller
 
             'endereco.array' => 'O campo endereço deve ser um objeto.',
             'preferencias.array' => 'O campo preferências deve ser um objeto.',
+
+            // Mensagens de validação das preferências
+            'preferencias.tamanho_pet.in' => 'O tamanho do pet deve ser: pequeno, medio ou grande.',
+            'preferencias.tempo_disponivel.in' => 'O tempo disponível deve ser: pouco_tempo, tempo_moderado ou muito_tempo.',
+            'preferencias.estilo_vida.in' => 'O estilo de vida deve ser: baixa, moderada ou alta.',
+            'preferencias.espaco_casa.in' => 'O espaço da casa deve ser: area_pequena, area_media ou area_externa.',
         ]);
 
         if ($validator->fails()) {
@@ -141,12 +148,14 @@ class UsuarioController extends Controller
                     'imagem' => $imagemPath,
                 ]);
 
+                // Criar endereço se fornecido
                 if (!empty($endereco) && is_array($endereco) && count(array_filter($endereco, fn($v) => $v !== null && $v !== '')) > 0) {
                     $enderecoData = $endereco;
                     $enderecoData['id_usuario'] = $usuario->id;
                     Endereco::create($enderecoData);
                 }
 
+                // Criar preferências se fornecidas
                 if (!empty($preferencias) && is_array($preferencias) && count(array_filter($preferencias, fn($v) => $v !== null && $v !== '')) > 0) {
                     $prefsData = $preferencias;
                     $prefsData['usuario_id'] = $usuario->id;
@@ -225,7 +234,7 @@ class UsuarioController extends Controller
                 'role' => 'nullable|string|in:user,admin',
 
                 // Validação da imagem no update
-                'imagem' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:5120',
+                'imagem' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:10240',
 
                 'endereco' => 'nullable|array',
                 'endereco.cep' => 'nullable|string|max:9',
@@ -236,15 +245,21 @@ class UsuarioController extends Controller
                 'endereco.cidade' => 'nullable|string|max:100',
                 'endereco.uf' => 'nullable|string|max:2',
 
+                // Validação das preferências conforme migration
                 'preferencias' => 'nullable|array',
                 'preferencias.tamanho_pet' => 'nullable|string|in:pequeno,medio,grande',
                 'preferencias.tempo_disponivel' => 'nullable|string|in:pouco_tempo,tempo_moderado,muito_tempo',
-                'preferencias.estilo_vida' => 'nullable|string|in:vida_tranquila,ritmo_equilibrado,sempre_em_acao',
+                'preferencias.estilo_vida' => 'nullable|string|in:baixa,moderada,alta',
                 'preferencias.espaco_casa' => 'nullable|string|in:area_pequena,area_media,area_externa',
             ], [
                 'imagem.image' => 'O arquivo deve ser uma imagem.',
                 'imagem.mimes' => 'A imagem deve ser do tipo: jpeg, jpg, png ou webp.',
-                'imagem.max' => 'A imagem deve ter no máximo 5MB.',
+                'imagem.max' => 'A imagem deve ter no máximo 10MB.',
+
+                'preferencias.tamanho_pet.in' => 'O tamanho do pet deve ser: pequeno, medio ou grande.',
+                'preferencias.tempo_disponivel.in' => 'O tempo disponível deve ser: pouco_tempo, tempo_moderado ou muito_tempo.',
+                'preferencias.estilo_vida.in' => 'O estilo de vida deve ser: baixa, moderada ou alta.',
+                'preferencias.espaco_casa.in' => 'O espaço da casa deve ser: area_pequena, area_media ou area_externa.',
             ]);
 
             if ($validator->fails()) {
@@ -255,6 +270,7 @@ class UsuarioController extends Controller
             $preferencias = is_array($request->input('preferencias')) ? $request->input('preferencias') : [];
 
             return DB::transaction(function () use ($request, $usuario, $endereco, $preferencias) {
+                // Prepara dados do usuário
                 $userData = $request->only([
                     'nome',
                     'email',
@@ -264,36 +280,44 @@ class UsuarioController extends Controller
                     'role'
                 ]);
 
+                // Hash da senha se fornecida
                 if ($request->filled('password')) {
                     $userData['password'] = Hash::make($request->password);
                 }
-                
-                $novoPathImagem = $this->processarCapaParaUpdate($request, $usuario);
-                if ($novoPathImagem !== null) {
-                    $usuario->imagem = $novoPathImagem;
+
+                // Processa upload de nova imagem
+                if ($request->hasFile('imagem')) {
+                    // Remove imagem antiga se existir
+                    if ($usuario->imagem && Storage::disk('public')->exists($usuario->imagem)) {
+                        Storage::disk('public')->delete($usuario->imagem);
+                    }
+
+                    // Faz upload da nova imagem
+                    $imagem = $request->file('imagem');
+                    $imagemNome = time() . '_' . uniqid() . '.' . $imagem->getClientOriginalExtension();
+                    $userData['imagem'] = $imagem->storeAs('usuarios', $imagemNome, 'public');
                 }
 
+                // Atualiza o usuário
                 $usuario->update($userData);
 
+                // Atualiza ou cria endereço
                 if (!empty($endereco) && is_array($endereco) && count(array_filter($endereco, fn($v) => $v !== null && $v !== '')) > 0) {
-                    $enderecoData = $endereco;
-
                     if ($usuario->endereco) {
-                        $usuario->endereco->update($enderecoData);
+                        $usuario->endereco->update($endereco);
                     } else {
-                        $enderecoData['id_usuario'] = $usuario->id;
-                        Endereco::create($enderecoData);
+                        $endereco['id_usuario'] = $usuario->id;
+                        Endereco::create($endereco);
                     }
                 }
 
+                // Atualiza ou cria preferências
                 if (!empty($preferencias) && is_array($preferencias) && count(array_filter($preferencias, fn($v) => $v !== null && $v !== '')) > 0) {
-                    $prefsData = $preferencias;
-
                     if ($usuario->preferencias) {
-                        $usuario->preferencias->update($prefsData);
+                        $usuario->preferencias->update($preferencias);
                     } else {
-                        $prefsData['usuario_id'] = $usuario->id;
-                        PreferenciaUsuario::create($prefsData);
+                        $preferencias['usuario_id'] = $usuario->id;
+                        PreferenciaUsuario::create($preferencias);
                     }
                 }
 

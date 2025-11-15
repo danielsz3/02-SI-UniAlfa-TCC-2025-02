@@ -6,6 +6,9 @@ import AffinityCarousel from '@/components/AffinityCarousel';
 import { X } from 'lucide-react'; // Ícone para o botão de fechar
 import Link from 'next/link';
 import Image from 'next/image';
+import { AnimalDetailModal } from '@/components/animal/AnimalDetailModal';
+import { Animal } from '@/types';
+import { getToken } from '@/lib/api';
 
 type User = {
   id: number | string;
@@ -15,16 +18,17 @@ export default function AffinityPage() {
   const router = useRouter();
   const [userId, setUserId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [selectedAnimal, setSelectedAnimal] = useState<Animal | null>(null)
 
   const handleClose = () => {
     router.push('/adotar');
   };
 
-  // Trava/Destrava o scroll (lógica não muda)
   useEffect(() => {
     document.body.style.overflow = 'hidden';
 
-    // Lógica do localStorage (não muda)
+    getToken()
+
     const userJsonString = localStorage.getItem('user')
     if (userJsonString) {
       try {
@@ -41,7 +45,6 @@ export default function AffinityPage() {
       setError('Erro: Usuário não autenticado.')
     }
 
-    // Função de limpeza
     return () => {
       document.body.style.overflow = ''
     };
@@ -64,17 +67,24 @@ export default function AffinityPage() {
         <X size={24} />
       </button>
 
-      {/* Use case: Parar propagação de clique */}
       <div onClick={(e) => e.stopPropagation()}>
         {error ? (
           <div className="text-white">{error}</div>
         ) : userId ? (
-          <AffinityCarousel userId={userId} />
+          <AffinityCarousel
+            userId={userId}
+            onAnimalClick={setSelectedAnimal}
+          />
         ) : (
-          // Use case: Estado de loading
           <div className="text-white">Carregando...</div>
         )}
       </div>
+
+      <AnimalDetailModal
+        buttonAdotar={false}
+        initialData={selectedAnimal}
+        onClose={() => setSelectedAnimal(null)}
+      />
 
     </div>
   );

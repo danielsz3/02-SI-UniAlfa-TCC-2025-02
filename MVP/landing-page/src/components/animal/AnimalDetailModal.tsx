@@ -83,8 +83,8 @@ export function AnimalDetailModal({ initialData, onClose, buttonAdotar }: Animal
         return (
             <div className="grid lg:grid-cols-2 grid-cols-1 gap-6 md:gap-8">
                 {/* Coluna 1: Imagem */}
-                <div className="rounded-lg overflow-hidden h-[30vh] sm:h-[55vh]">
-                    <ImageCarousel images={animal.imagens} alt={animal.nome} />
+                <div className="rounded-lg overflow-hidden  sm:h-full min-h-[55vh]">
+                    <ImageCarousel images={animal.imagens} alt={animal.nome}/>
                 </div>
 
                 {/* Coluna 2: Informações */}
@@ -93,8 +93,7 @@ export function AnimalDetailModal({ initialData, onClose, buttonAdotar }: Animal
                         <div className="flex items-center justify-between mb-2">
                             <DialogTitle className="text-4xl font-bold">{animal.nome}</DialogTitle>
                             <Badge
-                                variant="outline"
-                                className="capitalize bg-accent-foreground text-primary text-base px-3 py-1 shrink-0"
+                                className="capitalize text-base px-3 py-1 shrink-0"
                             >
                                 {animal.sexo}
                             </Badge>

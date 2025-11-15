@@ -37,7 +37,7 @@ export default function RadioCardGroup({ name, value, onValueChange, options, co
       {options.map(opt => (
         <div key={opt.value} className={cardClass(value === opt.value)}>
           <label htmlFor={opt.id} className="w-full h-full cursor-pointer flex flex-col gap-2">
-            <RadioGroupItem value={opt.value} id={opt.id} className="mb-1" />
+            <RadioGroupItem value={opt.value} id={opt.id} className="mb-1 hidden" />
             <span className="font-medium">{opt.title}</span>
             {opt.description && (
               <span className="text-xs text-muted-foreground">{opt.description}</span>

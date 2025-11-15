@@ -216,161 +216,161 @@ export default function LarTemporarioForm({
 
     return (
         <NotToken>
-        <main className="min-h-screen pt-24 bg-muted/30">
-            <div className="max-w-3xl mx-auto px-4">
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-2xl text-center font-bold">
-                            Formulário de Lar Temporário
-                        </CardTitle>
-                    </CardHeader>
+            <main className="min-h-screen md:py-24 py-8 px-4 bg-muted/30 dark:bg-muted flex items-center justify-center">
+                <div className="container max-w-2xl w-full">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-2xl text-center font-bold">
+                                Formulário de Lar Temporário
+                            </CardTitle>
+                        </CardHeader>
 
-                    <CardContent>
-                        <form onSubmit={handleSubmit} className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <FormInput
-                                    label="Nome"
-                                    name="nome"
-                                    value={nome}
-                                    onChange={handleChange}
-                                    required
-                                    maxLength={100}
-                                />
-
-                                <FormInput
-                                    label="Data de Nascimento"
-                                    name="data_nascimento"
-                                    type="date"
-                                    value={dataNascimento}
-                                    onChange={handleChange}
-                                />
-
-                                <FormInput
-                                    label="Telefone"
-                                    name="telefone"
-                                    value={telefone}
-                                    onChange={handleChange}
-                                    placeholder="(DDD) 9 xxxx-xxxx"
-                                />
-
-                            </div>
-
-                            <div className="space-y-4">
-                                <Label>Endereço</Label>
-
-                                <CepField
-                                    value={endereco.cep ?? ''}
-                                    onChange={(v: string) => setEndereco(prev => ({ ...prev, cep: v }))}
-                                    onAddress={(addr: any) => setEndereco(prev => ({
-                                        ...prev,
-                                        cep: addr.cep ?? prev.cep,
-                                        logradouro: addr.logradouro ?? prev.logradouro,
-                                        complemento: addr.complemento ?? prev.complemento,
-                                        numero: addr.numero ?? prev.numero,
-                                        bairro: addr.bairro ?? prev.bairro,
-                                        cidade: addr.cidade ?? prev.cidade,
-                                        uf: addr.estado ?? prev.uf,
-                                    }))}
-                                    error={errors['endereco.cep']?.[0] ?? undefined}
-                                />
-
-                                <TextField id="logradouro" name="logradouro" label="Logradouro" value={endereco.logradouro ?? ''} onChange={handleChange} required />
-                                <TextField id="complemento" name="complemento" label="Complemento" value={endereco.complemento ?? ''} onChange={handleChange} />
-                                <TextField id="numero" name="numero" label="Número" value={endereco.numero ?? ''} onChange={handleChange} required />
-                                <TextField id="bairro" name="bairro" label="Bairro" value={endereco.bairro ?? ''} onChange={handleChange} />
-                                <TextField id="cidade" name="cidade" label="Cidade" value={endereco.cidade ?? ''} onChange={handleChange} required />
-                                <TextField id="estado" name="estado" label="UF" value={endereco.uf ?? ''} onChange={handleChange} required maxLength={2} placeholder="PR" />
-                            </div>
-
-                            <div>
-                                <Label>Experiência com Animais</Label>
-                                <Textarea name="experiencia" value={experiencia} onChange={handleChange} rows={4} />
-                                {errors.experiencia && <p className="text-sm text-destructive mt-1">{errors.experiencia.join(', ')}</p>}
-                            </div>
-
-                            <div>
-                                <Label>Coloque imagens da sua residência</Label>
-
-                                {existingImages.length > 0 && (
-                                    <div className="flex flex-wrap gap-3 my-3">
-                                        {existingImages.map((img, idx) => {
-                                            const kept = !removedExistingFileNames.includes(filenameFromPath(img.caminho))
-                                            return (
-                                                <div key={idx} className="w-40 border rounded-md overflow-hidden">
-                                                    <img src={img.caminho} alt={img.nome_original ?? `img-${idx}`} className="w-full h-28 object-cover" />
-                                                    <div className="p-2 flex items-center justify-between">
-                                                        <span className="text-xs truncate">{img.nome_original ?? filenameFromPath(img.caminho)}</span>
-                                                        <Button type="button" onClick={() => toggleKeepExistingImage(img)} className={`text-xs ${kept ? 'bg-emerald-600' : 'bg-red-600'} px-2 py-1`}>
-                                                            {kept ? 'Manter' : 'Remover'}
-                                                        </Button>
-                                                    </div>
-                                                </div>
-                                            )
-                                        })}
-                                    </div>
-                                )}
-
-                                <div className="rounded-lg border border-dashed border-border bg-background/50 p-4">
-                                    <input
-                                        type="file"
-                                        accept="image/jpeg,image/png,image/jpg,image/webp"
-                                        multiple
-                                        onChange={e => handleFilesAdd(e.target.files)}
-                                        className="w-full text-sm text-muted-foreground file:border-0 file:bg-transparent file:text-primary cursor-pointer"
+                        <CardContent>
+                            <form onSubmit={handleSubmit} className="space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <FormInput
+                                        label="Nome"
+                                        name="nome"
+                                        value={nome}
+                                        onChange={handleChange}
+                                        required
+                                        maxLength={100}
                                     />
-                                    <p className="mt-2 text-sm text-muted-foreground">
-                                        Arraste ou selecione imagens (jpeg, png, webp) — até 10MB cada
-                                    </p>
 
-                                    {previews.length > 0 && (
-                                        <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
-                                            {previews.map((p, i) => (
-                                                <div key={i} className="relative rounded-md overflow-hidden border bg-muted">
-                                                    <img src={p.url} alt={p.name} className="w-32 h-32 object-cover" />
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => removeNewFile(i)}
-                                                        className="absolute -top-2 -right-2 inline-flex items-center justify-center rounded-full bg-destructive text-white w-6 h-6 text-xs shadow-md"
-                                                        title="Remover imagem"
-                                                    >
-                                                        ×
-                                                    </button>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
+                                    <FormInput
+                                        label="Data de Nascimento"
+                                        name="data_nascimento"
+                                        type="date"
+                                        value={dataNascimento}
+                                        onChange={handleChange}
+                                    />
+
+                                    <FormInput
+                                        label="Telefone"
+                                        name="telefone"
+                                        value={telefone}
+                                        onChange={handleChange}
+                                        placeholder="(DDD) 9 xxxx-xxxx"
+                                    />
+
                                 </div>
 
-                                {errors['imagens'] && <p className="text-sm text-destructive mt-2">{(errors['imagens'] as any).join?.(', ')}</p>}
-                            </div>
+                                <div className="space-y-4">
+                                    <Label>Endereço</Label>
 
-                            {errors.global && <div className="text-sm text-destructive">{errors.global.join(', ')}</div>}
+                                    <CepField
+                                        value={endereco.cep ?? ''}
+                                        onChange={(v: string) => setEndereco(prev => ({ ...prev, cep: v }))}
+                                        onAddress={(addr: any) => setEndereco(prev => ({
+                                            ...prev,
+                                            cep: addr.cep ?? prev.cep,
+                                            logradouro: addr.logradouro ?? prev.logradouro,
+                                            complemento: addr.complemento ?? prev.complemento,
+                                            numero: addr.numero ?? prev.numero,
+                                            bairro: addr.bairro ?? prev.bairro,
+                                            cidade: addr.cidade ?? prev.cidade,
+                                            uf: addr.estado ?? prev.uf,
+                                        }))}
+                                        error={errors['endereco.cep']?.[0] ?? undefined}
+                                    />
 
-                            <div className="flex gap-3">
-                                <Button type="submit" className="flex-1" disabled={submitting}>{submitting ? 'Salvando...' : initialData ? 'Atualizar' : 'Criar'}</Button>
-                                <Button variant="secondary" type="button" onClick={() => {
-                                    if (initialData) {
-                                        setNome(initialData.nome ?? '')
-                                        setDataNascimento(initialData.data_nascimento ?? '')
-                                        setTelefone(initialData.telefone ?? '')
-                                        setSituacao((initialData.situacao as any) ?? 'ativo')
-                                        setExperiencia(initialData.experiencia ?? '')
-                                        setEndereco(initialData.endereco ?? {})
-                                        setExistingImages(initialData.imagens ?? [])
-                                        setNewFiles([])
-                                        setRemovedExistingFileNames([])
-                                    } else {
-                                        setNome(''), setDataNascimento(''), setTelefone(''), setSituacao('inativo'), setExperiencia(''),
-                                            setEndereco({}), setExistingImages([]), setNewFiles([]), setRemovedExistingFileNames([])
-                                    }
-                                    setErrors({})
-                                }}>Cancelar</Button>
-                            </div>
-                        </form>
-                    </CardContent>
-                </Card>
-            </div>
-        </main>
+                                    <TextField id="logradouro" name="logradouro" label="Logradouro" value={endereco.logradouro ?? ''} onChange={handleChange} required />
+                                    <TextField id="complemento" name="complemento" label="Complemento" value={endereco.complemento ?? ''} onChange={handleChange} />
+                                    <TextField id="numero" name="numero" label="Número" value={endereco.numero ?? ''} onChange={handleChange} required />
+                                    <TextField id="bairro" name="bairro" label="Bairro" value={endereco.bairro ?? ''} onChange={handleChange} />
+                                    <TextField id="cidade" name="cidade" label="Cidade" value={endereco.cidade ?? ''} onChange={handleChange} required />
+                                    <TextField id="estado" name="estado" label="UF" value={endereco.uf ?? ''} onChange={handleChange} required maxLength={2} placeholder="PR" />
+                                </div>
+
+                                <div>
+                                    <Label>Experiência com Animais</Label>
+                                    <Textarea name="experiencia" value={experiencia} onChange={handleChange} rows={4} />
+                                    {errors.experiencia && <p className="text-sm text-destructive mt-1">{errors.experiencia.join(', ')}</p>}
+                                </div>
+
+                                <div>
+                                    <Label>Coloque imagens da sua residência</Label>
+
+                                    {existingImages.length > 0 && (
+                                        <div className="flex flex-wrap gap-3 my-3">
+                                            {existingImages.map((img, idx) => {
+                                                const kept = !removedExistingFileNames.includes(filenameFromPath(img.caminho))
+                                                return (
+                                                    <div key={idx} className="w-40 border rounded-md overflow-hidden">
+                                                        <img src={img.caminho} alt={img.nome_original ?? `img-${idx}`} className="w-full h-28 object-cover" />
+                                                        <div className="p-2 flex items-center justify-between">
+                                                            <span className="text-xs truncate">{img.nome_original ?? filenameFromPath(img.caminho)}</span>
+                                                            <Button type="button" onClick={() => toggleKeepExistingImage(img)} className={`text-xs ${kept ? 'bg-emerald-600' : 'bg-red-600'} px-2 py-1`}>
+                                                                {kept ? 'Manter' : 'Remover'}
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                )
+                                            })}
+                                        </div>
+                                    )}
+
+                                    <div className="rounded-lg border border-dashed border-border bg-background/50 p-4">
+                                        <input
+                                            type="file"
+                                            accept="image/jpeg,image/png,image/jpg,image/webp"
+                                            multiple
+                                            onChange={e => handleFilesAdd(e.target.files)}
+                                            className="w-full text-sm text-muted-foreground file:border-0 file:bg-transparent file:text-primary cursor-pointer"
+                                        />
+                                        <p className="mt-2 text-sm text-muted-foreground">
+                                            Arraste ou selecione imagens (jpeg, png, webp) — até 10MB cada
+                                        </p>
+
+                                        {previews.length > 0 && (
+                                            <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                                {previews.map((p, i) => (
+                                                    <div key={i} className="relative rounded-md overflow-hidden border bg-muted">
+                                                        <img src={p.url} alt={p.name} className="w-32 h-32 object-cover" />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => removeNewFile(i)}
+                                                            className="absolute -top-2 -right-2 inline-flex items-center justify-center rounded-full bg-destructive text-white w-6 h-6 text-xs shadow-md"
+                                                            title="Remover imagem"
+                                                        >
+                                                            ×
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {errors['imagens'] && <p className="text-sm text-destructive mt-2">{(errors['imagens'] as any).join?.(', ')}</p>}
+                                </div>
+
+                                {errors.global && <div className="text-sm text-destructive">{errors.global.join(', ')}</div>}
+
+                                <div className="flex gap-3">
+                                    <Button type="submit" className="flex-1" disabled={submitting}>{submitting ? 'Salvando...' : initialData ? 'Atualizar' : 'Criar'}</Button>
+                                    <Button variant="secondary" type="button" onClick={() => {
+                                        if (initialData) {
+                                            setNome(initialData.nome ?? '')
+                                            setDataNascimento(initialData.data_nascimento ?? '')
+                                            setTelefone(initialData.telefone ?? '')
+                                            setSituacao((initialData.situacao as any) ?? 'ativo')
+                                            setExperiencia(initialData.experiencia ?? '')
+                                            setEndereco(initialData.endereco ?? {})
+                                            setExistingImages(initialData.imagens ?? [])
+                                            setNewFiles([])
+                                            setRemovedExistingFileNames([])
+                                        } else {
+                                            setNome(''), setDataNascimento(''), setTelefone(''), setSituacao('inativo'), setExperiencia(''),
+                                                setEndereco({}), setExistingImages([]), setNewFiles([]), setRemovedExistingFileNames([])
+                                        }
+                                        setErrors({})
+                                    }}>Cancelar</Button>
+                                </div>
+                            </form>
+                        </CardContent>
+                    </Card>
+                </div>
+            </main>
         </NotToken>
     )
 }

@@ -313,6 +313,7 @@ export default function AdotarPageClient() {
 
             {/* 4. O Modal (Renderizado fora do main, mas controlado pelo estado) */}
             <AnimalDetailModal
+                buttonAdotar
                 initialData={selectedAnimal}
                 onClose={() => setSelectedAnimal(null)}
             />

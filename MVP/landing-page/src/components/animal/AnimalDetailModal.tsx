@@ -22,6 +22,7 @@ import ImageCarousel from "@/components/ImageCarousel"
 interface AnimalDetailModalProps {
     initialData: Animal | null
     onClose: () => void
+    buttonAdotar: boolean
 }
 
 async function fetchAnimal(id: number) {
@@ -40,7 +41,7 @@ async function fetchAnimal(id: number) {
     }
 }
 
-export function AnimalDetailModal({ initialData, onClose }: AnimalDetailModalProps) {
+export function AnimalDetailModal({ initialData, onClose, buttonAdotar }: AnimalDetailModalProps) {
     const [animal, setAnimal] = useState<Animal | null>(initialData)
     const [loadingDetails, setLoadingDetails] = useState(false)
     const [error, setError] = useState<string | null>(null)
@@ -180,11 +181,13 @@ export function AnimalDetailModal({ initialData, onClose }: AnimalDetailModalPro
                         </p>
                     )}
 
-                    <Button asChild size="lg" className="w-full">
-                        <Link href={`/adotar/form?animal_id=${animal.id}`}>
-                            Quero Adotar {animal.nome}
-                        </Link>
-                    </Button>
+                    {buttonAdotar && (
+                        <Button asChild size="lg" className="w-full">
+                            <Link href={`/adotar/form?animal_id=${animal.id}`}>
+                                Quero Adotar {animal.nome}
+                            </Link>
+                        </Button>
+                    )}
                 </div>
             </div>
         )

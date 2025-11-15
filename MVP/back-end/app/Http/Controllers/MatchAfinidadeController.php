@@ -18,24 +18,11 @@ class MatchAfinidadeController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        try {
-            $query = MatchAfinidade::with(['usuario', 'animal']);
-
-            if ($request->filled('status')) {
-                $query->where('status', $request->input('status'));
-            }
-            if ($request->filled('animal_id')) {
-                $query->where('animal_id', $request->input('animal_id'));
-            }
-            if ($request->filled('usuario_id')) {
-                $query->where('usuario_id', $request->input('usuario_id'));
-            }
-
-            return $this->SearchIndex($request, $query, 'match_afinidades', []);
-        } catch (\Exception $e) {
-            Log::error('Erro ao listar matches: ' . $e->getMessage(), ['exception' => $e]);
-            return response()->json(['error' => 'Não foi possível carregar os matches'], 500);
-        }
+        return $this->SearchIndex(
+            $request,
+            MatchAfinidade::with(['usuario', 'animal', 'animal.imagens']),
+            'matches-afinidade'
+        );
     }
 
     public function store(Request $request): JsonResponse

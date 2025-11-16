@@ -219,27 +219,34 @@ public function forgetPassword(Request $request): JsonResponse
     /**
      * Resetar senha
      */
-    public function resetPassword(Request $request): JsonResponse
-    {
-        $validator = Validator::make($request->all(), [
-            'token' => 'required',
-            'email' => 'required|email',
-            'password' => [
-                'required',
-                'string',
-                'min:8',
-                'confirmed',
-                'regex:/^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/',
-            ],
-        ]);
+   public function resetPassword(Request $request): JsonResponse
+{
+    $validator = Validator::make($request->all(), [
+        'token' => 'required',
+        'email' => 'required|email',
+        'password' => [
+            'required',
+            'string',
+            'min:8',
+            'confirmed',
+            'regex:/^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/',
+        ],
+    ]);
 
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
+    if ($validator->fails()) {
+        return response()->json(['errors' => $validator->errors()], 422);
+    }
 
+    try {
         $status = Password::broker('usuarios')->reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
             function ($user, $password) {
+                if (Hash::check($password, $user->password)) {
+                    throw ValidationException::withMessages([
+                        'password' => ['A nova senha não pode ser igual à senha antiga.'],
+                    ]);
+                }
+
                 $user->forceFill([
                     'password' => Hash::make($password),
                 ])->setRememberToken(Str::random(60));
@@ -247,13 +254,18 @@ public function forgetPassword(Request $request): JsonResponse
                 $user->save();
             }
         );
-
-        if ($status === Password::PASSWORD_RESET) {
-            return response()->json(['message' => 'Senha redefinida com sucesso']);
-        }
-
-        return response()->json(['error' => 'Falha ao redefinir a senha', 'message' => __($status)], 400);
+    } catch (ValidationException $e) {
+        return response()->json(['errors' => $e->errors()], 422);
+    } catch (\Exception $e) {
+        return response()->json(['error' => 'Erro ao redefinir a senha', 'message' => $e->getMessage()], 500);
     }
+
+    if ($status === Password::PASSWORD_RESET) {
+        return response()->json(['message' => 'Senha redefinida com sucesso']);
+    }
+
+    return response()->json(['error' => 'Falha ao redefinir a senha', 'message' => __($status)], 400);
+}
 
     /**
      * Rota de debug (opcional) — gera token/link para teste manual.

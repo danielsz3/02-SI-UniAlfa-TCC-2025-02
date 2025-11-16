@@ -350,77 +350,87 @@ class AnimalController extends Controller
      * Recomendar animais para um usuário de acordo com preferências
      */
     public function recomendar(Request $request, $usuarioId): JsonResponse
-    {
-        try {
-            $usuario = Usuario::with('preferencias')->find($usuarioId);
+{
+    try {
+        $usuario = Usuario::with('preferencias')->find($usuarioId);
 
-            if (!$usuario) {
-                return response()->json(['error' => 'Usuário não encontrado'], 404);
-            }
-
-            $pref = $usuario->preferencias;
-            if (!$pref) {
-                return response()->json(['error' => 'Usuário não possui preferências definidas'], 400);
-            }
-
-            // buscar do cache (ou recalcular) — agora trazendo relações relevantes
-            $animais = Cache::remember('animais_ativos', 3600, function () {
-                return Animal::with(['imagens', 'usuario', 'larTemporario'])->get();
-            });
-
-            $resultados = $animais->map(function ($animal) use ($pref) {
-                $score = 0;
-                $total = 4;
-
-                if (!empty($pref->tamanho_pet) && $pref->tamanho_pet === $animal->tamanho) {
-                    $score += 1;
-                }
-                if (!empty($pref->tempo_disponivel) && $pref->tempo_disponivel === $animal->tempo_necessario) {
-                    $score += 1;
-                }
-                if (!empty($pref->estilo_vida) && $pref->estilo_vida === $animal->nivel_energia) {
-                    $score += 1;
-                }
-                if (!empty($pref->espaco_casa) && $pref->espaco_casa === $animal->ambiente_ideal) {
-                    $score += 1;
-                }
-
-                $percent = $total > 0 ? intval(($score / $total) * 100) : 0;
-
-                return [
-                    'animal' => $animal,
-                    'afinidade' => $score,
-                    'afinidade_percent' => $percent,
-                ];
-            });
-
-            // ordenar por afinidade (desc) e resetar chaves
-            $ordenados = $resultados->sortByDesc('afinidade')->values();
-
-            // === Paginação manual ===
-            $range = json_decode($request->query('range', '[0,9]'), true);
-            $start = $range[0] ?? 0;
-            $end   = $range[1] ?? 9;
-            $perPage = ($end - $start + 1);
-            $page    = intval($start / $perPage) + 1;
-
-            // Aplicar paginação na collection
-            $itemsForCurrentPage = $ordenados->forPage($page, $perPage)->values();
-            $total = $ordenados->count();
-
-            // Montar resposta com cabeçalhos
-            $response = response()
-                ->json($itemsForCurrentPage->toArray())
-                ->header('Content-Range', "recomendacoes {$start}-{$end}/{$total}")
-                ->header('Access-Control-Expose-Headers', 'Content-Range');
-
-            return $response;
-        } catch (\Exception $e) {
-            Log::error('Erro ao recomendar animais: ' . $e->getMessage(), ['usuario_id' => $usuarioId, 'exception' => $e]);
-            return response()->json([
-                'error' => 'Não foi possível gerar recomendações',
-                'message' => config('app.debug') ? $e->getMessage() : 'Erro interno do servidor'
-            ], 500);
+        if (!$usuario) {
+            return response()->json(['error' => 'Usuário não encontrado'], 404);
         }
+
+        $pref = $usuario->preferencias;
+        if (!$pref) {
+            return response()->json(['error' => 'Usuário não possui preferências definidas'], 400);
+        }
+
+        // IDs dos animais que já possuem match com o usuário
+        $animaisComMatch = \App\Models\MatchAfinidade::where('usuario_id', $usuarioId)
+            ->pluck('animal_id')
+            ->toArray();
+
+        // buscar do cache (ou recalcular) — agora trazendo relações relevantes
+        $animais = Cache::remember('animais_ativos', 3600, function () {
+            return Animal::with(['imagens', 'usuario', 'larTemporario'])->get();
+        });
+
+        // Filtrar animais que não estão em match com o usuário
+        $animaisFiltrados = $animais->filter(function ($animal) use ($animaisComMatch) {
+            return !in_array($animal->id, $animaisComMatch);
+        });
+
+        $resultados = $animaisFiltrados->map(function ($animal) use ($pref) {
+            $score = 0;
+            $total = 4;
+
+            if (!empty($pref->tamanho_pet) && $pref->tamanho_pet === $animal->tamanho) {
+                $score += 1;
+            }
+            if (!empty($pref->tempo_disponivel) && $pref->tempo_disponivel === $animal->tempo_necessario) {
+                $score += 1;
+            }
+            if (!empty($pref->estilo_vida) && $pref->estilo_vida === $animal->nivel_energia) {
+                $score += 1;
+            }
+            if (!empty($pref->espaco_casa) && $pref->espaco_casa === $animal->ambiente_ideal) {
+                $score += 1;
+            }
+
+            $percent = $total > 0 ? intval(($score / $total) * 100) : 0;
+
+            return [
+                'animal' => $animal,
+                'afinidade' => $score,
+                'afinidade_percent' => $percent,
+            ];
+        });
+
+        // ordenar por afinidade (desc) e resetar chaves
+        $ordenados = $resultados->sortByDesc('afinidade')->values();
+
+        // === Paginação manual ===
+        $range = json_decode($request->query('range', '[0,9]'), true);
+        $start = $range[0] ?? 0;
+        $end   = $range[1] ?? 9;
+        $perPage = ($end - $start + 1);
+        $page    = intval($start / $perPage) + 1;
+
+        // Aplicar paginação na collection
+        $itemsForCurrentPage = $ordenados->forPage($page, $perPage)->values();
+        $total = $ordenados->count();
+
+        // Montar resposta com cabeçalhos
+        $response = response()
+            ->json($itemsForCurrentPage->toArray())
+            ->header('Content-Range', "recomendacoes {$start}-{$end}/{$total}")
+            ->header('Access-Control-Expose-Headers', 'Content-Range');
+
+        return $response;
+    } catch (\Exception $e) {
+        Log::error('Erro ao recomendar animais: ' . $e->getMessage(), ['usuario_id' => $usuarioId, 'exception' => $e]);
+        return response()->json([
+            'error' => 'Não foi possível gerar recomendações',
+            'message' => config('app.debug') ? $e->getMessage() : 'Erro interno do servidor'
+        ], 500);
     }
+}
 }

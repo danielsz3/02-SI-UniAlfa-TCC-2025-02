@@ -17,7 +17,7 @@ const MinhaAppBar = (props: AppBarProps) => (
 );
 
 const CustomMenu = (props: MenuProps) => (
-    <Menu {...props}>
+    <Menu {...props} className='no-print'>
         <MenuItemLink 
             to="/"
             primaryText="Dashboard"

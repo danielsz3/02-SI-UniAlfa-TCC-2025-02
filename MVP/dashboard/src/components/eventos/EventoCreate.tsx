@@ -164,7 +164,7 @@ const EventoCreate = () => {
         navigate('/posts/create', {
             state: {
                 defaultValues: {
-                    legenda: `Participe do evento "${eventoCriado.titulo}"!\n📅 ${eventoCriado.data_inicio} - ${eventoCriado.data_fim}\n📍 ${eventoCriado.local}\n\n${eventoCriado.descricao}`,
+                    legenda: `Participe do evento "${eventoCriado.titulo}"!\n📅 ${new Date(eventoCriado.data_inicio).toLocaleDateString('pt-BR')} - ${new Date(eventoCriado.data_fim).toLocaleDateString('pt-BR')}\n📍 ${eventoCriado.local}\n\n${eventoCriado.descricao}`,
                     imagens: validImages,
                 },
             },

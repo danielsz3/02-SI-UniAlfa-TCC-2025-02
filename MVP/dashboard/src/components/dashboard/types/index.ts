@@ -58,6 +58,7 @@ export interface SimplePieChartProps {
     data: PieData[];
     colors: string[];
     title: string;
+    height?: number;
 }
 
 export interface SimpleAreaChartProps {
@@ -82,6 +83,16 @@ export interface Animal {
     imagens?: Image[];
     lar_temporario_id?: number;
     fica_usuario?: boolean;
+}
+
+export interface LarTemp {
+    id: number;
+    nome: string;
+    situacao: 'ativo' | 'inativo';
+    animais: Animal[];
+    imagens: Image[];
+    created_at: string;
+    data_nascimento: string;
 }
 
 export interface Image {

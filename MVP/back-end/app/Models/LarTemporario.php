@@ -35,6 +35,11 @@ class LarTemporario extends Model
         return $this->hasMany(ImagemLarTemporario::class, 'id_lar_temporario', 'id');
     }
 
+    public function animais()
+    {
+        return $this->hasMany(Animal::class, 'lar_temporario_id');
+    }
+
     public function getIdadeAttribute(): ?int
     {
         return $this->data_nascimento?->age;

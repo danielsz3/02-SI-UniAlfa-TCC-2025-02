@@ -1,5 +1,4 @@
 import * as React from 'react';
-// 1. Importar o 'useMemo'
 import { FC, useMemo } from 'react'; 
 import { Box, Card, CardContent, Typography } from '@mui/material';
 import {
@@ -9,34 +8,28 @@ import {
     Tooltip,
     Legend,
     ResponsiveContainer,
-    // PieLabelRenderProps, // Não é mais necessário
 } from 'recharts';
 import { SimplePieChartProps } from '../types';
+// Corrigi o caminho relativo assumindo que 'types' está um nível acima
 
 // --- Componente de Gráfico de Pizza ---
-const SimplePieChart = ({ data, colors, title }: SimplePieChartProps) => {
+const SimplePieChart: FC<SimplePieChartProps> = ({ data, colors, title, height }) => {
     
-    // 2. Calcular o valor total para o percentual
+    // Calcular o valor total para o percentual
     const total = useMemo(() => 
         data.reduce((sum, entry) => sum + entry.value, 0), 
     [data]);
 
-    // 3. Função para formatar a legenda (NOVO)
-    /**
-     * Adiciona o percentual (ex: "Adotados (45%)") a cada item da legenda.
-     */
+    // Função para formatar a legenda (com percentual)
     const renderLegendWithPercent = (value: string, entry: any) => {
-        // 'entry.payload' contém o { name, value } do item
         const itemValue = entry.payload?.value;
 
-        // Evita divisão por zero
         if (!total || total === 0 || !itemValue) {
             return `${value} (0%)`;
         }
 
         const percent = (itemValue / total) * 100;
         
-        // 'value' é o 'name' (ex: "Adotados")
         return `${value} (${percent.toFixed(0)}%)`;
     };
 
@@ -46,18 +39,16 @@ const SimplePieChart = ({ data, colors, title }: SimplePieChartProps) => {
                 <Typography variant="h6" gutterBottom align="center">
                     {title}
                 </Typography>
-                <Box sx={{ height: 300 }}>
+                <Box sx={{ height: height || 300 }}>
                     <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                             <Pie
                                 data={data}
-                                cx="50%"
+                                cx="35%" 
                                 cy="50%"
-                                // 4. Rótulo da fatia desativado
-                                // (A legenda agora tem o percentual)
                                 labelLine={false}
                                 label={false} 
-                                outerRadius={100}
+                                outerRadius={100} // Raio mantido
                                 fill="#8884d8"
                                 dataKey="value"
                             >
@@ -75,8 +66,17 @@ const SimplePieChart = ({ data, colors, title }: SimplePieChartProps) => {
                                 ]}
                                 wrapperStyle={{ zIndex: 1100 }}
                             />
-                            {/* 5. Legenda atualizada com o formatador --- */}
-                            <Legend formatter={renderLegendWithPercent} />
+                            {/* 2. LEGENDA ATUALIZADA PARA O LAYOUT LATERAL */}
+                            <Legend
+                            wrapperStyle={{ fontSize: 20}} 
+                                formatter={renderLegendWithPercent}
+                                // Alinha a legenda verticalmente no meio
+                                verticalAlign="middle" 
+                                // Informa que o layout dos itens é vertical
+                                layout="vertical" 
+                                // Alinha a caixa da legenda à direita
+                                align="left" 
+                            />
                         </PieChart>
                     </ResponsiveContainer>
                 </Box>

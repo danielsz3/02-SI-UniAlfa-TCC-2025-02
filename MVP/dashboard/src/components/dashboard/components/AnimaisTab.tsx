@@ -86,12 +86,12 @@ export const AnimaisTab = ({ startDate, endDate }: AnimaisTabProps) => {
 
     const animalsLares = useMemo(() => {
         if (!allAnimals) return [];
-        return allAnimals.filter(a => a.lar_temporario_id && a.situacao !== 'em_aprovacao');
+        return allAnimals.filter(a => a.lar_temporario_id && a.situacao !== 'em_aprovacao' && a.situacao !== 'adotado');
     }, [allAnimals]);
 
     const animalsComAdotantes = useMemo(() => {
         if (!allAnimals) return [];
-        return allAnimals.filter(a => a.fica_usuario && a.situacao !== 'adotado');
+        return allAnimals.filter(a => a.situacao == 'adotado' || (a.fica_usuario === true && a.situacao !== 'em_aprovacao'));
     }, [allAnimals]);
 
 
@@ -157,7 +157,7 @@ export const AnimaisTab = ({ startDate, endDate }: AnimaisTabProps) => {
     return (
         <Grid container spacing={3}>
 
-            <Grid size={{ xs: 12, md: 4 }}>
+            <Grid size={{ xs: 12, md: 3, sm: 6 }}>
                 <MetricCard
                     title="Animais"
                     value={allAnimals?.length || 0}
@@ -165,7 +165,15 @@ export const AnimaisTab = ({ startDate, endDate }: AnimaisTabProps) => {
                 />
             </Grid>
 
-            <Grid size={{ xs: 12, md: 4 }}>
+            <Grid size={{ xs: 12, md: 3, sm: 6 }}>
+                <MetricCard
+                    title="Animais em Aprovação"
+                    value={allAnimals?.filter(a => a.situacao === 'em_aprovacao').length || 0}
+                    description='Animais em aprovação para adocão'
+                />
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 3, sm: 6 }}>
                 <MetricCard
                     title="Animais em Lares"
                     value={animalsLares?.length || 0}
@@ -173,7 +181,7 @@ export const AnimaisTab = ({ startDate, endDate }: AnimaisTabProps) => {
                 />
             </Grid>
 
-            <Grid size={{ xs: 12, md: 4 }}>
+            <Grid size={{ xs: 12, md: 3, sm: 6 }}>
                 <MetricCard
                     title="Animais com Adotantes"
                     value={animalsComAdotantes?.length || 0}
@@ -182,14 +190,14 @@ export const AnimaisTab = ({ startDate, endDate }: AnimaisTabProps) => {
             </Grid>
 
             {/* Linha 1: Os Gráficos */}
-            <Grid size={{ xs: 12, md: 6 }}>
+            <Grid size={{ xs: 12, md: 6, sm: 6 }}>
                 <SimplePieChart
                     data={statusPieData}
                     colors={COLORS_ANIMAIS}
                     title="Status dos Animais"
                 />
             </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
+            <Grid size={{ xs: 12, md: 6, sm: 6 }}>
                 <SimplePieChart
                     data={castrationPieData}
                     colors={COLORS_CASTRADOS}

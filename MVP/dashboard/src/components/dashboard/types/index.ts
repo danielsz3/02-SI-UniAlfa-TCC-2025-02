@@ -85,6 +85,16 @@ export interface Animal {
     fica_usuario?: boolean;
 }
 
+export interface Transacao {
+    id: number;
+    tipo: 'receita' | 'despesa';
+    valor: number;
+    data: string;
+    created_at: string;
+    categoria: string;
+    situacao: 'concluido' | 'pendente' | 'cancelado';
+}
+
 export interface LarTemp {
     id: number;
     nome: string;

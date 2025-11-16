@@ -16,6 +16,7 @@ import { formatDate } from './utils/formatter';
 import { AnimaisTab } from './components/AnimaisTab';
 import { LaresTab } from './components/LaresTab';
 import { AdocoesTab } from './components/AdocoesTab';
+import { TransacoesTab } from './components/TransacoesTab';
 
 export const Dashboard = () => {
     // --- ESTADOS ---
@@ -75,7 +76,6 @@ export const Dashboard = () => {
         <Box m={{ xs: 1, sm: 2 }} mt={2} className="print-content">
             <Title title="Dashboard" />
 
-            {/* Seção de Filtros de Data (agora com classe no-print) */}
             <Box>
                 <LocalizationProvider
                     dateAdapter={AdapterDateFns}
@@ -122,7 +122,6 @@ export const Dashboard = () => {
                 </LocalizationProvider>
             </Box>
 
-            {/* NOVA SEÇÃO DE ABAS E BOTÃO DE IMPRIMIR */}
             <Box
                 sx={{
                     display: 'flex',
@@ -151,10 +150,6 @@ export const Dashboard = () => {
                 </Button>
             </Box>
 
-            {/* Conteúdo das Abas */}
-            {/* Renderização condicional: O componente da aba só é montado 
-              (e, portanto, só busca dados) quando ele está ativo.
-            */}
             <Box>
                 {tab === 0 && (
                     <AnimaisTab
@@ -176,13 +171,13 @@ export const Dashboard = () => {
                         endDate={endDate}
                     />
                 )}
-                {/*
+
                 {tab === 3 && (
-                     <TransacoesTab 
-                        startDate={formattedStart} 
-                        endDate={formattedEnd} 
+                    <TransacoesTab
+                        startDate={startDate}
+                        endDate={endDate}
                     />
-                )} */}
+                )}
             </Box>
         </Box>
     );

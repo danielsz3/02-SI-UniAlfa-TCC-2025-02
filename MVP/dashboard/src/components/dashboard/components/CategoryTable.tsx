@@ -14,21 +14,102 @@ import {
     TableSortLabel,
     TableFooter,
 } from '@mui/material';
-import { CategoryDataPoint, CategoryTableProps } from '../types';
+import { CategoryDataPoint, Transacao } from '../types';
 import { formatCurrency } from '../utils/formatter';
 
-// Tipos locais para ordenação (definidos aqui como no original)
+// --- NOVAS PROPS ---
+/**
+ * As novas props para este componente.
+ * Ele só precisa do título e da lista de TODAS as transações.
+ */
+interface CategoryTableProps {
+    title: string;
+    transactions: Transacao[]; // <--- Recebe o novo tipo Transacao[]
+}
+
+// Tipos locais para ordenação (mantidos)
 type Order = 'asc' | 'desc';
 type CategoryDataKey = keyof CategoryDataPoint;
 
-// --- Componente de Tabela de Categorias (COM CORREÇÕES) ---
-const CategoryTable = ({
-    data,
+
+// --- Componente de Tabela de Categorias ATUALIZADO ---
+const CategoryTable: FC<CategoryTableProps> = ({
     title,
-    transactionCounts,
-    totalTransactions,
-}: CategoryTableProps) => {
-    // --- Lógica de Ordenação ---
+    transactions, // Recebe a lista de transações
+}) => {
+
+    // --- LÓGICA DE AGRUPAMENTO (Tudo interno) ---
+
+    /**
+     * 1. Filtra apenas as transações concluídas.
+     * Esta é a base para todos os cálculos.
+     */
+    const completedTransactions = useMemo(() => {
+        if (!transactions) return [];
+        // O 'valor' já é um número, então não precisamos de parseFloat
+        return transactions.filter(t => t.situacao === 'concluido');
+    }, [transactions]);
+
+
+    /**
+     * 2. Transforma para a Tabela de Categorias (agrupado por categoria)
+     * Agora usa a lista filtrada 'completedTransactions'.
+     */
+    const categoryTableData = useMemo<CategoryDataPoint[]>(() => {
+        if (!completedTransactions) return [];
+
+        const groupedByCategory = completedTransactions.reduce((acc, t) => {
+            const categoryKey = t.categoria;
+
+            if (!acc[categoryKey]) {
+                acc[categoryKey] = { categoria: categoryKey, receitas: 0, despesas: 0, resultado: 0 };
+            }
+
+            const valorValido = Number(t.valor) || 0;
+
+            if (t.tipo === 'receita') {
+                acc[categoryKey].receitas += valorValido;
+            } else if (t.tipo === 'despesa') {
+                acc[categoryKey].despesas += valorValido;
+            }
+
+            return acc;
+        }, {} as Record<string, CategoryDataPoint>);
+
+        return Object.values(groupedByCategory).map(c => ({
+            ...c,
+            resultado: c.receitas - c.despesas,
+        }));
+
+    }, [completedTransactions]);
+
+    /**
+     * 3. Contagem de transações por categoria
+     * Agora usa a lista filtrada 'completedTransactions'.
+     */
+    const transactionCounts = useMemo(() => {
+        if (!completedTransactions) return {};
+        return completedTransactions.reduce((acc, t) => {
+            const key = t.categoria;
+            acc[key] = (acc[key] || 0) + 1;
+            return acc;
+        }, {} as Record<string, number>);
+    }, [completedTransactions]); // Depende das transações filtradas
+
+    /**
+     * 4. Total de transações
+     * Agora usa a lista filtrada 'completedTransactions'.
+     */
+    const totalTransactions = useMemo(
+        () => completedTransactions.length,
+        [completedTransactions] // Depende das transações filtradas
+    );
+
+    // --- FIM DA LÓGICA DE AGRUPAMENTO ---
+
+
+    // --- LÓGICA DE ORDENAÇÃO E TOTAIS ---
+    // (Esta parte não muda, pois depende dos dados já agrupados)
     const [order, setOrder] = useState<Order>('desc');
     const [orderBy, setOrderBy] = useState<CategoryDataKey>('resultado');
 
@@ -48,9 +129,9 @@ const CategoryTable = ({
     };
 
     const sortedData = useMemo(() => {
-        if (!Array.isArray(data)) return [];
-        return [...data].sort(getComparator(order, orderBy));
-    }, [data, order, orderBy]);
+        if (!Array.isArray(categoryTableData)) return [];
+        return [...categoryTableData].sort(getComparator(order, orderBy));
+    }, [categoryTableData, order, orderBy]);
 
     const totalReceitas = useMemo(() => {
         return sortedData.reduce((sum, current) => sum + current.receitas, 0);
@@ -65,8 +146,9 @@ const CategoryTable = ({
     }, [totalReceitas, totalDespesas]);
     // --- Fim da Lógica de Ordenação ---
 
+    // O JSX de renderização não precisa de NENHUMA alteração
     return (
-        <Card sx={{ boxShadow: 3, borderRadius: 2 }}>
+        <Card sx={{ boxShadow: 0, p: 0, backgroundColor: 'transparent' }}>
             <CardContent>
                 <Typography variant="h6" gutterBottom align="center">
                     {title}

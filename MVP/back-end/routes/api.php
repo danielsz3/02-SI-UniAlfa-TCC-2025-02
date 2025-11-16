@@ -112,10 +112,9 @@ Route::middleware(['jwt.auth'])->group(function () {
         Route::apiResource('eventos', EventoController::class)->except(['index', 'show']);
         Route::post('eventos/{id}/restore', [EventoController::class, 'restore'])->name('eventos.restore');
 
-        // Posts apenas para admin (CRUD completo)
-        Route::apiResource('posts', PostController::class);
-        Route::post('posts/{id}/restore', [PostController::class, 'restore'])->name('posts.restore');
-
+        // Postagem
+        Route::post('posts/enviar-n8n', [PostController::class, 'enviarParaN8n'])->name('posts.enviar-n8n');
+       
         // Adoções: admin ganha update/destroy + ações extras
         Route::apiResource('adocoes', AdocaoController::class)->except(['index', 'show', 'store']);
         Route::post('adocoes/{id}/restore', [AdocaoController::class, 'restore'])->name('adocoes.restore');

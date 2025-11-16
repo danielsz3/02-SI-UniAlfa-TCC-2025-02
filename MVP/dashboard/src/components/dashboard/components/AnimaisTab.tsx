@@ -91,7 +91,7 @@ export const AnimaisTab = ({ startDate, endDate }: AnimaisTabProps) => {
 
     const animalsComAdotantes = useMemo(() => {
         if (!allAnimals) return [];
-        return allAnimals.filter(a => a.situacao == 'adotado' || (a.fica_usuario === true && a.situacao !== 'em_aprovacao'));
+        return allAnimals.filter(a => a.situacao == 'adotado' || (a.fica_usuario === true && a.lar_temporario_id == null ));
     }, [allAnimals]);
 
 
@@ -185,7 +185,7 @@ export const AnimaisTab = ({ startDate, endDate }: AnimaisTabProps) => {
                 <MetricCard
                     title="Animais com Adotantes"
                     value={animalsComAdotantes?.length || 0}
-                    description='Desconsidera animais já adotados'
+                    description='Considera animais já adotados'
                 />
             </Grid>
 

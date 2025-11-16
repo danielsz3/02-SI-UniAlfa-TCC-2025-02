@@ -13,7 +13,7 @@ class PostController extends Controller
     /**
      * Envia imagens + legenda para o n8n via multipart
      */
-    public function enviarParaN8n(Request $request): JsonResponse
+    public function store(Request $request): JsonResponse
     {
         // 🔹 Validação básica
         $validator = Validator::make($request->all(), [
@@ -60,10 +60,11 @@ class PostController extends Controller
             return response()->json([
                 'message' => 'Enviado com sucesso ao n8n',
                 'response' => $response->json(),
-            ], 200);
+            ], 201);
 
         } catch (\Throwable $e) {
             Log::error('Erro ao enviar para n8n: ' . $e->getMessage());
+
             return response()->json([
                 'error' => 'Falha ao enviar dados para o n8n.',
                 'details' => $e->getMessage()

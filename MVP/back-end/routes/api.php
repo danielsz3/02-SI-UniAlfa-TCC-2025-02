@@ -114,8 +114,7 @@ Route::middleware(['jwt.auth'])->group(function () {
 
         // Posts apenas para admin (CRUD completo)
         Route::apiResource('posts', PostController::class);
-        Route::post('posts/{id}/restore', [PostController::class, 'restore'])->name('posts.restore');
-
+        
         // Adoções: admin ganha update/destroy + ações extras
         Route::apiResource('adocoes', AdocaoController::class)->except(['index', 'show', 'store']);
         Route::post('adocoes/{id}/restore', [AdocaoController::class, 'restore'])->name('adocoes.restore');

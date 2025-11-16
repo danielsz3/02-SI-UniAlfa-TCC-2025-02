@@ -19,7 +19,7 @@ use Carbon\Carbon;
 class LaresTemporarioController extends Controller
 {
     use SearchIndex;
-    use ManagerGallery;  
+    use ManagerGallery;
     // Define as propriedades para a trait ManagerGallery
     protected $campoGaleria = 'imagens';
     protected $storagePath = 'lares_temporarios';
@@ -35,7 +35,7 @@ class LaresTemporarioController extends Controller
     {
         return $this->SearchIndex(
             $request,
-            LarTemporario::with(['endereco', 'imagens']),
+            LarTemporario::with(['endereco', 'imagens', 'animais']),
             'lares_temporarios',
             ['nome', 'data_nascimento', 'telefone']
         );

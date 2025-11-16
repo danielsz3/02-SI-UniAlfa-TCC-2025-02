@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useState, FC } from 'react';
 import { Title } from 'react-admin';
-import { Box, Grid, Tabs, Tab, Button, Typography } from '@mui/material';
+import { Box, Grid, Tabs, Tab, Button, Typography, useMediaQuery } from '@mui/material';
 import { Print as PrintIcon } from '@mui/icons-material';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -14,12 +14,16 @@ import { ptBR } from 'date-fns/locale';
 // Importa os novos componentes de aba
 import { formatDate } from './utils/formatter';
 import { AnimaisTab } from './components/AnimaisTab';
+import { LaresTab } from './components/LaresTab';
+import { AdocoesTab } from './components/AdocoesTab';
 
-export const Dashboard: FC = () => {
+export const Dashboard = () => {
     // --- ESTADOS ---
     const [startDate, setStartDate] = useState<Date | null>(
         subDays(new Date(), 30)
     );
+
+    const isSmall = useMediaQuery((theme: any) => theme.breakpoints.down('sm'));
     const [endDate, setEndDate] = useState<Date | null>(new Date());
 
     const [tab, setTab] = useState(0);
@@ -34,19 +38,38 @@ export const Dashboard: FC = () => {
     };
 
     const handlePrint = () => {
+
+
         // ... (Lógica de impressão idêntica)
         const style = document.createElement('style');
         style.innerHTML = `
             @media print {
-                .no-print { display: none !important; }
+                .MuiDrawer-root,
+                .no-print {
+                    display: none !important;
+                }
                 /* ... outros estilos de impressão ... */
             }
         `;
+
         document.head.appendChild(style);
         window.print();
         document.head.removeChild(style);
     };
-    
+
+    // Ajuste o tamanho da página para A3
+    const printStyle = document.createElement('style');
+    printStyle.innerHTML = `
+        @media print {
+            html, body {
+                width: 297mm;
+                height: 420mm;
+            }
+        }
+    `;
+
+    document.head.appendChild(printStyle);
+
     // --- Renderização ---
     return (
         <Box m={{ xs: 1, sm: 2 }} mt={2} className="print-content">
@@ -116,15 +139,15 @@ export const Dashboard: FC = () => {
                     <Tab label="Adoções" id="tab-adocoes" />
                     <Tab label="Transações" id="tab-transacoes" />
                 </Tabs>
-                
+
                 <Button
                     variant="outlined"
-                    startIcon={<PrintIcon />}
+                    startIcon={isSmall ? undefined : <PrintIcon />}
                     className='no-print'
                     onClick={handlePrint}
                     sx={{ mb: 1, ml: 2 }}
                 >
-                    Imprimir
+                    {isSmall ? <PrintIcon /> : 'Imprimir'}
                 </Button>
             </Box>
 
@@ -134,23 +157,26 @@ export const Dashboard: FC = () => {
             */}
             <Box>
                 {tab === 0 && (
-                    <AnimaisTab 
-                        startDate={startDate} 
-                        endDate={endDate} 
+                    <AnimaisTab
+                        startDate={startDate}
+                        endDate={endDate}
                     />
                 )}
 
-                {/* {tab === 1 && (
-                    <LaresTab />
+                {tab === 1 && (
+                    <LaresTab
+                        startDate={startDate}
+                        endDate={endDate}
+                    />
                 )}
 
                 {tab === 2 && (
-                    <AdocoesTab 
-                        startDate={formattedStart} 
-                        endDate={formattedEnd} 
+                    <AdocoesTab
+                        startDate={startDate}
+                        endDate={endDate}
                     />
                 )}
-
+                {/*
                 {tab === 3 && (
                      <TransacoesTab 
                         startDate={formattedStart} 

@@ -19,7 +19,8 @@ import {
     FunctionField,
     Link,
     useReference,
-    Loading
+    Loading,
+    Count
 } from 'react-admin';
 import { FaEye } from 'react-icons/fa';
 import { chipTipos, Situacao, tamanhos } from '../animais/AnimalList';
@@ -67,7 +68,7 @@ const Aside = () => {
                 <CardContent sx={{ px: 0 }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <Typography variant="body1" sx={{ px: 2 }}>
-                            Animais neste Lar
+                            Animais ainda neste Lar
                         </Typography>
                         
                             <Button
@@ -80,7 +81,7 @@ const Aside = () => {
                                     to={`/animais?filter=${encodeURIComponent(JSON.stringify({ "lar_temporario_id": record.id }))}`}
                                     sx={{ textDecoration: 'none', color: 'primary.main' }}
                                 >
-                                    Ver todos
+                                    Ver todos ( <Count resource="animais" filter={{ "lar_temporario_id": record.id }} /> )
                                 </Link>
                             </Button>
                     </Box>

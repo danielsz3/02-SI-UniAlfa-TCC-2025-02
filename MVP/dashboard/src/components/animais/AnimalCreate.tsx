@@ -107,7 +107,7 @@ Venha conhecer ${animalCriado.nome}!
 📋 Descrição:
 ${animalCriado.descricao}
 
-📅 Nascimento: ${animalCriado.data_nascimento ? new Date(animalCriado.data_nascimento).toLocaleDateString('pt-BR') : 'Data não informada'}
+📅 Nascimento aproximado: ${animalCriado.data_nascimento ? new Date(animalCriado.data_nascimento).toLocaleDateString('pt-BR') : 'Data não informada'}
 ⚧ Sexo: ${animalCriado.sexo === 'macho' ? 'Macho' : 'Fêmea'}
 🐕 Tipo: ${animalCriado.tipo_animal === 'cao' ? 'Cachorro' : animalCriado.tipo_animal === 'gato' ? 'Gato' : 'Outro'}
 
@@ -191,10 +191,12 @@ Entre em contato para saber mais e fazer parte dessa história de amor e adoçã
                             reference="lares-temporarios"
                         >
                             <SelectInput
-                                validate={required('O usuário é obrigatório')}
+                                validate={required('O lar temporário é obrigatório')}
                                 optionValue="id"
                                 optionText="nome"
                                 label="Lar Temporário"
+                                helperText="Selecione um lar temporário para o animal."
+
                             />
                         </ReferenceInput>
 

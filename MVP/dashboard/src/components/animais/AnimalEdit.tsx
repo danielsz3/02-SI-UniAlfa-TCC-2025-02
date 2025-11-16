@@ -1,4 +1,4 @@
-import { BooleanInput, Button, DeleteWithConfirmButton, Edit, FormTab, ImageField, ImageInput, RadioButtonGroupInput, required, SaveButton, SelectInput, TabbedForm, TextInput, useNotify, useRecordContext, useRedirect } from "react-admin";
+import { BooleanInput, Button, DeleteWithConfirmButton, Edit, FormTab, ImageField, ImageInput, RadioButtonGroupInput, ReferenceInput, required, SaveButton, SelectInput, TabbedForm, TextInput, useNotify, useRecordContext, useRedirect } from "react-admin";
 import { FilePlaceholder } from "../FilePlaceHolder";
 import CustomDatePicker from "../datepicker/customDatePicker";
 import { useFormContext } from "react-hook-form";
@@ -62,6 +62,38 @@ const StatusInput = () => {
     );
 };
 
+const LarTempInput = () => {
+    const record = useRecordContext();
+    const ficaUsuario = record?.fica_usuario;
+
+    if (ficaUsuario) {
+        const helperText = 'O animal fica com o usuário criador do animal. Não é possivel atribuir um lar temporário.';
+        return (
+            <TextInput
+                source="lar_temporario_id"
+                label="Lar Temporário"
+                helperText={helperText}
+                disabled
+            />
+        );
+    }
+
+    return (
+        <ReferenceInput
+            source="lar_temporario_id"
+            reference="lares-temporarios"
+        >
+            <SelectInput
+                validate={required('O lar temporário é obrigatório')}
+                optionValue="id"
+                optionText="nome"
+                label="Lar Temporário"
+                helperText="Selecione um lar temporário para o animal."
+            />
+        </ReferenceInput>
+    );
+}
+
 const AnimalToolbar = () => {
     const redirect = useRedirect();
 
@@ -104,6 +136,8 @@ const AnimalEdit = () => (
             toolbar={<AnimalToolbar />}
         >
             <FormTab label="Informações">
+
+                <LarTempInput />
 
                 <StatusInput />
 

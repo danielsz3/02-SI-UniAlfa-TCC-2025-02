@@ -47,7 +47,7 @@ class PostController extends Controller
         // 🔹 Envio ao n8n
         try {
             $response = Http::withOptions([
-                'verify' => false, // Ignorar SSL
+                'verify' => false,
             ])
                 ->asMultipart()
                 ->timeout(30)
@@ -57,10 +57,8 @@ class PostController extends Controller
                 throw new \Exception("Erro no retorno do n8n: " . $response->body());
             }
 
-            return response()->json([
-                'message' => 'Enviado com sucesso ao n8n',
-                'response' => $response->json(),
-            ], 201);
+            // ✅ Sucesso → retorna corpo vazio com 201
+            return response()->json(null, 201);
 
         } catch (\Throwable $e) {
             Log::error('Erro ao enviar para n8n: ' . $e->getMessage());

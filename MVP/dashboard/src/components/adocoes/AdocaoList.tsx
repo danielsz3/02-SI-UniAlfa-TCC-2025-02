@@ -1,4 +1,4 @@
-import { AutocompleteInput, DataTable, FunctionField, List, Pagination, PaginationProps, RaRecord, ReferenceInput, SelectInput, useRecordContext } from 'react-admin';
+import { AutocompleteInput, DataTable, DateField, FunctionField, List, Pagination, PaginationProps, RaRecord, ReferenceInput, SelectInput, useRecordContext } from 'react-admin';
 import CustomDatePicker from '../datepicker/customDatePicker';
 import { CustomListActions } from '../ExportActions';
 import { Avatar, Box } from '@mui/material';
@@ -99,7 +99,9 @@ export const AdocaoList = () => (
         pagination={<Pag />}
     >
         <DataTable rowClick="edit">
-            <DataTable.Col source="id" />
+            <DataTable.Col source="created_at" label="Data">
+                <DateField source="created_at" showTime locales={'pt-BR'} />
+            </DataTable.Col>
             <DataTable.Col source="usuario" disableSort label="Adotante">
                 <FunctionField
                     render={

@@ -95,6 +95,16 @@ export interface LarTemp {
     data_nascimento: string;
 }
 
+export interface Adocao {
+    id: number;
+    animal_id: number;
+    usuario_id: number;
+    created_at: string;
+    animal: Animal;
+    usuario: any;
+    status: 'em_aprovacao' | 'aprovado' | 'negado';
+}
+
 export interface Image {
     id: string;
     file: File;

@@ -15,6 +15,7 @@ import { ptBR } from 'date-fns/locale';
 import { formatDate } from './utils/formatter';
 import { AnimaisTab } from './components/AnimaisTab';
 import { LaresTab } from './components/LaresTab';
+import { AdocoesTab } from './components/AdocoesTab';
 
 export const Dashboard = () => {
     // --- ESTADOS ---
@@ -168,14 +169,14 @@ export const Dashboard = () => {
                         endDate={endDate}
                     />
                 )}
-                {/*
+
                 {tab === 2 && (
-                    <AdocoesTab 
-                        startDate={formattedStart} 
-                        endDate={formattedEnd} 
+                    <AdocoesTab
+                        startDate={startDate}
+                        endDate={endDate}
                     />
                 )}
-
+                {/*
                 {tab === 3 && (
                      <TransacoesTab 
                         startDate={formattedStart} 

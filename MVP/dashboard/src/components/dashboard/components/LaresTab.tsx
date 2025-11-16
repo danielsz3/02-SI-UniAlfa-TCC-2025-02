@@ -174,7 +174,7 @@ export const LaresTab = ({ startDate, endDate }: LaresTabProps) => {
                     height={200}
                     data={situacaoPieData}
                     colors={COLORS_LAR}
-                    title="Status dos Animais"
+                    title="Status dos Lares"
                 />
             </Grid>
 

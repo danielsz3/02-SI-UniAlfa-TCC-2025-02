@@ -14,8 +14,6 @@ export const authProvider = {
 
         const response = await fetch(request);
 
-        console.log(response);
-
         if (!response.ok) {
             throw new Error('Credenciais inválidas');
         }

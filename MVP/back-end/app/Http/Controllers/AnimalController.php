@@ -80,7 +80,7 @@ class AnimalController extends Controller
             'tipo_animal.required' => 'O tipo do animal é obrigatório.',
             'tipo_animal.in' => 'O tipo do animal deve ser "cao", "gato" ou "outro".',
             'imagens.array' => 'As imagens devem ser enviadas como um array.',
-            'imagens.max' => 'Você pode enviar no máximo 10 imagens.',
+            'imagens.max' => 'Você pode enviar no máximo 10 imagens.', 
             'imagens.*.image' => 'Cada arquivo enviado deve ser uma imagem válida.',
             'imagens.*.max' => 'Cada imagem deve ter no máximo 10MB.',
             'usuario_id.exists' => 'Usuário não encontrado.',
@@ -204,9 +204,6 @@ class AnimalController extends Controller
         'fica_usuario' => 'nullable|boolean',
     ];
 
-    if ($request->hasFile('imagens')) {
-        $rules['imagens.*'] = 'file|image|mimes:jpeg,png,jpg,webp|max:10240';
-    }
 
     $messages = [
         'nome.required' => 'O nome do animal é obrigatório.',
@@ -229,6 +226,19 @@ class AnimalController extends Controller
 
     if ($validator->fails()) {
         return response()->json(['errors' => $validator->errors()], 422);
+    }
+
+    // Verificar limite TOTAL de imagens (existentes + novas)
+    $imagensExistentes = $animal->imagens()->count();
+    $novasImagens = is_array($request->file('imagens')) ? count($request->file('imagens')) : 0;
+    $total = $imagensExistentes + $novasImagens;
+
+    if ($total > 10) {
+        return response()->json([
+            'errors' => [
+                'imagens' => ['O total de imagens não pode exceder 10.'],
+            ],
+        ], 422);
     }
 
     try {

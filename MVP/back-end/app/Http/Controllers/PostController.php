@@ -30,12 +30,6 @@ class PostController extends Controller
         }
 
         try {
-            return DB::transaction(function () use ($request) {
-                // Cria o post
-                $post = Post::create([
-                    'legenda' => $request->input('legenda', ''),
-                ]);
-
                 $multipart = [
                     [
                         'name' => 'legenda',
@@ -47,13 +41,6 @@ class PostController extends Controller
                 if ($request->hasFile('imagens')) {
                     foreach ($request->file('imagens') as $idx => $imagem) {
                         $caminho = $imagem->store('posts', 'public');
-
-                        ImagemPost::create([
-                            'post_id' => $post->id,
-                            'caminho' => $caminho,
-                            'nome_original' => $imagem->getClientOriginalName(),
-                        ]);
-
                         $multipart[] = [
                             'name' => "imagens[$idx]",
                             'contents' => fopen($imagem->getRealPath(), 'r'),
@@ -62,44 +49,11 @@ class PostController extends Controller
                     }
                 }
 
-                // Processa imagens em base64
-                if ($request->has('imagens_base64')) {
-                    foreach ($request->input('imagens_base64') as $idx => $base64Image) {
-                        if (preg_match('/^data:image\/(\w+);base64,/', $base64Image, $type)) {
-                            $data = substr($base64Image, strpos($base64Image, ',') + 1);
-                            $ext = strtolower($type[1]); // jpg, png, etc
-
-                            $data = base64_decode($data);
-                            if ($data === false) {
-                                continue; // base64 inválido
-                            }
-
-                            $fileName = uniqid() . '.' . $ext;
-                            $filePath = 'posts/' . $fileName;
-
-                            Storage::disk('public')->put($filePath, $data);
-
-                            ImagemPost::create([
-                                'post_id' => $post->id,
-                                'caminho' => $filePath,
-                                'nome_original' => $fileName,
-                            ]);
-
-                            // Para enviar ao n8n, adiciona o arquivo do storage
-                            $fullPath = Storage::disk('public')->path($filePath);
-                            $multipart[] = [
-                                'name' => "imagens[" . (count($multipart) - 1) . "]",
-                                'contents' => fopen($fullPath, 'r'),
-                                'filename' => $fileName,
-                            ];
-                        }
-                    }
-                }
 
                 // Envia para o webhook n8n
                 $response = Http::withOptions(['verify' => false])
                     ->asMultipart()
-                    ->timeout(60)
+                    ->timeout(120)
                     ->post('https://webhook.chatfacil.cloud/webhook/postar-instagram', $multipart);
 
                 if (!$response->successful()) {
@@ -110,8 +64,7 @@ class PostController extends Controller
                     throw new \Exception("Erro no retorno do n8n: " . $response->body());
                 }
 
-                return response()->json(['id' => $post->id], 201);
-            });
+                return response()->json(['id' => $response->id ?? 0], 201);
         } catch (\Throwable $e) {
             Log::error('Erro ao criar post e enviar para n8n: ' . $e->getMessage(), [
                 'payload' => $request->all(),

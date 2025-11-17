@@ -76,6 +76,7 @@ class EventoController extends Controller
             'imagens.*.image' => 'Cada imagem deve ser um arquivo de imagem válido.',
             'imagens.*.mimes' => 'As imagens devem ser do tipo jpeg, png, jpg ou webp.',
             'imagens.*.max' => 'Cada imagem deve ter no máximo 10MB.',
+            'imagens.max' => 'Você pode enviar no máximo 10 imagens.',
         ]);
 
         if ($validator->fails()) {
@@ -178,11 +179,6 @@ class EventoController extends Controller
         'imagens' => 'nullable|array',
         'imagens.*.src' => 'required|string', // para garantir que cada imagem mantida tenha src
     ];
-
-    // Validação condicional para arquivos de imagens na galeria
-    if ($request->hasFile('imagens')) {
-        $rules['imagens.*'] = 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240';
-    }
 
     $messages = [
         'titulo.required' => 'O título do evento é obrigatório.',

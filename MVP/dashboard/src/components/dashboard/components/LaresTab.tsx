@@ -16,7 +16,8 @@ import {
     Avatar,
     Stack,
     TableFooter,
-    Button
+    Button,
+    Chip
 } from '@mui/material';
 import { endOfDay, format, formatISO, startOfDay } from 'date-fns';
 import SimplePieChart from './SimplePieChart';
@@ -209,7 +210,9 @@ export const LaresTab = ({ startDate, endDate }: LaresTabProps) => {
                                             <p>{lar.nome}</p>
                                         </Stack>
                                     </TableCell>
-                                    <TableCell>{lar.situacao}</TableCell>
+                                    <TableCell>
+                                        <Chip sx={{ textTransform: 'capitalize', fontWeight: 'bold' }} label={lar.situacao} color={lar.situacao === 'ativo' ? 'success' : 'error'} />
+                                    </TableCell>
                                     <TableCell>
                                         {format(new Date(lar.created_at), 'dd/MM/yyyy HH:mm')}
                                     </TableCell>
@@ -266,7 +269,9 @@ export const LaresTab = ({ startDate, endDate }: LaresTabProps) => {
                                                 <p>{lar.nome}</p>
                                             </Stack>
                                         </TableCell>
-                                        <TableCell>{lar.situacao}</TableCell>
+                                        <TableCell>
+                                            <Chip sx={{ textTransform: 'capitalize', fontWeight: 'bold' }} label={lar.situacao} color={lar.situacao === 'ativo' ? 'success' : 'error'} />
+                                        </TableCell>
                                         <TableCell>
                                             {lar.animais.filter(animal => animal.situacao !== 'adotado').length}
                                         </TableCell>
@@ -279,8 +284,8 @@ export const LaresTab = ({ startDate, endDate }: LaresTabProps) => {
                                 <TableRow>
                                     <TableCell colSpan={3} align="right">
                                         <Box display="flex" alignItems="center" justifyContent="space-between" gap={3}>
-                                        <Typography variant="subtitle2" sx={{mb:1}}>Desconsidera animais já adotados</Typography>
-                                        
+                                            <Typography variant="subtitle2" sx={{ mb: 1 }}>Desconsidera animais já adotados</Typography>
+
                                         </Box>
                                     </TableCell>
                                 </TableRow>

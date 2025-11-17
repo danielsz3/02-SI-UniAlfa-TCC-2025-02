@@ -3,25 +3,17 @@ import {
     TextInput,
     useListContext,
     DateInput,
+    IconButtonWithTooltip,
 } from 'react-admin';
 import { Link } from 'react-router-dom';
 import { Grid, Card, CardContent, Typography, Box, Button, Chip } from '@mui/material';
 import React, { JSX } from 'react';
-import { FaWhatsapp, FaInstagram } from "react-icons/fa";
+import { FaWhatsapp, FaInstagram, FaPlus } from "react-icons/fa";
+import AddToPhotosIcon from '@mui/icons-material/AddToPhotos';
 
 // Filtros
 const filters = [
     <TextInput label="Serviço" source="service" size="small" alwaysOn />,
-    <DateInput
-                label="Criado a partir de"
-                source="created_at_from"
-                alwaysOn
-            />,
-            <DateInput
-                label="Criado até"
-                source="created_at_to"
-                alwaysOn
-            />,
 ];
 
 // Configurações dos serviços
@@ -97,7 +89,7 @@ const IntegracoesGrid = () => {
                                         label={isConnected ? "Conectado" : "Desconectado"}
                                         size="medium"
                                         color={isConnected ? "success" : "default"}
-                                        variant="outlined"
+                                        variant={isConnected ? "filled" : "outlined"}
                                     />
                                 )}
                             </Box>
@@ -125,6 +117,19 @@ const IntegracoesGrid = () => {
                                     >
                                         {isConnected ? "Configurar" : "Conectar"}
                                     </Button>
+                                    {isConnected && (
+                                        <Link to="/posts/create">
+                                            <IconButtonWithTooltip
+                                                label="Criar postagem"
+                                                component="span"
+                                                sx={{
+                                                    color: 'primary'
+                                                }}
+                                            >
+                                                <AddToPhotosIcon color='primary' fontSize='medium'/>
+                                            </IconButtonWithTooltip>
+                                        </Link>
+                                    )}
                                 </Box>
                             ) : (
                                 <Typography

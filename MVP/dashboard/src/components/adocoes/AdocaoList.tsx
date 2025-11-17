@@ -1,4 +1,4 @@
-import { AutocompleteInput, DataTable, DateField, FunctionField, List, Pagination, PaginationProps, RaRecord, ReferenceInput, SelectInput, useRecordContext } from 'react-admin';
+import { AutocompleteInput, ChipField, DataTable, DateField, FunctionField, List, Pagination, PaginationProps, RaRecord, ReferenceInput, SelectField, SelectInput, useRecordContext } from 'react-admin';
 import CustomDatePicker from '../datepicker/customDatePicker';
 import { CustomListActions } from '../ExportActions';
 import { Avatar, Box } from '@mui/material';
@@ -49,8 +49,8 @@ const filters = [
         size="small"
         choices={[
             { id: 'em_aprovacao', name: 'Em Aberto' },
-            { id: 'aprovado', name: 'Aprovado' }
-
+            { id: 'aprovado', name: 'Aprovado' },
+            { id: 'negado', name: 'Negado' },
         ]}
         alwaysOn
     />,
@@ -130,7 +130,22 @@ export const AdocaoList = () => (
                     }
                 />
             </DataTable.Col>
-            <DataTable.Col source="status" />
+            <DataTable.Col source="status" >
+                <FunctionField
+                    render={
+                        record =>
+                            <SelectField
+                                source="status"
+                                choices={[
+                                    { id: 'em_aprovacao', name: 'Em Aberto' },
+                                    { id: 'aprovado', name: 'Aprovado' },
+                                    { id: 'negado', name: 'Negado' }
+                                ]}
+                                optionText={<ChipField source="name" color={record.status === 'em_aprovacao' ? 'warning' : record.status === 'aprovado' ? 'success' : 'error'} />}
+                            />
+                    }
+                />
+            </DataTable.Col>
         </DataTable>
     </List>
 );

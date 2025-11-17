@@ -1,6 +1,6 @@
 import React from 'react';
 import { UserMenu, Logout } from 'react-admin';
-import { Avatar } from '@mui/material';
+import { Avatar, Typography } from '@mui/material';
 
 const getUserImageFromLocalStorage = () => {
     const userString = localStorage.getItem('user');
@@ -10,20 +10,30 @@ const getUserImageFromLocalStorage = () => {
     return imageUrl;
 }
 
+const getNameUserFromLocalStorage = () => {
+    const userString = localStorage.getItem('user');
+    if (!userString) return undefined;
+    const user = JSON.parse(userString);
+    return user.nome;
+}
+
 const MeuMenuUsuario = () => (
-    <UserMenu
-        icon={
-            <Avatar
-                sx={{
-                    height: 30,
-                    width: 30,
-                }}
-                src={getUserImageFromLocalStorage()}
-            />
-        }
-    >
-        <Logout />
-    </UserMenu>
+    <>
+        {getNameUserFromLocalStorage()}
+        <UserMenu
+            icon={
+                <Avatar
+                    sx={{
+                        height: 30,
+                        width: 30,
+                    }}
+                    src={getUserImageFromLocalStorage()}
+                />
+            }
+        >
+            <Logout />
+        </UserMenu>
+    </>
 );
 
 export default MeuMenuUsuario;

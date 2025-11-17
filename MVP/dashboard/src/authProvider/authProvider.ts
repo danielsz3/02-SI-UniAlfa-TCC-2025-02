@@ -1,4 +1,5 @@
 import { jwtDecode } from "jwt-decode";
+import { useGetIdentity } from "react-admin";
 interface JwtPayload {
     exp: number;
     [key: string]: any;
@@ -60,4 +61,5 @@ export const authProvider = {
     },
 
     getPermissions: () => Promise.resolve(),
+
 };

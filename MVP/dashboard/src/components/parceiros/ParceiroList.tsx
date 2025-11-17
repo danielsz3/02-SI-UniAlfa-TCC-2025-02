@@ -4,6 +4,7 @@ import {
     SimpleList,
     TextInput,
     DateInput,
+    RaRecord,
 } from 'react-admin'
 import {
     Grid,
@@ -16,22 +17,33 @@ import {
 } from '@mui/material'
 import { Link } from 'react-router-dom'
 import { useCreatePath } from 'react-admin'
+import CustomDatePicker from '../datepicker/customDatePicker';
+import { CustomListActions } from '../ExportActions';
 
 const CARD_HEIGHT = 250;
 
 const filters = [
     <TextInput label="Nome" source="nome" size="small" alwaysOn />,
-    <DateInput
+    <CustomDatePicker
         label="Criado a partir de"
         source="created_at_from"
-        alwaysOn
+        past
     />,
-    <DateInput
+    <CustomDatePicker
         label="Criado até"
         source="created_at_to"
-        alwaysOn
+        past
     />,
 ];
+
+const formatadorDeParceiros = (data: RaRecord[]) => {
+    return data.map(record => ({
+        'Data Criação': new Date(record.created_at).toLocaleString(),
+        'Nome': record.nome,
+        "Url Site": record.url_site,
+        "Descrição": record.descricao
+    }));
+};
 
 const ParceiroGrid = () => {
     const { data, isLoading } = useListContext()
@@ -69,10 +81,9 @@ const ParceiroGrid = () => {
                                     left: 0,
                                     width: '100%',
                                     height: '100%',
-                                    backgroundImage: `url(${
-                                        record.imagem?.src ||
+                                    backgroundImage: `url(${record.imagem?.src ||
                                         import.meta.env.VITE_API_URL + '/imagens/' + record.imagem
-                                    })`,
+                                        })`,
                                     backgroundSize: 'cover',
                                     backgroundPosition: 'center',
                                 }}
@@ -107,11 +118,16 @@ const ParceiroList = () => {
     return (
         <List
             filters={filters}
+            sort={{ field: 'nome', order: 'ASC' }}
             sx={{
                 '& .RaList-content': {
                     boxShadow: 'none',
                 },
             }}
+            actions={<CustomListActions
+                formatter={formatadorDeParceiros}
+                nomeArquivo="export_parceiros"
+            />}
         >
             {isSmall ? (
                 <SimpleList

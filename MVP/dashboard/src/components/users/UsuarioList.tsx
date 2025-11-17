@@ -1,6 +1,7 @@
-import { DataTable, DateField, EmailField, List, RaRecord, SelectInput, TextInput } from 'react-admin';
+import { DataTable, DateField, EmailField, FunctionField, List, RaRecord, SelectInput, SimpleList, TextInput } from 'react-admin';
 import CustomDatePicker from '../datepicker/customDatePicker';
 import { CustomListActions } from '../ExportActions';
+import { Badge, Box, Chip, useMediaQuery, useTheme } from '@mui/material';
 
 const filters = [
     <TextInput label="Nome" source="nome" size="small" alwaysOn />,
@@ -67,25 +68,62 @@ const formatadorDeUsuarios = (data: RaRecord[]) => {
     }));
 };
 
-export const UsuarioList = () => (
-    <List
-        filters={filters}
-        actions={<CustomListActions
-            formatter={formatadorDeUsuarios}
-            nomeArquivo="export_usuarios"
-        />}
-    >
-        <DataTable rowClick="edit">
-            <DataTable.Col source="id" />
-            <DataTable.Col source="nome" />
-            <DataTable.Col source="email">
-                <EmailField source="email" />
-            </DataTable.Col>
-            <DataTable.Col source="data_nascimento">
-                <DateField source="data_nascimento" />
-            </DataTable.Col>
-            <DataTable.Col source="telefone" />
-            <DataTable.Col source="role" />
-        </DataTable>
-    </List>
-);
+export const UsuarioList = () => {
+
+    const theme = useTheme();
+    const isSmall = useMediaQuery(theme.breakpoints.down('sm'));
+
+    return (
+        <List
+            filters={filters}
+            actions={<CustomListActions
+                formatter={formatadorDeUsuarios}
+                nomeArquivo="export_usuarios"
+            />}
+        >
+            {isSmall ? (
+                <SimpleList
+                    leftAvatar={(record) => {
+                        if (record.imagem) {
+                            return import.meta.env.VITE_API_URL + '/imagens/' + record.imagem;
+                        }
+                    }}
+                    primaryText={(record) => record.nome}
+                    secondaryText={(record) => record.email}
+                    tertiaryText={(record) => record.role}
+                />
+            ) : (
+                <DataTable rowClick="edit">
+                    <DataTable.Col source="created_at" label="Data cadastro">
+                        <DateField source="created_at" showTime locales={'pt-BR'} />
+                    </DataTable.Col>
+                    <DataTable.Col source="nome" />
+                    <DataTable.Col source="email">
+                        <EmailField source="email" />
+                    </DataTable.Col>
+                    <DataTable.Col source="data_nascimento">
+                        <DateField source="data_nascimento" />
+                    </DataTable.Col>
+                    <DataTable.Col source="telefone">
+                        <FunctionField
+                            render={(record) => formatPhone(record.telefone)}
+                        />
+                    </DataTable.Col>
+                    <DataTable.Col source="role" label="Tipo" >
+                        <FunctionField
+                            render={(record) => {
+                                return <Box sx={{ display: 'flex', justifyContent: 'center', minWidth: '100%'}}>
+                                    <Chip
+                                        sx={{ fontWeight: 'bold' }}
+                                        color={record.role === 'user' ? 'primary' : 'secondary'}
+                                        label={record.role === 'user' ? 'Usuário' : 'Administrador'}
+                                    />
+                                </Box>
+                            }}
+                        />
+                    </DataTable.Col>
+                </DataTable>
+            )}
+        </List>
+    )
+};

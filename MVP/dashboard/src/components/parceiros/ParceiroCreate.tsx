@@ -27,12 +27,6 @@ const ParceiroToolbar = () => {
             leftButtons={[
                 <SaveButton
                     type='button'
-                    mutationOptions={{
-                        onSuccess: () => {
-                            notify('Parceiro salvo com sucesso!', { type: 'success' });
-                            redirect('list', 'parceiros');
-                        },
-                    }}
                 />,
                 <SaveButton
                     type='button'

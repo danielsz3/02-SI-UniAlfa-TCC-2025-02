@@ -1,4 +1,4 @@
-import { Button, DeleteWithConfirmButton, Edit, ImageField, ImageInput, SaveButton, SimpleForm, TextInput, required, useNotify, useRedirect } from 'react-admin';
+import { Button, DeleteWithConfirmButton, Edit, ImageField, ImageInput, SaveButton, SimpleForm, TextInput, required, useRedirect } from 'react-admin';
 import { FilePlaceholder } from '../FilePlaceHolder';
 import { CustomToolbar } from '../CustomToolbar';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';

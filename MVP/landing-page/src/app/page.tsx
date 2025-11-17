@@ -24,11 +24,14 @@ function HeroSection() {
     <section className="relative w-full bg-linear-to-br from-primary/10 via-primary/5 to-background overflow-hidden min-h-[500px] flex items-center">
       <div className="absolute inset-0 w-full h-full z-0">
         <Ballpit
-          count={80}
-          gravity={0.05}
-          friction={1}
+          count={50}
+          gravity={0.045}
+          friction={0.9975}
           wallBounce={1}
           followCursor={false}
+          minSize={1.6}
+          maxSize={1.1}
+          lightIntensity={50}
           colors={["#0367A6", "#54DBF7", "#F2F1F0", "#049DBF", "#3DD1F2"]} />
       </div>
 

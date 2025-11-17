@@ -64,7 +64,7 @@ class PostController extends Controller
                     throw new \Exception("Erro no retorno do n8n: " . $response->body());
                 }
 
-                return response()->json(['id' => $response->id ?? 0], 201);
+                return response()->json(['id' => $response->id ?? 1], 201);
         } catch (\Throwable $e) {
             Log::error('Erro ao criar post e enviar para n8n: ' . $e->getMessage(), [
                 'payload' => $request->all(),

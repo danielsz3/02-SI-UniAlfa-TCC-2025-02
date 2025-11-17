@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import ImageCarousel from "@/components/ImageCarousel"
 import { Imagens } from "@/types"
+import Ballpit from "@/components/Ballpit"
 
 type Evento = {
   id: number
@@ -20,23 +21,38 @@ type Evento = {
 
 function HeroSection() {
   return (
-    <section className="w-full bg-linear-to-br from-primary/10 via-primary/5 to-background">
-      <div className="mx-auto max-w-6xl px-4 py-16 md:py-24">
-        <div className="flex flex-col items-center text-center space-y-6">
-          <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
-            Encontre seu novo melhor amigo
-          </h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl">
-            Conectamos pets que precisam de um lar com pessoas que querem amar.
-            Adote, doe e transforme vidas.
-          </p>
-          <div className="flex gap-4">
-            <Button size="lg" asChild>
-              <Link href="/adotar">Adotar um Pet</Link>
-            </Button>
-            <Button size="lg" variant="outline" asChild>
-              <Link href="/doar-pet">Doar um Pet</Link>
-            </Button>
+    <section className="relative w-full bg-linear-to-br from-primary/10 via-primary/5 to-background overflow-hidden min-h-[500px] flex items-center">
+      <div className="absolute inset-0 w-full h-full z-0">
+        <Ballpit
+          count={80}
+          gravity={0.05}
+          friction={1}
+          wallBounce={1}
+          followCursor={false}
+          colors={["#0367A6", "#54DBF7", "#F2F1F0", "#049DBF", "#3DD1F2"]} />
+      </div>
+
+      <div className="relative z-10 mx-auto max-w-6xl px-4 py-16 md:py-24 pointer-events-none">
+        <div className="flex flex-col items-center text-center space-y-6 pointer-events-auto">
+          <div className="flex flex-col items-center text-center space-y-6 pointer-events-auto 
+      bg-background/30 dark:bg-background/50 backdrop-blur-sm p-8 rounded-2xl border border-white/20 shadow-xl">
+            <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
+              Encontre seu novo melhor amigo
+            </h1>
+
+            <p className="text-lg md:text-2xl text-primary dark:text-accent font-semibold max-w-2xl">
+              Conectamos pets que precisam de um lar com pessoas que querem amar.
+              Adote, doe e transforme vidas.
+            </p>
+
+            <div className="flex gap-4">
+              <Button size="lg" asChild>
+                <Link href="/adotar">Adotar um Pet</Link>
+              </Button>
+              <Button size="lg" variant="outline" className="hover:text-white" asChild>
+                <Link href="/doar-pet">Doar um Pet</Link>
+              </Button>
+            </div>
           </div>
         </div>
       </div>

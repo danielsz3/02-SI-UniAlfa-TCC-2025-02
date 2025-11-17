@@ -9,21 +9,16 @@ const handleError = (response: Response) => {
 
     if (response.status === 422 && errorBody.errors) {
 
-      console.log('[handleError] Processando Erro 422. "errors" encontrado:', errorBody.errors);
-
       const formattedErrors: { [key: string]: string } = {};
       const allErrorMessages: string[] = [];
 
       // Adicionando mais logs para ter certeza sobre a formatação
       const errorKeys = Object.keys(errorBody.errors);
-      console.log('[handleError] Chaves de erro encontradas:', errorKeys); // DEBUG 2.1
 
       errorKeys.forEach(key => {
-        console.log(`[handleError] Processando chave: "${key}"`); // DEBUG 2.2
         const errorValue = errorBody.errors[key];
 
         if (Array.isArray(errorValue)) {
-          console.log(`[handleError] Chave "${key}" é um array:`, errorValue); // DEBUG 2.3
           errorValue.forEach((errorItem, index) => {
             let errorMessage = 'Erro de validação';
 
@@ -36,12 +31,10 @@ const handleError = (response: Response) => {
             allErrorMessages.push(errorMessage);
 
             if (index === 0) {
-              console.log(`[handleError] Definindo erro para o campo "${key}":`, errorMessage); // DEBUG 2.4
               formattedErrors[key] = errorMessage;
             }
           });
         } else if (typeof errorValue === 'string') {
-          console.log(`[handleError] Chave "${key}" é uma string:`, errorValue); // DEBUG 2.5
           allErrorMessages.push(errorValue);
           formattedErrors[key] = errorValue;
         }
@@ -56,8 +49,6 @@ const handleError = (response: Response) => {
         message: mainErrorMessage,
         body: { errors: formattedErrors }
       };
-
-      console.log('--- [handleError] Rejeitando para React-Admin (422) ---', rejectionPayload);
 
       // Esta rejeição será pega pelo .catch() abaixo
       return Promise.reject(rejectionPayload);
@@ -130,8 +121,6 @@ const httpClient = (url: string, options: fetchUtils.Options = {}) => {
         return Promise.reject(error);
       }
 
-      console.error("Erro de rede:", error);
-
       return Promise.reject({
         status: 0,
         message: error.message || "Não foi possível conectar à API"
@@ -150,7 +139,6 @@ const convertDataRequestToHTTP = (
   if (isUpdate) {
     Object.keys(requestData).forEach((key) => {
       const field = requestData[key];
-      console.log('Processando item de array para FormData:', key, field); // DEBUG
       if (
         (key === "arquivo" || key === "imagem") &&
         field &&
@@ -159,13 +147,11 @@ const convertDataRequestToHTTP = (
       ) {
         delete requestData[key];
       }
-      console.log('Após verificação, item é:', key, requestData[key]); // DEBUG
     });
   }
 
   const hasFileUpload = Object.keys(requestData).some((key) => {
     const field = requestData[key];
-    console.log('Verificando campo para upload de arquivo:', key, field); // DEBUG
     return Array.isArray(field)
       ? field.some(
         (item) => item && typeof item === "object" && item.rawFile instanceof File

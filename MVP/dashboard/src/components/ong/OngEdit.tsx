@@ -18,6 +18,7 @@ import {
     SelectInput,
     regex,
     Edit,
+    useRedirect,
 } from 'react-admin';
 import CustomDatePicker from '../datepicker/customDatePicker';
 import { useFormContext } from 'react-hook-form';
@@ -70,7 +71,8 @@ const CepInput = () => {
 };
 
 const OngEdit = (props: EditProps) => {
-
+    const notify = useNotify();
+    const navigate = useRedirect();
     return (
         <Edit
             {...props}
@@ -79,6 +81,12 @@ const OngEdit = (props: EditProps) => {
             redirect='edit'
             sx={{
                 maxWidth: { xs: '100%', sm: 600, md: 800 }, margin: { sm: 0, md: '0 auto' }, mt: 2
+            }}
+            mutationOptions={{
+                onSuccess: () => {
+                    notify('ONG atualizada com sucesso!', { type: 'info' });
+                    navigate('/ongs/edit/1');
+                }
             }}
         >
             <TabbedForm

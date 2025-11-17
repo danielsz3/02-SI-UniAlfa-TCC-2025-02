@@ -114,6 +114,7 @@ class LaresTemporarioController extends Controller
             'imagens.*.image' => 'Cada arquivo enviado em imagens deve ser uma imagem válida.',
             'imagens.*.mimes' => 'As imagens devem ser do tipo: jpeg, png, jpg ou webp.',
             'imagens.*.max' => 'Cada imagem deve ter no máximo 10MB.',
+            'imagens.max' => 'Você pode enviar no máximo 10 imagens.',
         ]);
 
         if ($validator->fails()) {
@@ -233,11 +234,9 @@ class LaresTemporarioController extends Controller
 
             // Imagens - validação condicional
             'imagens' => 'nullable|array',
-        ];
+            'imagem' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240',
 
-        // if ($request->hasFile('imagens')) {
-        //     $rules['imagens.*'] = 'file|image|mimes:jpeg,png,jpg,webp|max:10240';
-        // }
+        ];
 
         $validator = Validator::make($request->all(), $rules, [
             'nome.required' => 'O nome é obrigatório.',
@@ -267,10 +266,24 @@ class LaresTemporarioController extends Controller
             'imagens.*.image' => 'Cada arquivo enviado em imagens deve ser uma imagem válida.',
             'imagens.*.mimes' => 'As imagens devem ser do tipo: jpeg, png, jpg ou webp.',
             'imagens.*.max' => 'Cada imagem deve ter no máximo 10MB.',
+            'imagens.max' => 'Você pode enviar no máximo 10 imagens.',
+
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
+        }
+        // Verificar limite TOTAL de imagens (existentes + novas)
+        $imagensExistentes = $lar->imagens()->count();
+        $novasImagens = is_array($request->file('imagens')) ? count($request->file('imagens')) : 0;
+        $total = $imagensExistentes + $novasImagens;
+
+        if ($total > 10) {
+            return response()->json([
+                'errors' => [
+                    'imagens' => ['O total de imagens não pode exceder 10.'],
+                ],
+            ], 422);
         }
 
         try {

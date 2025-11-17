@@ -118,6 +118,8 @@ class OngController extends Controller
 
             'contatos.*.link' => 'nullable|url',
             'contatos.*.descricao' => 'nullable|string|max:255',
+
+
         ];
 
         // Regra do ID (separada)
@@ -129,14 +131,9 @@ class OngController extends Controller
             }),
         ];
 
-        // Validação da Galeria (campo $campoGaleria)
-        if ($request->hasFile($this->campoGaleria)) {
-            $rules[$this->campoGaleria . '.*'] = 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240';
-        }
-
         // Validação da Capa (campo $campoImagemCapa)
         if ($request->hasFile($this->campoImagemCapa)) {
-            $rules[$this->campoImagemCapa] = 'file|image|mimes:jpeg,png,jpg,gif,webp|max:5120';
+            $rules[$this->campoImagemCapa] = 'file|image|mimes:jpeg,png,jpg,gif,webp|max:10240';
         } else {
             $rules[$this->campoImagemCapa] = 'sometimes|nullable|url';
         }
@@ -146,6 +143,7 @@ class OngController extends Controller
             'imagem.image' => 'A imagem deve ser um arquivo de imagem válido.',
             'imagem.mimes' => 'Tipos permitidos: jpeg, png, jpg, webp.',
             'imagem.max' => 'A imagem deve ter no máximo 10MB.',
+
         ];
 
         $validator = Validator::make($request->all(), $rules, $messages);
@@ -154,13 +152,40 @@ class OngController extends Controller
         }
 
         // Validação extra
+
+        $validator = Validator::make($request->all(), $rules, $messages);
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        // Validação extra das imagens (galeria)
         $imgRules = $this->getImagesValidationRules();
-        $imgValidator = Validator::make($request->all(), $imgRules);
+        $imgValidator = Validator::make($request->all(), $imgRules, [
+            'imagens.array' => 'As imagens devem ser enviadas em um array.',
+            'imagens.max' => 'O total de imagens não pode exceder 10.',
+            'imagens.*.image' => 'Cada arquivo deve ser uma imagem válida.',
+            'imagens.*.mimes' => 'Tipos permitidos: jpeg, jpg, png, webp.',
+            'imagens.*.max' => 'Cada imagem deve ter no máximo 10MB.',
+        ]);
         if ($imgValidator->fails()) {
             return response()->json(['errors' => $imgValidator->errors()], 422);
         }
-        // --- Fim da Validação ---
 
+        // Limite TOTAL de imagens (existentes + novas)
+        $imagensExistentes = $ong->imagens()->count();
+        $novasImagens = is_array($request->file($this->campoGaleria))
+            ? count($request->file($this->campoGaleria))
+            : 0;
+        $total = $imagensExistentes + $novasImagens;
+
+        if ($total > 10) {
+            return response()->json([
+                'errors' => [
+                    'imagens' => ['O total de imagens não pode exceder 10.'],
+                ],
+            ], 422);
+        }
+        // --- Fim da Validação -
         try {
             return DB::transaction(function () use ($request, $ong) {
 
@@ -191,6 +216,18 @@ class OngController extends Controller
                 // 5. 👈 CHAMA O TRAIT para sincronizar a GALERIA
                 if ($request->has($this->campoGaleria) || $request->hasFile($this->campoGaleria)) {
                     $this->sincronizarGaleria($request, $ong);
+                }
+
+                $imagensExistentes = $ong->imagens()->count();
+                $novasImagens = is_array($request->file('imagens')) ? count($request->file('imagens')) : 0;
+                $total = $imagensExistentes + $novasImagens;
+
+                if ($total > 10) {
+                    return response()->json([
+                        'errors' => [
+                            'imagens' => ['O total de imagens não pode exceder 10.'],
+                        ],
+                    ], 422);
                 }
 
                 return response()->json($ong->fresh(['contatos', 'imagens']), 200);

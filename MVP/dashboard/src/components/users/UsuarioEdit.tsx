@@ -1,62 +1,30 @@
-import { SimpleForm, TextInput, required, PasswordInput, Edit, ImageInput, ImageField } from 'react-admin';
+import React from 'react';
+import { 
+    SimpleForm, 
+    TextInput, 
+    required, 
+    PasswordInput, 
+    Edit, 
+    ImageInput, 
+    ImageField, 
+    useRecordContext
+} from 'react-admin';
 import CustomDatePicker from '../datepicker/customDatePicker';
 import { FilePlaceholder } from '../FilePlaceHolder';
-import { CustomToolbar } from '../CustomToolbar';
+import { CustomToolbar } from '../CustomToolbar'; 
 
-const UserEdit = () => (
-    <Edit
-        title="Editar Usuário"
-        sx={{ width: '100%', maxWidth: 600, margin: '0 auto' }}
-        redirect="list"
-    >
-        <SimpleForm>
-            <TextInput
-                source="nome"
-                label="Nome"
-                validate={required('O nome é obrigatório')}
-            />
+const UserFormContent = () => {
 
-            <TextInput
-                source="cpf"
-                label="CPF"
-                validate={required('O CPF é obrigatório')}
-            />
+    const record = useRecordContext();
 
-            <CustomDatePicker
-                source='data_nascimento'
-                label="Data de Nascimento *"
-                validate={required('A data de nascimento é obrigatória')}
-            />
+    const isUser = record && record.role === 'user';
 
-            <TextInput
-                source="telefone"
-                label="Telefone"
-                validate={[required('O telefone é obrigatória')
-                ]}
-            />
-
-            <TextInput
-                source="email"
-                label="Email"
-                validate={[required('O email é obrigatório'),
-                (value) => value && !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(value) && 'O email é inválido'
-                ]}
-            />
-
-            <PasswordInput
-                source="password"
-                label="Senha"
-                helperText="Deixe em branco para não alterar a senha"
-            />
-
-            <PasswordInput
-                source="password_confirmation"
-                label="Confirmar Senha"
-            />
-
+    return (
+        <>
             <ImageInput
                 source="imagem"
                 label="Imagem"
+                disabled={isUser}
                 accept={{ 'image/*': ['.png', '.jpg', '.jpeg', '.gif'] }}
                 maxSize={10_500_000}
                 validate={required('Pelo menos uma imagem é obrigatória')}
@@ -75,8 +43,70 @@ const UserEdit = () => (
                 <ImageField source="src" title="title" />
             </ImageInput>
 
-        </SimpleForm>
-    </Edit>
-);
+            <TextInput
+                source="nome"
+                label="Nome"
+                disabled={isUser}
+                validate={required('O nome é obrigatório')}
+            />
+
+            <TextInput
+                source="cpf"
+                label="CPF"
+                disabled={isUser}
+                validate={required('O CPF é obrigatório')}
+            />
+
+            <CustomDatePicker
+                source='data_nascimento'
+                label="Data de Nascimento *"
+                disabled={isUser}
+                validate={required('A data de nascimento é obrigatória')}
+            />
+
+            <TextInput
+                source="telefone"
+                label="Telefone"
+                disabled={isUser}
+                validate={[required('O telefone é obrigatória')]}
+            />
+
+            <TextInput
+                source="email"
+                label="Email"
+                disabled={isUser}
+                validate={[
+                    required('O email é obrigatório'),
+                    (value) => value && !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(value) && 'O email é inválido'
+                ]}
+            />
+
+            <PasswordInput
+                source="password"
+                label="Senha"
+                helperText="Deixe em branco para não alterar a senha"
+            />
+
+            <PasswordInput
+                source="password_confirmation"
+                label="Confirmar Senha"
+            />
+        </>
+    );
+};
+
+const UserEdit = () => {
+    return (
+        <Edit
+            title="Editar Usuário"
+            sx={{ width: '100%', maxWidth: 600, margin: '0 auto', mb: 10 }}
+            redirect="list"
+        >
+            <SimpleForm>
+                <UserFormContent key={0} />
+            </SimpleForm>
+        </Edit>
+    )
+};
 
 export default UserEdit;

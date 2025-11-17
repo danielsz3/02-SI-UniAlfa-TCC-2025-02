@@ -23,6 +23,7 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({ source, label, ...p
     return (
         <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
             <DatePicker
+                {...field}
                 label={label}
                 disablePast={!props.past}
                 disableFuture={!props.future}

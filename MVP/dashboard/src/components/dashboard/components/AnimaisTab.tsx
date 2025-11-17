@@ -16,22 +16,21 @@ import {
     Avatar,
     Stack,
     TableFooter,
-    Button
+    Button,
+    Chip
 } from '@mui/material';
 import { endOfDay, format, formatISO, startOfDay } from 'date-fns';
 import SimplePieChart from './SimplePieChart';
 import { Animal, PieData } from '../types';
 import { useApiSearch } from '../hooks/useApiSearch';
-import { Situacao } from 'src/components/animais/AnimalList';
 import { red } from '@mui/material/colors';
 import MetricCard from './MetricCard';
+import { chipTipos, Situacao } from '../../animais/AnimalList';
 
 interface AnimaisTabProps {
     startDate: Date | null;
     endDate: Date | null;
 }
-
-
 
 // --- Constantes de Cor ---
 const COLORS_ANIMAIS = ['#0088FE', '#00C49F', '#f0b12a', '#FF8042', '#8884d8'];
@@ -91,7 +90,7 @@ export const AnimaisTab = ({ startDate, endDate }: AnimaisTabProps) => {
 
     const animalsComAdotantes = useMemo(() => {
         if (!allAnimals) return [];
-        return allAnimals.filter(a => a.situacao == 'adotado' || (a.fica_usuario === true && a.lar_temporario_id == null ));
+        return allAnimals.filter(a => a.situacao == 'adotado' || (a.fica_usuario === true && a.lar_temporario_id == null));
     }, [allAnimals]);
 
 
@@ -237,7 +236,14 @@ export const AnimaisTab = ({ startDate, endDate }: AnimaisTabProps) => {
                                             <p>{animal.nome}</p>
                                         </Stack>
                                     </TableCell>
-                                    <TableCell>{animal.situacao}</TableCell>
+                                    <TableCell>
+                                        <Chip label={statusNameMap[animal.situacao as keyof StatusName || 'indefinido']}
+                                            sx={{
+                                                fontWeight: 'bold',
+                                                backgroundColor: chipTipos[animal.situacao].bgCor,
+                                                color: chipTipos[animal.situacao].textCor || '#000000'
+                                            }} />
+                                    </TableCell>
                                     <TableCell>
                                         {format(new Date(animal.created_at), 'dd/MM/yyyy HH:mm')}
                                     </TableCell>
@@ -294,7 +300,14 @@ export const AnimaisTab = ({ startDate, endDate }: AnimaisTabProps) => {
                                                 <p>{animal.nome}</p>
                                             </Stack>
                                         </TableCell>
-                                        <TableCell>{animal.situacao}</TableCell>
+                                        <TableCell>
+                                            <Chip label={statusNameMap[animal.situacao as keyof StatusName || 'indefinido']}
+                                                sx={{
+                                                    fontWeight: 'bold',
+                                                    backgroundColor: chipTipos[animal.situacao].bgCor,
+                                                    color: chipTipos[animal.situacao].textCor || '#000000'
+                                                }} />
+                                        </TableCell>
                                         <TableCell>
                                             {format(new Date(animal.created_at), 'dd/MM/yyyy HH:mm')}
                                         </TableCell>

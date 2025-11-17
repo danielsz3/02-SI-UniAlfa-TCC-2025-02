@@ -16,7 +16,8 @@ import {
     Avatar,
     Stack,
     TableFooter,
-    Button
+    Button,
+    Chip
 } from '@mui/material';
 import { endOfDay, format, formatISO, startOfDay } from 'date-fns';
 import SimplePieChart from './SimplePieChart';
@@ -194,12 +195,14 @@ export const TransacoesTab = ({ startDate, endDate }: TransacoesTabProps) => {
                                         {formatCurrency(transacao.valor)}
                                     </TableCell>
                                     <TableCell>
-                                        {transacao.tipo}
+                                        <Chip size='small' variant='outlined' sx={{ textTransform: 'capitalize', fontWeight: 'bold' }} label={transacao.tipo} color={transacao.tipo === 'receita' ? 'success' : 'error'} />
                                     </TableCell>
                                     <TableCell>
                                         {transacao.categoria}
                                     </TableCell>
-                                    <TableCell>{transacao.situacao}</TableCell>
+                                    <TableCell>
+                                        <Chip size='small' sx={{ textTransform: 'capitalize', fontWeight: 'bold' }} label={transacao.situacao} color={transacao.situacao === 'concluido' ? 'success' : transacao.situacao === 'pendente' ? 'warning' : 'error'} />
+                                    </TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>

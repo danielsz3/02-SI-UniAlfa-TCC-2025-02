@@ -20,7 +20,8 @@ import {
     Link,
     useReference,
     Loading,
-    Count
+    Count,
+    ChipField
 } from 'react-admin';
 import { FaEye } from 'react-icons/fa';
 import { chipTipos, Situacao, tamanhos } from '../animais/AnimalList';
@@ -70,20 +71,20 @@ const Aside = () => {
                         <Typography variant="body1" sx={{ px: 2 }}>
                             Animais ainda neste Lar
                         </Typography>
-                        
-                            <Button
-                                variant="outlined"
-                                size="small"
-                                sx={{ mr: 2 }}
-                                endIcon={<NavigateNextIcon />}
+
+                        <Button
+                            variant="outlined"
+                            size="small"
+                            sx={{ mr: 2 }}
+                            endIcon={<NavigateNextIcon />}
+                        >
+                            <Link
+                                to={`/animais?filter=${encodeURIComponent(JSON.stringify({ "lar_temporario_id": record.id }))}`}
+                                sx={{ textDecoration: 'none', color: 'primary.main' }}
                             >
-                                <Link
-                                    to={`/animais?filter=${encodeURIComponent(JSON.stringify({ "lar_temporario_id": record.id }))}`}
-                                    sx={{ textDecoration: 'none', color: 'primary.main' }}
-                                >
-                                    Ver todos ( <Count resource="animais" filter={{ "lar_temporario_id": record.id }} /> )
-                                </Link>
-                            </Button>
+                                Ver todos ( <Count resource="animais" filter={{ "lar_temporario_id": record.id }} /> )
+                            </Link>
+                        </Button>
                     </Box>
 
                     <ReferenceManyField
@@ -210,7 +211,7 @@ const LarTempShow = (props: ShowProps) => {
                 },
             }}
             render={({ record, error, isPending }) => {
-                if (isPending) return <Loading/>;
+                if (isPending) return <Loading />;
                 if (error) return <p>Error: {error.message}</p>;
                 if (!record) return <p>No record found</p>;
 
@@ -239,7 +240,11 @@ const LarTempShow = (props: ShowProps) => {
                                             <SelectField
                                                 label="Situação"
                                                 source="situacao"
-                                                choices={situacaoChoices}
+                                                choices={[
+                                                    { id: 'ativo', name: 'Ativo' },
+                                                    { id: 'inativo', name: 'Inativo' },
+                                                ]}
+                                                optionText={<ChipField size='small' source="name" color={record.situacao === 'ativo' ? 'success' : 'error'} />}
                                             />
 
                                             <TextField

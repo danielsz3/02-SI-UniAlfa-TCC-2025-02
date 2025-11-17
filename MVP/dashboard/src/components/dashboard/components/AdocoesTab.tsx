@@ -16,13 +16,13 @@ import {
     Avatar,
     Stack,
     TableFooter,
-    Button
+    Button,
+    Chip
 } from '@mui/material';
 import { endOfDay, format, formatISO, startOfDay } from 'date-fns';
 import SimplePieChart from './SimplePieChart';
-import { Adocao, Animal, PieData } from '../types';
+import { Adocao, PieData } from '../types';
 import { useApiSearch } from '../hooks/useApiSearch';
-import { Situacao } from 'src/components/animais/AnimalList';
 import { red } from '@mui/material/colors';
 import MetricCard from './MetricCard';
 
@@ -32,7 +32,7 @@ interface AdocoesTabProps {
 }
 
 // --- Constantes de Cor ---
-const COLORS_AOCOES = ['#0088FE', '#00C49F', '#f0b12a', '#FF8042', '#8884d8'];
+const COLORS_ADOCOES = ['#5097d6', '#1ab81a', '#f14425', '#FF8042', '#8884d8'];
 
 // --- Componente da Aba ---
 export const AdocoesTab = ({ startDate, endDate }: AdocoesTabProps) => {
@@ -144,7 +144,7 @@ export const AdocoesTab = ({ startDate, endDate }: AdocoesTabProps) => {
                 <SimplePieChart
                     height={200}
                     data={statusPieData}
-                    colors={COLORS_AOCOES}
+                    colors={COLORS_ADOCOES}
                     title="Status das Adoções"
                 />
             </Grid>
@@ -194,7 +194,9 @@ export const AdocoesTab = ({ startDate, endDate }: AdocoesTabProps) => {
                                             <p>{adocao.usuario.nome}</p>
                                         </Stack>
                                     </TableCell>
-                                    <TableCell>{adocao.status}</TableCell>
+                                    <TableCell>
+                                        <Chip sx={{fontWeight: 'bold'}} label={statusNameMap[adocao.status || 'indefinido']} color={statusNameMap[adocao.status] === 'Aprovado' ? 'success' : 'warning'} />
+                                    </TableCell>
                                     <TableCell>
                                         {format(new Date(adocao.created_at), 'dd/MM/yyyy HH:mm')}
                                     </TableCell>

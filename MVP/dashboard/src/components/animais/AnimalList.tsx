@@ -45,7 +45,7 @@ const filters = [
 ]
 
 export const chipTipos = {
-    disponivel: { label: 'Disponível', bgCor: '#ffffff00', textCor: '' },
+    disponivel: { label: 'Disponível', bgCor: 'primary.main', textCor: '#fff' },
     adotado: { label: 'Adotado', bgCor: '#9c27b0', textCor: '#fff' },
     em_adocao: { label: 'Em Adoção', bgCor: '#425a8fff', textCor: '#fff' },
     em_aprovacao: { label: 'Anúnciado', bgCor: '#296b2c', textCor: '#fff' },

@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useState } from "react"
+import { ReactNode, useState } from "react"
 import { useRouter } from "next/navigation"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
@@ -36,7 +36,7 @@ interface User {
     imagem?: string;
 }
 
-async function apiLogout(token) {
+async function apiLogout(token: string | null | undefined) {
     try {
         const res = await fetch(`${API_BASE}/logout`, {
             method: "POST",
@@ -61,7 +61,7 @@ function Brand() {
     )
 }
 
-function TopLevelLink({ href, children }) {
+function TopLevelLink({ href, children }: { href: string, children: ReactNode }) {
     return (
         <Link
             href={href}

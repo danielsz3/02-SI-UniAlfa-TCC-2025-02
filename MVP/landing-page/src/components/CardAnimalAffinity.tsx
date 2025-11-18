@@ -14,9 +14,9 @@ import {
 import ImageCarousel from './ImageCarousel';
 import { calcularIdade } from '@/lib/animal-utils';
 import { Button } from './ui/button';
-import { Heart, Info, X, Loader2 } from 'lucide-react'; // <-- ALTERAÇÃO: Importa o Loader2
+import { Heart, Info, X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useState } from 'react'; // <-- ALTERAÇÃO: Importa o useState
+import { useState } from 'react';
 import { getToken } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 
@@ -24,15 +24,18 @@ interface Props {
   animal_afinidade: AnimalAffinity;
   onStatusChangeSuccess: (animalId: number) => void;
   onAnimalClick: (animal: AnimalAffinity) => void;
+  isParentProcessing: boolean;
+  onActionStart: () => void;
+  onActionEnd: () => void;
 }
-
-// A função 'mudarStatus' que estava aqui foi movida
-// para dentro do componente para podermos usar o state.
 
 export default function CardAnimalAffinity({
   animal_afinidade,
   onStatusChangeSuccess,
   onAnimalClick,
+  isParentProcessing,
+  onActionStart,
+  onActionEnd,
 }: Props) {
 
   const router = useRouter();
@@ -43,6 +46,8 @@ export default function CardAnimalAffinity({
 
   const handleMudarStatus = async (status: 'escolhido' | 'rejeitado') => {
     if (loadingAction) return;
+
+    onActionStart();
 
     setLoadingAction(status);
 
@@ -84,31 +89,36 @@ export default function CardAnimalAffinity({
             router.push(`/painel-adotante?status=${status}`);
           },
         },
+        actionButtonStyle: {
+          backgroundColor: '#0367A6',
+          color: 'white',
+          fontSize: '0.8rem',
+        },
+        duration: 3000,
       });;
 
       // Chama a função do componente pai para remover o card da lista
       onStatusChangeSuccess(animal_afinidade.animal.id);
 
-      // Nota: Não precisamos de 'setLoadingAction(null)' aqui,
-      // porque o componente será removido da lista pelo pai.
-
     } catch (error) {
-      // 5. Erro!
       const errorMessage =
         error instanceof Error ? error.message : 'Erro desconhecido';
-      toast.error(`Erro: ${errorMessage}`, { id: toastId });
+      toast.error(`Erro: ${errorMessage}`, { id: toastId, richColors: true });
 
-      // Se der erro, reativamos os botões
       setLoadingAction(null);
+    } finally {
+      onActionEnd();
     }
   };
+
+  const isGlobalDisabled = isParentProcessing || !!loadingAction;
 
   return (
     <Card className="h-full flex flex-col">
       <CardHeader>
         <CardTitle>{animal_afinidade.animal.nome}</CardTitle>
         <p>{calcularIdade(animal_afinidade.animal.data_nascimento)}</p>
-        <Badge className="capitalize absolute top-7 right-7">
+        <Badge className="capitalize absolute h-10 w-20 text-md top-7 right-7">
           {animal_afinidade.animal.sexo}
         </Badge>
       </CardHeader>
@@ -117,7 +127,7 @@ export default function CardAnimalAffinity({
         <div className="w-full h-[45vh] md:h-[35vh] overflow-hidden rounded-t-lg">
           <ImageCarousel images={animal_afinidade.animal.imagens} />
         </div>
-        <CardDescription className="mt-2 text-sm text-muted-foreground">
+        <CardDescription className="mt-2 text-md text-muted-foreground">
           {animal_afinidade.animal.descricao || 'Sem descrição disponível.'}
         </CardDescription>
       </CardContent>
@@ -130,42 +140,42 @@ export default function CardAnimalAffinity({
         <div className="flex items-center gap-5">
           <Button
             variant="ghost"
-            size="icon"
+            size="icon-lg"
             title="Detalhes"
-            className="rounded-full cursor-pointer"
+            className="rounded-full cursor-pointer size-10 hover:scale-110"
             onClick={() => onAnimalClick(animal_afinidade)}
-            disabled={!!loadingAction}
+            disabled={isGlobalDisabled}
           >
-            <Info className="size-5" />
+            <Info className="size-6" />
           </Button>
 
           <Button
             variant="destructive"
-            size="icon"
+            size="icon-lg"
             title="Rejeitar"
-            className="cursor-pointer"
+            className="cursor-pointer size-10 hover:scale-110"
             onClick={() => handleMudarStatus('rejeitado')}
-            disabled={!!loadingAction}
+            disabled={isGlobalDisabled}
           >
             {loadingAction === 'rejeitado' ? (
-              <Loader2 className="size-5 animate-spin" />
+              <Loader2 className="size-6 animate-spin" />
             ) : (
-              <X className="size-5" />
+              <X className="size-6" />
             )}
           </Button>
 
           <Button
             variant="default"
-            size="icon"
+            size="icon-lg"
             title="Escolher"
-            className="cursor-pointer"
+            className="cursor-pointer size-15 rounded-full hover:scale-110 duration-300 ease-in-out"
             onClick={() => handleMudarStatus('escolhido')}
-            disabled={!!loadingAction}
+            disabled={isGlobalDisabled}
           >
             {loadingAction === 'escolhido' ? (
-              <Loader2 className="size-5 animate-spin" />
+              <Loader2 className="size-6 animate-spin" />
             ) : (
-              <Heart fill="white" className="size-5" />
+              <Heart className="size-8 fill-current " />
             )}
           </Button>
         </div>

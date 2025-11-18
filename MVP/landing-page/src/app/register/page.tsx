@@ -5,7 +5,7 @@ import PersonalForm from "./PersonalForm"
 import AddressForm from "./AddressForm"
 import PreferencesForm from "./PreferencesForm"
 import ConfirmForm from "./ConfirmForm"
-import { useRouter } from "next/navigation" // Corrigido para next/navigation
+import { useRouter } from "next/navigation"
 
 interface FormData {
     nome?: string
@@ -65,7 +65,6 @@ export default function RegisterPage() {
         setStep(s => s - 1)
     }
 
-    // Exemplo: função para ser chamada após o registro bem-sucedido
     async function onRegisterSuccess() {
         await handleRedirectAfterAuth(router)
     }
@@ -91,7 +90,7 @@ export default function RegisterPage() {
                     <ConfirmForm
                         data={formData}
                         onBack={prevStep}
-                        onRegisterSuccess={onRegisterSuccess} // Passe essa prop para ConfirmForm
+                        onRegisterSuccess={onRegisterSuccess}
                     />
                 )}
             </main>

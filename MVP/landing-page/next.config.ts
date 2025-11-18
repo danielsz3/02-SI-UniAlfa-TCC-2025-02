@@ -12,10 +12,16 @@ const nextConfig = {
         protocol: 'http',
         hostname: '127.0.0.1',
         port: '8000',
-        pathname: '/api/imagens/**', // Permite qualquer imagem dentro de /api/imagens/
+        pathname: '/api/imagens/**',
+      },
+
+      {
+        protocol: "https",
+        hostname: "github.com",
       },
     ],
   },
+  devIndicators: false
 };
 
 export default nextConfig;

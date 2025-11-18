@@ -12,7 +12,6 @@ import {
   CarouselPrevious,
   type CarouselApi,
 } from '@/components/ui/carousel';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Loader2 } from 'lucide-react';
 import { getToken } from '@/lib/api';
 
@@ -83,6 +82,8 @@ export default function AffinityCarousel({ userId, onAnimalClick }: Props) {
   const [isLoading, setIsLoading] = useState(true);
   const [isPaginating, setIsPaginating] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const [selectedIndex, setSelectedIndex] = useState(0);
 
@@ -185,7 +186,6 @@ export default function AffinityCarousel({ userId, onAnimalClick }: Props) {
     );
   }
 
-  console.log(`--- RENDER: A mostrar CARROSSEL com ${animais.length} animais.`);
   return (
     <div className="w-[90vw] mx-auto">
       <Carousel
@@ -193,8 +193,10 @@ export default function AffinityCarousel({ userId, onAnimalClick }: Props) {
         opts={{
           align: 'center',
           loop: false,
+          watchDrag: !isProcessing,
         }}
-        className="w-full"
+        className={`w-full transition-opacity duration-300 ${isProcessing ? 'pointer-events-none opacity-80' : ''
+          }`}
       >
         <CarouselContent className="flex gap-4">
           {animais.map((animal, index) => (
@@ -217,6 +219,9 @@ export default function AffinityCarousel({ userId, onAnimalClick }: Props) {
                   onAnimalClick={() => onAnimalClick(animal.animal)}
                   animal_afinidade={animal}
                   onStatusChangeSuccess={handleRemoverAnimalDaLista}
+                  isParentProcessing={isProcessing}
+                  onActionStart={() => setIsProcessing(true)}
+                  onActionEnd={() => setIsProcessing(false)}
                 />
               </div>
             </CarouselItem>
@@ -231,8 +236,12 @@ export default function AffinityCarousel({ userId, onAnimalClick }: Props) {
           )}
         </CarouselContent>
 
-        <CarouselPrevious className="hidden lg:flex" />
-        <CarouselNext className="hidden lg:flex" />
+        {!isProcessing && (
+          <>
+            <CarouselPrevious className="hidden lg:flex" />
+            <CarouselNext className="hidden lg:flex" />
+          </>
+        )}
       </Carousel>
     </div>
   );

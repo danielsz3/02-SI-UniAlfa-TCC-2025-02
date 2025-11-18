@@ -31,13 +31,13 @@ export function getToken(): string | null {
 
     if (!token) {
         clearAuthData(true)
-        toast.error('Voce precisa estar autenticado, faça o login.')
+        toast.error('Voce precisa estar autenticado, faça o login.', { richColors: true })
         return null
     }
 
     if (isTokenExpired(token)) {
         clearAuthData(true)
-        toast.error('Token expirado, faça o login novamente.')
+        toast.error('Token expirado, faça o login novamente.', { richColors: true })
         return null
     }
 

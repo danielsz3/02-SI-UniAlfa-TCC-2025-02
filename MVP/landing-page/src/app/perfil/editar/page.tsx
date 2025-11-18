@@ -1,448 +1,192 @@
 "use client"
 
-import React, { useEffect, useState, ChangeEvent, FormEvent } from "react"
+import { useEffect, useState } from "react"
+import PersonalForm from "@/app/register/PersonalForm"
+import AddressForm from "@/app/register/AddressForm"
+import PreferencesForm from "@/app/register/PreferencesForm"
 import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import TextField from "@/components/forms/inputs/TextField"
-import CepField from "@/components/forms/inputs/CepField"
-import { useAuth } from "@/components/Providers"
-import { AvatarUpload } from "@/components/forms/inputs/AvatarUpload"
-import { Label } from "@/components/ui/label"
-import RadioCardGroup from "@/components/forms/inputs/RadioCardGroup"
 
-const legendClass = "text-sm text-gray-600 dark:text-gray-400 mb-4"
-
-const API = process.env.NEXT_PUBLIC_API_BASE_URL
-
-export default function EditarPerfilPage() {
-  const { user } = useAuth()
+export default function EditProfilePage() {
   const router = useRouter()
 
-  const [form, setForm] = useState({
+  const [step, setStep] = useState(0)
+
+  const [form, setForm] = useState<any>({
     nome: "",
+    sobrenome: "",
+    telefone: "",
+    sexo: "",
     email: "",
     cpf: "",
     dataNascimento: "",
-    telefone: "",
+    senha: undefined,
+    confirmarSenha: undefined,
+  })
+
+  const [addressForm, setAddressForm] = useState({
     cep: "",
     logradouro: "",
-    numero: "",
     complemento: "",
+    numero: "",
     bairro: "",
     cidade: "",
     estado: "",
-    tamanhoPet: "",
-    tempoCuidar: "",
-    estiloVida: "",
-    espaco: "",
   })
 
-  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [addressErrors, setAddressErrors] = useState<Record<string, string>>({})
+  const [errors, setErrors] = useState<any>({})
+
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (!user) return
+  const [data, setData] = useState<any>({
+    personal: {},
+    address: {},
+    preferences: {},
+  })
 
-    setForm({
-      nome: user.nome || "",
-      email: user.email || "",
-      cpf: user.cpf || "",
-      dataNascimento: user.data_nascimento || "",
-      telefone: user.telefone || "",
-      cep: user.endereco?.cep || "",
-      logradouro: user.endereco?.logradouro || "",
-      numero: user.endereco?.numero || "",
-      complemento: user.endereco?.complemento || "",
-      bairro: user.endereco?.bairro || "",
-      cidade: user.endereco?.cidade || "",
-      estado: user.endereco?.uf || "",
-      tamanhoPet: user.preferencias?.tamanho_pet || "",
-      tempoCuidar: user.preferencias?.tempo_disponivel || "",
-      estiloVida: user.preferencias?.estilo_vida || "",
-      espaco: user.preferencias?.espaco_casa || "",
+  const updateField = (name: string, value: any) => {
+    setForm((prev: any) => ({ ...prev, [name]: value }))
+  }
+
+  const handleNext = (formData: any) => {
+    if (step === 0) setData((p: any) => ({ ...p, personal: formData }))
+    if (step === 1) setData((p: any) => ({ ...p, address: formData }))
+    if (step === 2) setData((p: any) => ({ ...p, preferences: formData }))
+
+    setStep((s) => s + 1)
+  }
+
+  const handleBack = () => setStep((s) => s - 1)
+
+  const handleSubmit = async () => {
+    await fetch("https://sua-api.com/usuarios/me", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
     })
 
-    setImagePreviewUrl(user.imagem_url || null)
-  }, [user])
-
-  const handleImageChange = (file: File | null) => {
-    setImageFile(file)
-
-    if (file) {
-      const url = URL.createObjectURL(file)
-      setImagePreviewUrl(url)
-    }
+    router.push("/perfil")
   }
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value })
-  }
+  // 🔥 Buscar dados reais da sua API
+  useEffect(() => {
+    async function loadUser() {
+      try {
+        const res = await fetch("https://sua-api.com/usuarios/me")
+        const usuario = await res.json()
 
-  async function salvar(e: FormEvent) {
-    e.preventDefault()
+        // Preenche form (dados pessoais)
+        setForm({
+          nome: usuario.nome || "",
+          sobrenome: usuario.sobrenome || "",
+          telefone: usuario.telefone || "",
+          sexo: usuario.sexo || "",
+          email: usuario.email || "",
+          cpf: usuario.cpf || "",
+          dataNascimento: usuario.dataNascimento || "",
+          senha: undefined,
+          confirmarSenha: undefined,
+        })
 
-    const token = localStorage.getItem("token") || ""
+        // Preenche endereço
+        setAddressForm({
+          cep: usuario.cep || "",
+          logradouro: usuario.logradouro || "",
+          complemento: usuario.complemento || "",
+          numero: usuario.numero || "",
+          bairro: usuario.bairro || "",
+          cidade: usuario.cidade || "",
+          estado: usuario.estado || "",
+        })
 
-    if (!user?.id) {
-      console.error("Usuário não está definido ou não tem ID")
-      return
-    }
-
-    setErrors({})
-
-    const formData = new FormData()
-
-    formData.append("_method", "PUT")
-
-    formData.append("nome", form.nome)
-    formData.append("email", form.email)
-    formData.append("cpf", form.cpf)
-    formData.append("data_nascimento", form.dataNascimento)
-    formData.append("telefone", form.telefone)
-
-    formData.append("endereco[cep]", form.cep)
-    formData.append("endereco[logradouro]", form.logradouro)
-    formData.append("endereco[numero]", form.numero)
-    formData.append("endereco[complemento]", form.complemento)
-    formData.append("endereco[bairro]", form.bairro)
-    formData.append("endereco[cidade]", form.cidade)
-    formData.append("endereco[uf]", form.estado)
-
-    formData.append("preferencias[tamanho_pet]", form.tamanhoPet)
-    formData.append("preferencias[tempo_disponivel]", form.tempoCuidar)
-    formData.append("preferencias[estilo_vida]", form.estiloVida)
-    formData.append("preferencias[espaco_casa]", form.espaco)
-
-    if (imageFile) {
-      formData.append("imagem", imageFile)
-    }
-
-    try {
-      const res = await fetch(`${API}/usuarios/${user.id}`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      })
-
-      if (res.ok) {
-        const updated = await res.json()
-        // Update succeeded; navigate home (auth context can be refreshed elsewhere if needed)
-        router.push("/")
-      } else {
-        const errorText = await res.text()
-        console.error("Erro ao salvar:", errorText)
+        // Preenche "data" completo
+        setData({
+          personal: {
+            nome: usuario.nome,
+            sobrenome: usuario.sobrenome,
+            telefone: usuario.telefone,
+            sexo: usuario.sexo,
+            email: usuario.email,
+            cpf: usuario.cpf,
+            dataNascimento: usuario.dataNascimento,
+          },
+          address: {
+            cep: usuario.cep,
+            logradouro: usuario.logradouro,
+            complemento: usuario.complemento,
+            numero: usuario.numero,
+            bairro: usuario.bairro,
+            cidade: usuario.cidade,
+            estado: usuario.estado,
+          },
+          preferences: {
+            tamanhoPet: usuario.tamanhoPet,
+            tempoCuidar: usuario.tempoCuidar,
+            estiloVida: usuario.estiloVida,
+            espaco: usuario.espaco,
+          },
+        })
+      } catch (err) {
+        console.error("Erro ao carregar usuário:", err)
       }
-    } catch (error) {
-      console.error("Erro na requisição:", error)
     }
-  }
 
-  if (!user) return null
+    loadUser()
+  }, [])
+
+  // Preview da imagem
+  useEffect(() => {
+    if (!imageFile) return
+    const url = URL.createObjectURL(imageFile)
+    setImagePreviewUrl(url)
+    return () => URL.revokeObjectURL(url)
+  }, [imageFile])
 
   return (
-    <main className="min-h-screen md:py-24 py-8 px-4 bg-muted/30 dark:bg-muted flex items-center justify-center">
-      <div className="container max-w-2xl w-full">
-        <form
-          onSubmit={salvar}
-          className="space-y-10 bg-white dark:bg-slate-800 p-8 rounded-lg shadow-lg"
-        >
-          <h2 className="text-3xl font-bold text-center text-slate-900 dark:text-white">
-            Editar Perfil
-          </h2>
+    <div className="w-full flex justify-center py-10">
+      {step === 0 && (
+        <PersonalForm
+          form={form}
+          updateField={updateField}
+          errors={errors}
+          imagePreviewUrl={imagePreviewUrl}
+          setImageFile={setImageFile}
+        />
+      )}
 
-          <AvatarUpload
-            label="Foto de Perfil"
-            name="imagem"
-            defaultPreviewUrl={imagePreviewUrl}
-            onChange={handleImageChange}
-          />
+      {step === 1 && (
+        <AddressForm
+          onNext={handleNext}
+          onBack={handleBack}
+          defaultValues={addressForm}
+        />
+      )}
 
-          <section className="space-y-4">
-            <h3 className="text-xl font-semibold text-slate-900 dark:text-white">
-              Dados Pessoais
-            </h3>
+      {step === 2 && (
+        <PreferencesForm
+          onNext={handleNext}
+          onBack={handleBack}
+          defaultValues={data.preferences}
+        />
+      )}
 
-            <TextField
-              id="nome"
-              name="nome"
-              label="Nome Completo"
-              value={form.nome}
-              onChange={handleChange}
-              required
-              error={errors.nome}
-            />
+      {step === 3 && (
+        <div className="w-full max-w-md mx-auto bg-white dark:bg-slate-800 p-8 rounded-lg shadow-lg text-center">
+          <h2 className="text-2xl font-semibold mb-4">Confirme os dados</h2>
 
-            <TextField
-              id="email"
-              name="email"
-              label="E-mail"
-              type="email"
-              value={form.email}
-              onChange={handleChange}
-              required
-              error={errors.email}
-            />
+          <pre className="text-left bg-slate-900 text-white p-4 rounded-md text-sm overflow-auto">
+            {JSON.stringify(data, null, 2)}
+          </pre>
 
-            <TextField
-              id="telefone"
-              name="telefone"
-              label="Telefone"
-              value={form.telefone}
-              onChange={handleChange}
-              error={errors.telefone}
-            />
-
-            <TextField
-              id="cpf"
-              name="cpf"
-              label="CPF"
-              value={form.cpf}
-              onChange={handleChange}
-              error={errors.cpf}
-            />
-
-            <TextField
-              id="dataNascimento"
-              name="dataNascimento"
-              label="Data de Nascimento"
-              type="date"
-              value={form.dataNascimento}
-              onChange={handleChange}
-              error={errors.dataNascimento}
-            />
-          </section>
-
-          <section className="space-y-4">
-            <h3 className="text-xl font-semibold text-slate-900 dark:text-white">
-              Endereço
-            </h3>
-
-            <CepField
-              value={form.cep}
-              onChange={(v) => setForm({ ...form, cep: v })}
-              onAddress={(addr) => setForm((f) => ({ ...f, ...addr }))}
-              error={errors.cep}
-            />
-
-            <TextField
-              id="logradouro"
-              name="logradouro"
-              label="Logradouro"
-              value={form.logradouro}
-              onChange={handleChange}
-              error={errors.logradouro}
-            />
-
-            <TextField
-              id="numero"
-              name="numero"
-              label="Número"
-              value={form.numero}
-              onChange={handleChange}
-              error={errors.numero}
-            />
-
-            <TextField
-              id="complemento"
-              name="complemento"
-              label="Complemento"
-              value={form.complemento}
-              onChange={handleChange}
-            />
-
-            <TextField
-              id="bairro"
-              name="bairro"
-              label="Bairro"
-              value={form.bairro}
-              onChange={handleChange}
-              error={errors.bairro}
-            />
-
-            <TextField
-              id="cidade"
-              name="cidade"
-              label="Cidade"
-              value={form.cidade}
-              onChange={handleChange}
-              error={errors.cidade}
-            />
-
-            <TextField
-              id="estado"
-              name="estado"
-              label="UF"
-              maxLength={2}
-              value={form.estado}
-              onChange={handleChange}
-              error={errors.estado}
-            />
-          </section>
-
-          <section className="space-y-8">
-            <div>
-              <Label className="text-base font-semibold block mb-1">
-                1. Que tamanho de pet você prefere?
-              </Label>
-              <p className={legendClass}>
-                Considere o espaço da sua casa e sua preferência pessoal.
-              </p>
-              <RadioCardGroup
-                name="tamanhoPet"
-                value={form.tamanhoPet || ""}
-                onValueChange={(v) => setForm({ ...form, tamanhoPet: v })}
-                options={[
-                  {
-                    value: "pequeno",
-                    id: "tamanho-pequeno",
-                    title: "Pequeno",
-                    description: "Pets que cabem no colo, fáceis de carregar (até 10kg).",
-                  },
-                  {
-                    value: "medio",
-                    id: "tamanho-medio",
-                    title: "Médio",
-                    description: "Pets nem muito grandes nem muito pequenos (10-25kg).",
-                  },
-                  {
-                    value: "grande",
-                    id: "tamanho-grande",
-                    title: "Grande",
-                    description: "Pets grandes que precisam de mais espaço (acima de 25kg).",
-                  },
-                ]}
-                columns={3}
-              />
-              {errors.tamanhoPet && (
-                <span className="text-red-500 text-xs mt-2 block">{errors.tamanhoPet}</span>
-              )}
-            </div>
-
-            <div>
-              <Label className="text-base font-semibold block mb-1">
-                2. Quanto tempo você tem disponível para cuidar do seu pet?
-              </Label>
-              <p className={legendClass}>
-                Seja honesto sobre sua rotina e disponibilidade diária.
-              </p>
-              <RadioCardGroup
-                name="tempoCuidar"
-                value={form.tempoCuidar || ""}
-                onValueChange={(v) => setForm({ ...form, tempoCuidar: v })}
-                options={[
-                  {
-                    value: "pouco",
-                    id: "tempo-pouco",
-                    title: "Pouco",
-                    description: "Prefiro pets mais independentes que não precisem de atenção.",
-                  },
-                  {
-                    value: "moderado",
-                    id: "tempo-moderado",
-                    title: "Moderado",
-                    description:
-                      "Posso dedicar algumas horas para passeios, brincadeiras e cuidados.",
-                  },
-                  {
-                    value: "muito",
-                    id: "tempo-muito",
-                    title: "Muito",
-                    description: "Tenho bastante tempo livre e gosto de me dedicar ao meu pet",
-                  },
-                ]}
-                columns={3}
-              />
-              {errors.tempoCuidar && (
-                <span className="text-red-500 text-xs mt-2 block">{errors.tempoCuidar}</span>
-              )}
-            </div>
-
-            <div>
-              <Label className="text-base font-semibold block mb-1">
-                3. Qual dessas opções descreve melhor seu estilo de vida?
-              </Label>
-              <p className={legendClass}>
-                Pense na sua rotina diária e no tipo de companhia que está procurando.
-              </p>
-              <RadioCardGroup
-                name="estiloVida"
-                value={form.estiloVida || ""}
-                onValueChange={(v) => setForm({ ...form, estiloVida: v })}
-                options={[
-                  {
-                    value: "tranquila",
-                    id: "vida-tranquila",
-                    title: "Tranquila",
-                    description: "Meu tempo livre é para descansar e recarregar as energias.",
-                  },
-                  {
-                    value: "equilibrado",
-                    id: "vida-equilibrado",
-                    title: "Equilibrado",
-                    description:
-                      "Intercalo períodos de atividade com momentos de descanso.",
-                  },
-                  {
-                    value: "acao",
-                    id: "vida-acao",
-                    title: "Sempre em ação",
-                    description:
-                      "Exercícios, passeios e atividades físicas fazem parte da minha rotina.",
-                  },
-                ]}
-                columns={3}
-              />
-              {errors.estiloVida && (
-                <span className="text-red-500 text-xs mt-2 block">{errors.estiloVida}</span>
-              )}
-            </div>
-
-            <div>
-              <Label className="text-base font-semibold block mb-1">
-                4. Como é o espaço da sua casa?
-              </Label>
-              <p className={legendClass}>Descreva o ambiente onde seu pet vai viver.</p>
-              <RadioCardGroup
-                name="espaco"
-                value={form.espaco || ""}
-                onValueChange={(v) => setForm({ ...form, espaco: v })}
-                options={[
-                  {
-                    value: "pequeno",
-                    id: "espaco-pequeno",
-                    title: "Pequeno",
-                    description: "Apartamento pequeno ou casa sem quintal/jardim.",
-                  },
-                  {
-                    value: "area_interna",
-                    id: "espaco-interno",
-                    title: "Área interna",
-                    description:
-                      "Casa ou apartamento espaçoso, mas sem área externa própria",
-                  },
-                  {
-                    value: "quintal",
-                    id: "espaco-quintal",
-                    title: "Quintal",
-                    description:
-                      "Tenho quintal, jardim ou espaço ao ar livre para o pet brincar",
-                  },
-                ]}
-                columns={3}
-              />
-              {errors.espaco && (
-                <span className="text-red-500 text-xs mt-2 block">{errors.espaco}</span>
-              )}
-            </div>
-          </section>
-          <Button type="submit" className="w-full text-lg py-3">
+          <button
+            onClick={handleSubmit}
+            className="mt-6 w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-lg"
+          >
             Salvar Alterações
-          </Button>
-        </form>
-      </div>
-    </main>
+          </button>
+        </div>
+      )}
+    </div>
   )
 }

@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { ThemeToggle } from "@/components/Theme-toggle"
+import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
 import {
     DropdownMenu,
@@ -271,7 +271,7 @@ export function Navbar() {
                                     Doar para a ONG
                                 </Link>
                                 <Link href="/lar-temporario" onClick={() => setMobileOpen(false)} className="text-sm hover:text-primary">
-                                    Ser um Lar Temporário
+                                    Lares Temporários
                                 </Link>
                             </div>
                         </div>

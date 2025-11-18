@@ -11,6 +11,8 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from "@/components/ui/accordion"
+import { Navbar } from "@/components/navbar"
+import { Footer } from "@/components/footer"
 
 // Types
 type Documento = {
@@ -162,6 +164,8 @@ export default function TransparenciaPage() {
 
   return (
     <>
+      <Navbar />
+
       <main className="min-h-screen pt-20 bg-background">
         {/* Cabeçalho / Charts */}
         <section className="max-w-6xl mx-auto px-4 py-6">

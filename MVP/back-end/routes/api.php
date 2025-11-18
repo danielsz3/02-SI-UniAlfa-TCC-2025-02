@@ -67,7 +67,7 @@ Route::middleware(['jwt.auth'])->group(function () {
     Route::apiResource('adocoes', AdocaoController::class)->only(['index', 'show', 'store']);
     Route::apiResource('match-afinidades', MatchAfinidadeController::class)->only(['index', 'show', 'store']);
     Route::post('match-afinidades/mudar-status', [MatchAfinidadeController::class, 'MudarStatus']);
-    Route::apiResource('lares-temporarios', LaresTemporarioController::class)->only(['index', 'show', 'store']);
+    // TODO VERIFICAR PERMISSÕES: Route::apiResource('lares-temporarios', LaresTemporarioController::class)->only(['index', 'show', 'store']);
     Route::apiResource('animais', AnimalController::class)->only(['store']);
 
     /**
@@ -92,7 +92,7 @@ Route::middleware(['jwt.auth'])->group(function () {
         Route::apiResource('parceiros', ParceiroController::class)->except(['index', 'show']);
         Route::post('parceiros/{id}/restore', [ParceiroController::class, 'restore'])->name('parceiros.restore');
 
-        Route::apiResource('lares-temporarios', LaresTemporarioController::class)->except(['index', 'show', 'store']);
+        // TODO VERIFICAR PERMISSÕES: Route::apiResource('lares-temporarios', LaresTemporarioController::class)->except(['index', 'show', 'store']);
         Route::post('lares-temporarios/{id}/restore', [LaresTemporarioController::class, 'restore'])->name('lares-temporarios.restore');
 
         Route::apiResource('contato-ongs', ContatoOngController::class)->except(['index', 'show']);

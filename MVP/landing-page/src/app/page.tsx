@@ -39,11 +39,11 @@ function HeroSection() {
         <div className="flex flex-col items-center text-center space-y-6 pointer-events-auto">
           <div className="flex flex-col items-center text-center space-y-6 pointer-events-auto 
       bg-background/30 dark:bg-background/50 backdrop-blur-sm p-8 rounded-2xl border border-white/20 shadow-xl">
-            <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
+            <h1 className="text-4xl md:text-6xl font-bold text-primary dark:text-white tracking-tight">
               Encontre seu novo melhor amigo
             </h1>
 
-            <p className="text-lg md:text-2xl text-primary dark:text-accent font-semibold max-w-2xl">
+            <p className="text-lg md:text-2xl text-black dark:text-accent font-semibold max-w-2xl">
               Conectamos pets que precisam de um lar com pessoas que querem amar.
               Adote, doe e transforme vidas.
             </p>
@@ -52,7 +52,7 @@ function HeroSection() {
               <Button size="lg" asChild>
                 <Link href="/adotar">Adotar um Pet</Link>
               </Button>
-              <Button size="lg" variant="outline" className="hover:text-white" asChild>
+              <Button size="lg" variant="outline" className="hover:text-white dark:hover:text-black dark:hover:bg-foreground" asChild>
                 <Link href="/doar-pet">Doar um Pet</Link>
               </Button>
             </div>

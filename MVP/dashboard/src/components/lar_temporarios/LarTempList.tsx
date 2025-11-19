@@ -1,6 +1,7 @@
 import { ChipField, DataTable, FunctionField, List, SelectInput, TextInput, RaRecord } from 'react-admin';
 import CustomDatePicker from '../datepicker/customDatePicker';
 import { CustomListActions } from '../ExportActions';
+import { CopyText } from '../CopyText';
 
 const calculateAge = (dataNascimento: string | number | Date) => {
     if (!dataNascimento) return null;
@@ -88,7 +89,7 @@ export const LarTempList = () => (
             <DataTable.Col source="nome" />
             <DataTable.Col label="Telefone">
                 <FunctionField
-                    render={(record) => formatPhone(record.telefone)}
+                    render={(record) => <CopyText text={formatPhone(record.telefone)} />}
                 />
             </DataTable.Col>
             <DataTable.Col label="Idade">

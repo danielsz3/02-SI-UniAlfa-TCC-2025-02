@@ -121,6 +121,28 @@ class LaresTemporarioController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
+        // 🔹 Validação: não permitir outro lar com o mesmo endereço
+        if ($request->has('endereco') && is_array($request->endereco)) {
+            $enderecoData = $request->endereco;
+
+            $jaExiste = LarTemporario::whereHas('endereco', function ($q) use ($enderecoData) {
+                $q->where('cep',        $enderecoData['cep']        ?? null)
+                    ->where('logradouro', $enderecoData['logradouro'] ?? null)
+                    ->where('numero',     $enderecoData['numero']     ?? null)
+                    ->where('bairro',     $enderecoData['bairro']     ?? null)
+                    ->where('cidade',     $enderecoData['cidade']     ?? null)
+                    ->where('uf',         $enderecoData['uf']         ?? null);
+            })->exists();
+
+            if ($jaExiste) {
+                return response()->json([
+                    'errors' => [
+                        'endereco' => ['Já existe um lar temporário cadastrado com este mesmo endereço.'],
+                    ],
+                ], 422);
+            }
+        }
+
         try {
             return DB::transaction(function () use ($request) {
                 $lar = LarTemporario::create($request->only([
@@ -142,14 +164,14 @@ class LaresTemporarioController extends Controller
 
                 foreach ($files as $file) {
                     if ($file && $file->isValid()) {
-                        $nomeOriginal = $file->getClientOriginalName(); // 🔹 ADICIONADO
+                        $nomeOriginal = $file->getClientOriginalName();
                         $path = $file->store('lares_temporarios', 'public');
                         [$width, $height] = @getimagesize($file->getRealPath()) ?: [null, null];
 
                         ImagemLarTemporario::create([
                             'id_lar_temporario' => $lar->id,
                             'caminho'           => $path,
-                            'nome_original'     => $nomeOriginal, // 🔹 ADICIONADO
+                            'nome_original'     => $nomeOriginal,
                             'width'             => $width,
                             'height'            => $height,
                         ]);
@@ -273,6 +295,31 @@ class LaresTemporarioController extends Controller
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
+
+        // 🔹 Validação: ao atualizar, não deixar este lar ficar com endereço igual ao de outro lar
+        if ($request->has('endereco') && is_array($request->endereco)) {
+            $enderecoData = $request->endereco;
+
+            $jaExiste = LarTemporario::where('id', '!=', $lar->id)
+                ->whereHas('endereco', function ($q) use ($enderecoData) {
+                    $q->where('cep',        $enderecoData['cep']        ?? null)
+                        ->where('logradouro', $enderecoData['logradouro'] ?? null)
+                        ->where('numero',     $enderecoData['numero']     ?? null)
+                        ->where('bairro',     $enderecoData['bairro']     ?? null)
+                        ->where('cidade',     $enderecoData['cidade']     ?? null)
+                        ->where('uf',         $enderecoData['uf']         ?? null);
+                })
+                ->exists();
+
+            if ($jaExiste) {
+                return response()->json([
+                    'errors' => [
+                        'endereco' => ['Já existe outro lar temporário com este mesmo endereço.'],
+                    ],
+                ], 422);
+            }
+        }
+
         // Verificar limite TOTAL de imagens (existentes + novas)
         $imagensExistentes = $lar->imagens()->count();
         $novasImagens = is_array($request->file('imagens')) ? count($request->file('imagens')) : 0;
@@ -370,5 +417,4 @@ class LaresTemporarioController extends Controller
             return response()->json(['error' => 'Erro ao deletar lar temporário'], 500);
         }
     }
-
 }

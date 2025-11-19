@@ -66,7 +66,6 @@ Route::middleware(['jwt.auth'])->group(function () {
     Route::apiResource('adocoes', AdocaoController::class)->only(['index', 'show', 'store']);
     Route::apiResource('match-afinidades', MatchAfinidadeController::class)->only(['index', 'show', 'store']);
     Route::post('match-afinidades/mudar-status', [MatchAfinidadeController::class, 'MudarStatus']);
-    // TODO VERIFICAR PERMISSÕES: Route::apiResource('lares-temporarios', LaresTemporarioController::class)->only(['index', 'show', 'store']);
     Route::apiResource('animais', AnimalController::class)->only(['store']);
 
     /**
@@ -87,7 +86,8 @@ Route::middleware(['jwt.auth'])->group(function () {
 
         Route::apiResource('parceiros', ParceiroController::class)->except(['index', 'show']);
 
-        // TODO VERIFICAR PERMISSÕES: Route::apiResource('lares-temporarios', LaresTemporarioController::class)->except(['index', 'show', 'store']);
+        Route::apiResource('lares-temporarios', LaresTemporarioController::class)->except(['index', 'show', 'store']);
+        
         Route::apiResource('contato-ongs', ContatoOngController::class)->except(['index', 'show']);
 
         Route::apiResource('documentos', DocumentoController::class)->except(['index', 'show']);

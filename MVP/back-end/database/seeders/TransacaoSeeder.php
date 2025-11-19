@@ -22,7 +22,7 @@ class TransacaoSeeder extends Seeder
 
         $transacoes = [];
 
-        for ($i = 0; $i < 20; $i++) {
+        for ($i = 0; $i < 2000; $i++) {
             $tipo = $faker->randomElement(['receita', 'despesa']);
 
             $transacoes[] = [

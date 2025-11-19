@@ -330,42 +330,6 @@ class AnimalController extends Controller
     }
 
     /**
-     * Restaurar animal deletado
-     */
-    public function restore($id): JsonResponse
-    {
-        try {
-            $animal = Animal::withTrashed()->find($id);
-
-            if (!$animal) {
-                return response()->json(['error' => 'Animal não encontrado'], 404);
-            }
-
-            if (!$animal->trashed()) {
-                return response()->json(['error' => 'Animal já está ativo'], 400);
-            }
-
-            $animal->restore();
-
-            Cache::forget('animais_ativos');
-
-            $fresh = $animal->fresh(['imagens', 'usuario', 'larTemporario']);
-            $fresh->imagens->transform(function ($img) {
-                $img->url = Storage::url($img->caminho);
-                return $img;
-            });
-
-            return response()->json($fresh, 200);
-        } catch (\Exception $e) {
-            Log::error('Erro ao restaurar animal: ' . $e->getMessage(), ['id' => $id, 'exception' => $e]);
-            return response()->json([
-                'error' => 'Não foi possível restaurar o animal',
-                'message' => config('app.debug') ? $e->getMessage() : 'Erro interno do servidor'
-            ], 500);
-        }
-    }
-
-    /**
      * Recomendar animais para um usuário de acordo com preferências
      */
     public function recomendar(Request $request, $usuarioId): JsonResponse

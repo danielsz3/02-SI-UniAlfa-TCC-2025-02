@@ -11,8 +11,6 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from "@/components/ui/accordion"
-import { Navbar } from "@/components/navbar"
-import { Footer } from "@/components/footer"
 
 // Types
 type Documento = {
@@ -49,7 +47,7 @@ function DocItem({ doc }: { doc: Documento }) {
 
   return (
     <div className="flex items-center gap-3 p-3 rounded-md border border-border bg-transparent min-w-[260px]">
-      <div className="flex-shrink-0 h-12 w-12 rounded-md bg-muted/30 dark:bg-muted/20 flex items-center justify-center">
+      <div className="shrink-0 h-12 w-12 rounded-md bg-muted/30 dark:bg-muted/20 flex items-center justify-center">
         <FileText className="h-6 w-6 text-muted-foreground" />
       </div>
 
@@ -164,8 +162,6 @@ export default function TransparenciaPage() {
 
   return (
     <>
-      <Navbar />
-
       <main className="min-h-screen pt-20 bg-background">
         {/* Cabeçalho / Charts */}
         <section className="max-w-6xl mx-auto px-4 py-6">

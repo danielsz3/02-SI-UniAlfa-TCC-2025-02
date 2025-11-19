@@ -1,448 +1,157 @@
 "use client"
 
-import React, { useEffect, useState, ChangeEvent, FormEvent } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import TextField from "@/components/forms/inputs/TextField"
-import CepField from "@/components/forms/inputs/CepField"
-import { useAuth } from "@/components/Providers"
-import { AvatarUpload } from "@/components/forms/inputs/AvatarUpload"
-import { Label } from "@/components/ui/label"
-import RadioCardGroup from "@/components/forms/inputs/RadioCardGroup"
+import { toast } from "sonner"
 
-const legendClass = "text-sm text-gray-600 dark:text-gray-400 mb-4"
+import PersonalFormEdit from "@/app/perfil/editar/PersonalFormEdit"
+import AddressFormEdit from "@/app/perfil/editar/AddressFormEdit"
+import PreferencesFormEdit from "@/app/perfil/editar/PreferencesFormEdit"
 
-const API = process.env.NEXT_PUBLIC_API_BASE_URL
+import { apiGet, apiMultipart, apiPost } from "@/lib/api"
 
-export default function EditarPerfilPage() {
-  const { user } = useAuth()
+export interface FormData {
+  id_usuario?: number
+  nome?: string
+  email?: string
+  telefone?: string
+  cpf?: string
+  data_nascimento?: string
+  senha?: string
+  senha_confirmation?: string
+  avatar?: File | null
+
+  // Endereço
+  logradouro?: string
+  numero?: string
+  complemento?: string
+  bairro?: string
+  cidade?: string
+  estado?: string
+  cep?: string
+
+  // Preferências
+  notificacoesEmail?: boolean
+  notificacoesPush?: boolean
+  tamanho_pet?: string
+  tempo_disponivel?: string
+  estilo_vida?: string
+  espaco_casa?: string
+}
+
+export default function EditProfilePage() {
   const router = useRouter()
-
-  const [form, setForm] = useState({
-    nome: "",
-    email: "",
-    cpf: "",
-    dataNascimento: "",
-    telefone: "",
-    cep: "",
-    logradouro: "",
-    numero: "",
-    complemento: "",
-    bairro: "",
-    cidade: "",
-    estado: "",
-    tamanhoPet: "",
-    tempoCuidar: "",
-    estiloVida: "",
-    espaco: "",
-  })
-
-  const [errors, setErrors] = useState<Record<string, string>>({})
-  const [imageFile, setImageFile] = useState<File | null>(null)
-  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null)
+  const [step, setStep] = useState(0)
+  const [formData, setFormData] = useState<FormData>({})
+  const [avatarFile, setAvatarFile] = useState<File | null>(null)
 
   useEffect(() => {
-    if (!user) return
+    async function loadData() {
+      try {
+        const user = await apiGet<any>("usuarios/me")
+        const endereco = await apiGet<any>("enderecos/" + user.id)
+        const preferencias = await apiGet<any>("preferencias-usuarios/" + user.id)
 
-    setForm({
-      nome: user.nome || "",
-      email: user.email || "",
-      cpf: user.cpf || "",
-      dataNascimento: user.data_nascimento || "",
-      telefone: user.telefone || "",
-      cep: user.endereco?.cep || "",
-      logradouro: user.endereco?.logradouro || "",
-      numero: user.endereco?.numero || "",
-      complemento: user.endereco?.complemento || "",
-      bairro: user.endereco?.bairro || "",
-      cidade: user.endereco?.cidade || "",
-      estado: user.endereco?.uf || "",
-      tamanhoPet: user.preferencias?.tamanho_pet || "",
-      tempoCuidar: user.preferencias?.tempo_disponivel || "",
-      estiloVida: user.preferencias?.estilo_vida || "",
-      espaco: user.preferencias?.espaco_casa || "",
-    })
-
-    setImagePreviewUrl(user.imagem_url || null)
-  }, [user])
-
-  const handleImageChange = (file: File | null) => {
-    setImageFile(file)
-
-    if (file) {
-      const url = URL.createObjectURL(file)
-      setImagePreviewUrl(url)
+        setFormData({
+          ...user,
+          ...endereco,
+          ...preferencias,
+        })
+      } catch (err: any) {
+        console.error(err)
+        toast.error("Erro ao carregar dados do perfil", { richColors: true })
+      }
     }
+    loadData()
+  }, [])
+
+  const handlePersonalNext = (data: Partial<FormData> & { avatar?: File | null }) => {
+    setFormData(prev => ({ ...prev, ...data }))
+    if (data.avatar) setAvatarFile(data.avatar)
+    setStep(1)
   }
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value })
+  const handleAddressNext = (data: Partial<FormData>) => {
+    setFormData(prev => ({ ...prev, ...data }))
+    setStep(2)
   }
 
-  async function salvar(e: FormEvent) {
-    e.preventDefault()
+  const handlePreferencesNext = async (data: Partial<FormData>) => {
+    const updated = { ...formData, ...data }
+    setFormData(updated)
+    await handleSave(updated)
+  }
 
-    const token = localStorage.getItem("token") || ""
+  const handleBack = () => setStep(prev => Math.max(prev - 1, 0))
 
-    if (!user?.id) {
-      console.error("Usuário não está definido ou não tem ID")
-      return
-    }
-
-    setErrors({})
-
-    const formData = new FormData()
-
-    formData.append("_method", "PUT")
-
-    formData.append("nome", form.nome)
-    formData.append("email", form.email)
-    formData.append("cpf", form.cpf)
-    formData.append("data_nascimento", form.dataNascimento)
-    formData.append("telefone", form.telefone)
-
-    formData.append("endereco[cep]", form.cep)
-    formData.append("endereco[logradouro]", form.logradouro)
-    formData.append("endereco[numero]", form.numero)
-    formData.append("endereco[complemento]", form.complemento)
-    formData.append("endereco[bairro]", form.bairro)
-    formData.append("endereco[cidade]", form.cidade)
-    formData.append("endereco[uf]", form.estado)
-
-    formData.append("preferencias[tamanho_pet]", form.tamanhoPet)
-    formData.append("preferencias[tempo_disponivel]", form.tempoCuidar)
-    formData.append("preferencias[estilo_vida]", form.estiloVida)
-    formData.append("preferencias[espaco_casa]", form.espaco)
-
-    if (imageFile) {
-      formData.append("imagem", imageFile)
-    }
+  const handleSave = async (payload: FormData) => {
+    if (!payload.id_usuario) return toast.error("ID do usuário não encontrado", { richColors: true })
 
     try {
-      const res = await fetch(`${API}/usuarios/${user.id}`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
+      // 1️⃣ Atualiza usuário (incluindo avatar)
+      const userForm = new FormData()
+      userForm.append("nome", payload.nome || "")
+      userForm.append("email", payload.email || "")
+      userForm.append("telefone", payload.telefone || "")
+      if (avatarFile) userForm.append("avatar", avatarFile)
+
+      await apiMultipart(`usuarios/${payload.id_usuario}`, userForm, { method: "PUT" })
+
+      // 2️⃣ Atualiza endereço
+      const enderecoForm = new FormData()
+      enderecoForm.append("logradouro", payload.logradouro || "")
+      enderecoForm.append("numero", payload.numero || "")
+      enderecoForm.append("complemento", payload.complemento || "")
+      enderecoForm.append("bairro", payload.bairro || "")
+      enderecoForm.append("cidade", payload.cidade || "")
+      enderecoForm.append("estado", payload.estado || "")
+      enderecoForm.append("cep", payload.cep || "")
+
+      await apiMultipart(`enderecos/${payload.id_usuario}`, enderecoForm, { method: "PUT" })
+
+      // 3️⃣ Atualiza preferências
+      await apiPost(`preferencias-usuarios/${payload.id_usuario}`, {
+        notificacoesEmail: payload.notificacoesEmail ?? false,
+        notificacoesPush: payload.notificacoesPush ?? false,
+        tamanho_pet: payload.tamanho_pet || "",
+        tempo_disponivel: payload.tempo_disponivel || "",
+        estilo_vida: payload.estilo_vida || "",
+        espaco_casa: payload.espaco_casa || "",
       })
 
-      if (res.ok) {
-        const updated = await res.json()
-        // Update succeeded; navigate home (auth context can be refreshed elsewhere if needed)
-        router.push("/")
-      } else {
-        const errorText = await res.text()
-        console.error("Erro ao salvar:", errorText)
-      }
-    } catch (error) {
-      console.error("Erro na requisição:", error)
+      toast.success("Perfil atualizado com sucesso!", { richColors: true })
+      router.push("/")
+    } catch (err: any) {
+      console.error(err)
+      toast.error("Erro ao salvar perfil", { richColors: true })
     }
   }
 
-  if (!user) return null
-
   return (
-    <main className="min-h-screen md:py-24 py-8 px-4 bg-muted/30 dark:bg-muted flex items-center justify-center">
-      <div className="container max-w-2xl w-full">
-        <form
-          onSubmit={salvar}
-          className="space-y-10 bg-white dark:bg-slate-800 p-8 rounded-lg shadow-lg"
-        >
-          <h2 className="text-3xl font-bold text-center text-slate-900 dark:text-white">
-            Editar Perfil
-          </h2>
+    <div className="max-w-xl mx-auto p-4">
+      {step === 0 && (
+        <PersonalFormEdit
+          onNext={handlePersonalNext}
+          defaultValues={formData}
+          setAvatarFile={setAvatarFile}
+        />
+      )}
 
-          <AvatarUpload
-            label="Foto de Perfil"
-            name="imagem"
-            defaultPreviewUrl={imagePreviewUrl}
-            onChange={handleImageChange}
-          />
+      {step === 1 && (
+        <AddressFormEdit
+          onNext={handleAddressNext}
+          onBack={handleBack}
+          defaultValues={formData}
+        />
+      )}
 
-          <section className="space-y-4">
-            <h3 className="text-xl font-semibold text-slate-900 dark:text-white">
-              Dados Pessoais
-            </h3>
-
-            <TextField
-              id="nome"
-              name="nome"
-              label="Nome Completo"
-              value={form.nome}
-              onChange={handleChange}
-              required
-              error={errors.nome}
-            />
-
-            <TextField
-              id="email"
-              name="email"
-              label="E-mail"
-              type="email"
-              value={form.email}
-              onChange={handleChange}
-              required
-              error={errors.email}
-            />
-
-            <TextField
-              id="telefone"
-              name="telefone"
-              label="Telefone"
-              value={form.telefone}
-              onChange={handleChange}
-              error={errors.telefone}
-            />
-
-            <TextField
-              id="cpf"
-              name="cpf"
-              label="CPF"
-              value={form.cpf}
-              onChange={handleChange}
-              error={errors.cpf}
-            />
-
-            <TextField
-              id="dataNascimento"
-              name="dataNascimento"
-              label="Data de Nascimento"
-              type="date"
-              value={form.dataNascimento}
-              onChange={handleChange}
-              error={errors.dataNascimento}
-            />
-          </section>
-
-          <section className="space-y-4">
-            <h3 className="text-xl font-semibold text-slate-900 dark:text-white">
-              Endereço
-            </h3>
-
-            <CepField
-              value={form.cep}
-              onChange={(v) => setForm({ ...form, cep: v })}
-              onAddress={(addr) => setForm((f) => ({ ...f, ...addr }))}
-              error={errors.cep}
-            />
-
-            <TextField
-              id="logradouro"
-              name="logradouro"
-              label="Logradouro"
-              value={form.logradouro}
-              onChange={handleChange}
-              error={errors.logradouro}
-            />
-
-            <TextField
-              id="numero"
-              name="numero"
-              label="Número"
-              value={form.numero}
-              onChange={handleChange}
-              error={errors.numero}
-            />
-
-            <TextField
-              id="complemento"
-              name="complemento"
-              label="Complemento"
-              value={form.complemento}
-              onChange={handleChange}
-            />
-
-            <TextField
-              id="bairro"
-              name="bairro"
-              label="Bairro"
-              value={form.bairro}
-              onChange={handleChange}
-              error={errors.bairro}
-            />
-
-            <TextField
-              id="cidade"
-              name="cidade"
-              label="Cidade"
-              value={form.cidade}
-              onChange={handleChange}
-              error={errors.cidade}
-            />
-
-            <TextField
-              id="estado"
-              name="estado"
-              label="UF"
-              maxLength={2}
-              value={form.estado}
-              onChange={handleChange}
-              error={errors.estado}
-            />
-          </section>
-
-          <section className="space-y-8">
-            <div>
-              <Label className="text-base font-semibold block mb-1">
-                1. Que tamanho de pet você prefere?
-              </Label>
-              <p className={legendClass}>
-                Considere o espaço da sua casa e sua preferência pessoal.
-              </p>
-              <RadioCardGroup
-                name="tamanhoPet"
-                value={form.tamanhoPet || ""}
-                onValueChange={(v) => setForm({ ...form, tamanhoPet: v })}
-                options={[
-                  {
-                    value: "pequeno",
-                    id: "tamanho-pequeno",
-                    title: "Pequeno",
-                    description: "Pets que cabem no colo, fáceis de carregar (até 10kg).",
-                  },
-                  {
-                    value: "medio",
-                    id: "tamanho-medio",
-                    title: "Médio",
-                    description: "Pets nem muito grandes nem muito pequenos (10-25kg).",
-                  },
-                  {
-                    value: "grande",
-                    id: "tamanho-grande",
-                    title: "Grande",
-                    description: "Pets grandes que precisam de mais espaço (acima de 25kg).",
-                  },
-                ]}
-                columns={3}
-              />
-              {errors.tamanhoPet && (
-                <span className="text-red-500 text-xs mt-2 block">{errors.tamanhoPet}</span>
-              )}
-            </div>
-
-            <div>
-              <Label className="text-base font-semibold block mb-1">
-                2. Quanto tempo você tem disponível para cuidar do seu pet?
-              </Label>
-              <p className={legendClass}>
-                Seja honesto sobre sua rotina e disponibilidade diária.
-              </p>
-              <RadioCardGroup
-                name="tempoCuidar"
-                value={form.tempoCuidar || ""}
-                onValueChange={(v) => setForm({ ...form, tempoCuidar: v })}
-                options={[
-                  {
-                    value: "pouco",
-                    id: "tempo-pouco",
-                    title: "Pouco",
-                    description: "Prefiro pets mais independentes que não precisem de atenção.",
-                  },
-                  {
-                    value: "moderado",
-                    id: "tempo-moderado",
-                    title: "Moderado",
-                    description:
-                      "Posso dedicar algumas horas para passeios, brincadeiras e cuidados.",
-                  },
-                  {
-                    value: "muito",
-                    id: "tempo-muito",
-                    title: "Muito",
-                    description: "Tenho bastante tempo livre e gosto de me dedicar ao meu pet",
-                  },
-                ]}
-                columns={3}
-              />
-              {errors.tempoCuidar && (
-                <span className="text-red-500 text-xs mt-2 block">{errors.tempoCuidar}</span>
-              )}
-            </div>
-
-            <div>
-              <Label className="text-base font-semibold block mb-1">
-                3. Qual dessas opções descreve melhor seu estilo de vida?
-              </Label>
-              <p className={legendClass}>
-                Pense na sua rotina diária e no tipo de companhia que está procurando.
-              </p>
-              <RadioCardGroup
-                name="estiloVida"
-                value={form.estiloVida || ""}
-                onValueChange={(v) => setForm({ ...form, estiloVida: v })}
-                options={[
-                  {
-                    value: "tranquila",
-                    id: "vida-tranquila",
-                    title: "Tranquila",
-                    description: "Meu tempo livre é para descansar e recarregar as energias.",
-                  },
-                  {
-                    value: "equilibrado",
-                    id: "vida-equilibrado",
-                    title: "Equilibrado",
-                    description:
-                      "Intercalo períodos de atividade com momentos de descanso.",
-                  },
-                  {
-                    value: "acao",
-                    id: "vida-acao",
-                    title: "Sempre em ação",
-                    description:
-                      "Exercícios, passeios e atividades físicas fazem parte da minha rotina.",
-                  },
-                ]}
-                columns={3}
-              />
-              {errors.estiloVida && (
-                <span className="text-red-500 text-xs mt-2 block">{errors.estiloVida}</span>
-              )}
-            </div>
-
-            <div>
-              <Label className="text-base font-semibold block mb-1">
-                4. Como é o espaço da sua casa?
-              </Label>
-              <p className={legendClass}>Descreva o ambiente onde seu pet vai viver.</p>
-              <RadioCardGroup
-                name="espaco"
-                value={form.espaco || ""}
-                onValueChange={(v) => setForm({ ...form, espaco: v })}
-                options={[
-                  {
-                    value: "pequeno",
-                    id: "espaco-pequeno",
-                    title: "Pequeno",
-                    description: "Apartamento pequeno ou casa sem quintal/jardim.",
-                  },
-                  {
-                    value: "area_interna",
-                    id: "espaco-interno",
-                    title: "Área interna",
-                    description:
-                      "Casa ou apartamento espaçoso, mas sem área externa própria",
-                  },
-                  {
-                    value: "quintal",
-                    id: "espaco-quintal",
-                    title: "Quintal",
-                    description:
-                      "Tenho quintal, jardim ou espaço ao ar livre para o pet brincar",
-                  },
-                ]}
-                columns={3}
-              />
-              {errors.espaco && (
-                <span className="text-red-500 text-xs mt-2 block">{errors.espaco}</span>
-              )}
-            </div>
-          </section>
-          <Button type="submit" className="w-full text-lg py-3">
-            Salvar Alterações
-          </Button>
-        </form>
-      </div>
-    </main>
+      {step === 2 && (
+        <PreferencesFormEdit
+          onNext={handlePreferencesNext}
+          onBack={handleBack}
+          defaultValues={formData}
+        />
+      )}
+    </div>
   )
 }

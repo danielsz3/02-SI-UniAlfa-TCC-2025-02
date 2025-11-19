@@ -22,7 +22,7 @@ class AnimalSeeder extends Seeder
 
         $tipoImagemOptions = ['animais/animal-01.jpg', 'animais/animal-02.jpg'];
 
-        for ($i = 0; $i < 50; $i++) {
+        for ($i = 0; $i < 500; $i++) {
             DB::table('animais')->insert([
                 'nome' => $faker->firstName(),
                 'sexo' => $faker->randomElement($sexoOptions),
@@ -59,7 +59,7 @@ class AnimalSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
-            
+
             DB::table('imagens_animais')->insert([
                 'animal_id' => $i + 1,
                 'caminho' => $faker->randomElement($tipoImagemOptions),

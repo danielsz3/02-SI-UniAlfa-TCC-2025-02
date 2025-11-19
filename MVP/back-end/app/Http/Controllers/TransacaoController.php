@@ -275,17 +275,4 @@ class TransacaoController extends Controller
         return response()->json(null, 204);
     }
 
-    public function restore($id): JsonResponse
-    {
-        $transacao = Transacao::withTrashed()->find($id);
-        if (!$transacao) {
-            return response()->json(['error' => 'Transação não encontrada'], 404);
-        }
-        if (!$transacao->trashed()) {
-            return response()->json(['error' => 'Transação já está ativa'], 400);
-        }
-
-        $transacao->restore();
-        return response()->json($transacao->fresh(), 200);
-    }
 }

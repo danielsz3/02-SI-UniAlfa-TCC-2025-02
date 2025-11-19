@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { FormInput } from "@/components/forms/inputs/FormInput"
 import { FormSelect } from "@/components/forms/inputs/FormSelect"
+import NotToken from "@/components/NotToken"
 
 export default function DoarPage() {
   const router = useRouter()
@@ -149,6 +150,7 @@ const handleSubmit = async e => {
 
   return (
     <>
+    <NotToken>
       <main className="min-h-screen pt-24 bg-muted/30">
         <div className="max-w-3xl mx-auto px-4">
           <Card>
@@ -340,6 +342,7 @@ const handleSubmit = async e => {
           </Card>
         </div>
       </main>
+      </NotToken>
     </>
   )
 }

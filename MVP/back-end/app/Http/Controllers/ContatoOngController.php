@@ -200,35 +200,4 @@ class ContatoOngController extends Controller
         }
     }
 
-    /**
-     * Restaurar contato deletado
-     */
-    public function restore($id): JsonResponse
-    {
-        try {
-            $contato = ContatoOng::withTrashed()->find($id);
-
-            if (!$contato) {
-                return response()->json(['error' => 'Contato não encontrado'], 404);
-            }
-
-            if (!$contato->trashed()) {
-                return response()->json(['error' => 'Contato já está ativo'], 400);
-            }
-
-            $contato->restore();
-
-            return response()->json($contato->fresh(), 200);
-        } catch (\Exception $e) {
-            Log::error('Erro ao restaurar contato ONG: ' . $e->getMessage(), [
-                'id' => $id,
-                'exception' => $e
-            ]);
-            
-            return response()->json([
-                'error' => 'Não foi possível restaurar o contato',
-                'message' => config('app.debug') ? $e->getMessage() : 'Erro interno do servidor'
-            ], 500);
-        }
-    }
 }

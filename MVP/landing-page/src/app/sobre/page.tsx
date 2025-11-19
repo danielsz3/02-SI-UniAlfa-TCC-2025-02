@@ -1,48 +1,43 @@
-import { Card, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
-import { Navbar } from "@/components/navbar";
-import { Footer } from "@/components/footer";
+import { Card, CardContent, CardTitle, CardDescription } from "@/components/ui/card"
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
+import { Separator } from "@/components/ui/separator"
 
 interface LarTemporario {
-  id: number;
-  nome: string;
-  endereco: string;
-  imagemUrl?: string;
+  id: number
+  nome: string
+  endereco: string
+  imagemUrl?: string
 }
 
 async function fetchLares(): Promise<LarTemporario[]> {
   try {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/lares-temporarios`, {
       cache: "no-store",
-    });
+    })
     if (!res.ok) {
-      throw new Error("Falha ao buscar lares temporários");
+      throw new Error("Falha ao buscar lares temporários")
     }
-    const lares = await res.json();
+    const lares = await res.json()
 
     return lares.map((lar: any) => ({
       id: lar.id,
       nome: lar.nome_responsavel || lar.nome || "Responsável",
       endereco: `${lar.endereco || lar.logradouro || ""} - ${lar.bairro || ""} - ${lar.cep || ""} - ${lar.cidade || ""} ${lar.estado || ""}`,
       imagemUrl: lar.imagem_url || null,
-    }));
+    }))
   } catch (error) {
-    console.error(error);
-    return [];
+    console.error(error)
+    return []
   }
 }
 
 export default async function AboutPage() {
-  const lares = await fetchLares();
+  const lares = await fetchLares()
 
   return (
     <>
-      <Navbar />
       <main className="min-h-screen bg-background flex flex-col items-center px-4 py-10">
-        {/* Container centralizado e com largura máxima */}
         <div className="max-w-3xl w-full">
-          {/* Seção Quem Somos */}
           <section className="mb-12 flex flex-col md:flex-row items-center gap-8">
             <div className="w-full md:w-1/3 rounded-lg overflow-hidden border border-gray-300 dark:border-gray-700">
               <img
@@ -63,10 +58,8 @@ export default async function AboutPage() {
 
           <Separator className="my-8" />
 
-          {/* Título Lares Temporários */}
           <h2 className="text-2xl font-semibold mb-6 text-center">Lares Temporários</h2>
 
-          {/* Lista vertical dos lares */}
           <section className="flex flex-col gap-4">
             {lares.length === 0 && (
               <p className="text-center text-gray-500 dark:text-gray-400">
@@ -94,5 +87,5 @@ export default async function AboutPage() {
         </div>
       </main>
     </>
-  );
+  )
 }

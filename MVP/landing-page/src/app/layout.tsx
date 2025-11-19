@@ -1,9 +1,9 @@
-import "./globals.css"
-import type { Metadata } from "next"
-import Providers from "@/components/Providers"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
+import Providers from "@/components/Providers"
+import { Metadata } from "next"
 import { Toaster } from "sonner"
+import "./globals.css"
 
 export const metadata: Metadata = {
   title: "PetAffinity",
@@ -20,12 +20,11 @@ export default function RootLayout({
       <body className="bg-background text-foreground antialiased">
         <Providers>
           <Navbar />
-
           <main className="min-h-screen">
             {children}
           </main>
           <Toaster position="top-center" />
-          <Footer />
+          <Footer/>
         </Providers>
       </body>
     </html>

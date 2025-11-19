@@ -1,6 +1,5 @@
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
-
 import Providers from "@/components/Providers"
 import { Metadata } from "next"
 import { Toaster } from "sonner"

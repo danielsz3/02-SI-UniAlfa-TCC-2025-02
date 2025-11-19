@@ -1,191 +1,156 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import PersonalForm from "@/app/register/PersonalForm"
-import AddressForm from "@/app/register/AddressForm"
-import PreferencesForm from "@/app/register/PreferencesForm"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
+
+import PersonalFormEdit from "@/app/perfil/editar/PersonalFormEdit"
+import AddressFormEdit from "@/app/perfil/editar/AddressFormEdit"
+import PreferencesFormEdit from "@/app/perfil/editar/PreferencesFormEdit"
+
+import { apiGet, apiMultipart, apiPost } from "@/lib/api"
+
+export interface FormData {
+  id_usuario?: number
+  nome?: string
+  email?: string
+  telefone?: string
+  cpf?: string
+  data_nascimento?: string
+  senha?: string
+  senha_confirmation?: string
+  avatar?: File | null
+
+  // Endereço
+  logradouro?: string
+  numero?: string
+  complemento?: string
+  bairro?: string
+  cidade?: string
+  estado?: string
+  cep?: string
+
+  // Preferências
+  notificacoesEmail?: boolean
+  notificacoesPush?: boolean
+  tamanho_pet?: string
+  tempo_disponivel?: string
+  estilo_vida?: string
+  espaco_casa?: string
+}
 
 export default function EditProfilePage() {
   const router = useRouter()
-
   const [step, setStep] = useState(0)
+  const [formData, setFormData] = useState<FormData>({})
+  const [avatarFile, setAvatarFile] = useState<File | null>(null)
 
-  const [form, setForm] = useState<any>({
-    nome: "",
-    sobrenome: "",
-    telefone: "",
-    sexo: "",
-    email: "",
-    cpf: "",
-    dataNascimento: "",
-    senha: undefined,
-    confirmarSenha: undefined,
-  })
-
-  const [addressForm, setAddressForm] = useState({
-    cep: "",
-    logradouro: "",
-    complemento: "",
-    numero: "",
-    bairro: "",
-    cidade: "",
-    estado: "",
-  })
-
-  const [addressErrors, setAddressErrors] = useState<Record<string, string>>({})
-  const [errors, setErrors] = useState<any>({})
-
-  const [imageFile, setImageFile] = useState<File | null>(null)
-  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null)
-
-  const [data, setData] = useState<any>({
-    personal: {},
-    address: {},
-    preferences: {},
-  })
-
-  const updateField = (name: string, value: any) => {
-    setForm((prev: any) => ({ ...prev, [name]: value }))
-  }
-
-  const handleNext = (formData: any) => {
-    if (step === 0) setData((p: any) => ({ ...p, personal: formData }))
-    if (step === 1) setData((p: any) => ({ ...p, address: formData }))
-    if (step === 2) setData((p: any) => ({ ...p, preferences: formData }))
-
-    setStep((s) => s + 1)
-  }
-
-  const handleBack = () => setStep((s) => s - 1)
-
-  const handleSubmit = async () => {
-    await fetch("https://sua-api.com/usuarios/me", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    })
-
-    router.push("/perfil")
-  }
-
-  // 🔥 Buscar dados reais da sua API
   useEffect(() => {
-    async function loadUser() {
+    async function loadData() {
       try {
-        const res = await fetch("https://sua-api.com/usuarios/me")
-        const usuario = await res.json()
+        const user = await apiGet<any>("usuarios/me")
+        const endereco = await apiGet<any>("enderecos/" + user.id)
+        const preferencias = await apiGet<any>("preferencias-usuarios/" + user.id)
 
-        // Preenche form (dados pessoais)
-        setForm({
-          nome: usuario.nome || "",
-          sobrenome: usuario.sobrenome || "",
-          telefone: usuario.telefone || "",
-          sexo: usuario.sexo || "",
-          email: usuario.email || "",
-          cpf: usuario.cpf || "",
-          dataNascimento: usuario.dataNascimento || "",
-          senha: undefined,
-          confirmarSenha: undefined,
+        setFormData({
+          ...user,
+          ...endereco,
+          ...preferencias,
         })
-
-        // Preenche endereço
-        setAddressForm({
-          cep: usuario.cep || "",
-          logradouro: usuario.logradouro || "",
-          complemento: usuario.complemento || "",
-          numero: usuario.numero || "",
-          bairro: usuario.bairro || "",
-          cidade: usuario.cidade || "",
-          estado: usuario.estado || "",
-        })
-
-        // Preenche "data" completo
-        setData({
-          personal: {
-            nome: usuario.nome,
-            sobrenome: usuario.sobrenome,
-            telefone: usuario.telefone,
-            sexo: usuario.sexo,
-            email: usuario.email,
-            cpf: usuario.cpf,
-            dataNascimento: usuario.dataNascimento,
-          },
-          address: {
-            cep: usuario.cep,
-            logradouro: usuario.logradouro,
-            complemento: usuario.complemento,
-            numero: usuario.numero,
-            bairro: usuario.bairro,
-            cidade: usuario.cidade,
-            estado: usuario.estado,
-          },
-          preferences: {
-            tamanhoPet: usuario.tamanhoPet,
-            tempoCuidar: usuario.tempoCuidar,
-            estiloVida: usuario.estiloVida,
-            espaco: usuario.espaco,
-          },
-        })
-      } catch (err) {
-        console.error("Erro ao carregar usuário:", err)
+      } catch (err: any) {
+        console.error(err)
+        toast.error("Erro ao carregar dados do perfil", { richColors: true })
       }
     }
-
-    loadUser()
+    loadData()
   }, [])
 
-  // Preview da imagem
-  useEffect(() => {
-    if (!imageFile) return
-    const url = URL.createObjectURL(imageFile)
-    setImagePreviewUrl(url)
-    return () => URL.revokeObjectURL(url)
-  }, [imageFile])
+  const handlePersonalNext = (data: Partial<FormData> & { avatar?: File | null }) => {
+    setFormData(prev => ({ ...prev, ...data }))
+    if (data.avatar) setAvatarFile(data.avatar)
+    setStep(1)
+  }
+
+  const handleAddressNext = (data: Partial<FormData>) => {
+    setFormData(prev => ({ ...prev, ...data }))
+    setStep(2)
+  }
+
+  const handlePreferencesNext = async (data: Partial<FormData>) => {
+    const updated = { ...formData, ...data }
+    setFormData(updated)
+    await handleSave(updated)
+  }
+
+  const handleBack = () => setStep(prev => Math.max(prev - 1, 0))
+
+  const handleSave = async (payload: FormData) => {
+    if (!payload.id_usuario) return toast.error("ID do usuário não encontrado", { richColors: true })
+
+    try {
+      // 1️⃣ Atualiza usuário (incluindo avatar)
+      const userForm = new FormData()
+      userForm.append("nome", payload.nome || "")
+      userForm.append("email", payload.email || "")
+      userForm.append("telefone", payload.telefone || "")
+      if (avatarFile) userForm.append("avatar", avatarFile)
+
+      await apiMultipart(`usuarios/${payload.id_usuario}`, userForm, { method: "PUT" })
+
+      // 2️⃣ Atualiza endereço
+      const enderecoForm = new FormData()
+      enderecoForm.append("logradouro", payload.logradouro || "")
+      enderecoForm.append("numero", payload.numero || "")
+      enderecoForm.append("complemento", payload.complemento || "")
+      enderecoForm.append("bairro", payload.bairro || "")
+      enderecoForm.append("cidade", payload.cidade || "")
+      enderecoForm.append("estado", payload.estado || "")
+      enderecoForm.append("cep", payload.cep || "")
+
+      await apiMultipart(`enderecos/${payload.id_usuario}`, enderecoForm, { method: "PUT" })
+
+      // 3️⃣ Atualiza preferências
+      await apiPost(`preferencias-usuarios/${payload.id_usuario}`, {
+        notificacoesEmail: payload.notificacoesEmail ?? false,
+        notificacoesPush: payload.notificacoesPush ?? false,
+        tamanho_pet: payload.tamanho_pet || "",
+        tempo_disponivel: payload.tempo_disponivel || "",
+        estilo_vida: payload.estilo_vida || "",
+        espaco_casa: payload.espaco_casa || "",
+      })
+
+      toast.success("Perfil atualizado com sucesso!", { richColors: true })
+      router.push("/")
+    } catch (err: any) {
+      console.error(err)
+      toast.error("Erro ao salvar perfil", { richColors: true })
+    }
+  }
 
   return (
-    <div className="w-full flex justify-center py-10">
+    <div className="max-w-xl mx-auto p-4">
       {step === 0 && (
-        <PersonalForm
-          form={form}
-          updateField={updateField}
-          errors={errors}
-          imagePreviewUrl={imagePreviewUrl}
-          setImageFile={setImageFile}
+        <PersonalFormEdit
+          onNext={handlePersonalNext}
+          defaultValues={formData}
+          setAvatarFile={setAvatarFile}
         />
       )}
 
       {step === 1 && (
-        <AddressForm
-          onNext={handleNext}
+        <AddressFormEdit
+          onNext={handleAddressNext}
           onBack={handleBack}
-          defaultValues={addressForm}
+          defaultValues={formData}
         />
       )}
 
       {step === 2 && (
-        <PreferencesForm
-          onNext={handleNext}
+        <PreferencesFormEdit
+          onNext={handlePreferencesNext}
           onBack={handleBack}
-          defaultValues={data.preferences}
+          defaultValues={formData}
         />
-      )}
-
-      {step === 3 && (
-        <div className="w-full max-w-md mx-auto bg-white dark:bg-slate-800 p-8 rounded-lg shadow-lg text-center">
-          <h2 className="text-2xl font-semibold mb-4">Confirme os dados</h2>
-
-          <pre className="text-left bg-slate-900 text-white p-4 rounded-md text-sm overflow-auto">
-            {JSON.stringify(data, null, 2)}
-          </pre>
-
-          <button
-            onClick={handleSubmit}
-            className="mt-6 w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-lg"
-          >
-            Salvar Alterações
-          </button>
-        </div>
       )}
     </div>
   )

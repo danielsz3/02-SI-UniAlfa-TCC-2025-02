@@ -167,7 +167,7 @@ export const TransacoesTab = ({ startDate, endDate }: TransacoesTabProps) => {
                 />
             </Grid>
 
-            <Grid size={{ xs: 12, sm: 6 }}>
+            <Grid size={{ xs: 12, md: 6 }}>
                 <Typography variant="h6" gutterBottom>Transações Recentes</Typography>
                 <TableContainer component={Paper}>
                     <Table size="small">
@@ -224,7 +224,7 @@ export const TransacoesTab = ({ startDate, endDate }: TransacoesTabProps) => {
                 </TableContainer>
             </Grid>
 
-            <Grid size={{ xs: 12, sm: 6 }}>
+            <Grid size={{ xs: 12, md: 6 }}>
                 <SimplePieChart
                     height={350}
                     data={tipoPieData}

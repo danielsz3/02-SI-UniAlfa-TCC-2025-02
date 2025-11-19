@@ -189,14 +189,14 @@ export const AnimaisTab = ({ startDate, endDate }: AnimaisTabProps) => {
             </Grid>
 
             {/* Linha 1: Os Gráficos */}
-            <Grid size={{ xs: 12, md: 6, sm: 6 }}>
+            <Grid size={{ xs: 12, md: 6 }}>
                 <SimplePieChart
                     data={statusPieData}
                     colors={COLORS_ANIMAIS}
                     title="Status dos Animais"
                 />
             </Grid>
-            <Grid size={{ xs: 12, md: 6, sm: 6 }}>
+            <Grid size={{ xs: 12, md: 6 }}>
                 <SimplePieChart
                     data={castrationPieData}
                     colors={COLORS_CASTRADOS}

@@ -36,7 +36,7 @@ interface User {
     imagem?: string;
 }
 
-async function apiLogout(token: string) {
+async function apiLogout(token: string | null | undefined) {
     try {
         const res = await fetch(${API_BASE}/logout, {
             method: "POST",
@@ -61,7 +61,7 @@ function Brand() {
     )
 }
 
-function TopLevelLink({ href, children }: { href: string; children: React.ReactNode }) {
+function TopLevelLink({ href, children }: { href: string, children: ReactNode }) {
     return (
         <Link
             href={href}
@@ -156,7 +156,7 @@ function RightActions({ loading, onLogout, user }: { loading: boolean, onLogout:
                     <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon">
                             <Avatar className="h-8 w-8">
-                                <AvatarImage src={${API_BASE}/imagens/${user.imagem}} alt={user.nome ?? "Usuário"} />
+                                <AvatarImage src={`${API_BASE}/imagens/${user.imagem}`} alt={user.nome ?? "Usuário"} />
                                 <AvatarFallback>{user.nome?.[0]?.toUpperCase() || "U"}</AvatarFallback>
                             </Avatar>
                         </Button>

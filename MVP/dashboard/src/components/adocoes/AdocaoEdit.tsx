@@ -3,7 +3,6 @@ import {
     Edit,
     SaveButton,
     SimpleForm,
-    TextInput,
     Toolbar,
     useRecordContext
 } from 'react-admin';
@@ -20,6 +19,7 @@ import ThumbUpOutlinedIcon from '@mui/icons-material/ThumbUpOutlined';
 import PetsOutlinedIcon from '@mui/icons-material/PetsOutlined';
 import { formatarDiferencaData } from '../../utils/formatDate';
 import ThumbDownIcon from '@mui/icons-material/ThumbDown';
+import { CopyText } from '../CopyText';
 
 type StatusAdocao = string;
 type QtdPessoas = string;
@@ -32,6 +32,7 @@ type Animal = {
     id: number;
     nome: string;
     sexo: string;
+    tamanho: string;
     data_nascimento: string;
     imagens: any[];
 };
@@ -128,11 +129,9 @@ const InfoCard: React.FC<InfoCardProps> = ({ icon, title, children }) => (
  * Componente principal que renderiza a visualização dos dados
  */
 const VisualizacaoDados = () => {
-    // AQUI a grande mudança: tipamos o useRecordContext
     const record = useRecordContext<AdocaoRecord>();
     if (!record) return null;
 
-    // Função auxiliar tipada
     const formataBool = (value: boolean | number | undefined | null): string => {
         return value ? 'Sim' : 'Não';
     };
@@ -142,33 +141,25 @@ const VisualizacaoDados = () => {
         return s.charAt(0).toUpperCase() + s.slice(1);
     };
 
-    // Tipagem inferida (correta) a partir do 'record'
-    const animalInfo = `${record.animal?.sexo || 'Sexo desconhecido'} - ${formatarDiferencaData(record.animal?.data_nascimento)}`;
+    const animalInfo = `${record.animal?.sexo || 'Sexo desconhecido'} - ${record.animal?.tamanho} - ${formatarDiferencaData(record.animal?.data_nascimento)}`;
 
     const imageUrl = record.animal?.imagens[0]?.caminho
         ? import.meta.env.VITE_API_URL + `/imagens/${record.animal?.imagens[0]?.caminho}`
         : null;
 
-    // Manipulador de erro para imagem (com tipagem de evento)
     const onImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
         (e.target as HTMLImageElement).style.display = 'none';
-        // Aqui você poderia mostrar o Box de fallback
     };
 
     const renderRotinaChips = () => {
-        // Se 'sobre_rotina' for null ou um objeto vazio
         if (!record.sobre_rotina || Object.keys(record.sobre_rotina).length === 0) {
             return <Typography variant="body2">Nenhuma rotina informada.</Typography>;
         }
 
-        // Transforma { "horarios": "manhã", "atividade": "passeio" }
-        // em [ ["horarios", "manhã"], ["atividade", "passeio"] ]
         return Object.entries(record.sobre_rotina).map(([key, value], index) => (
             <Chip
                 key={key}
-                // (NOVO) Aplica a cor dinamicamente
                 color={CHIP_COLORS[index % CHIP_COLORS.length]}
-                // (NOVO) Capitaliza a chave e mostra o valor
                 label={`${capitalize(key)}: ${value}`}
             />
         ));
@@ -226,10 +217,18 @@ const VisualizacaoDados = () => {
             </Box>
 
             {/* Usuário Info */}
-            <Typography variant="h6">{record.usuario?.nome} - {record.usuario?.telefone || 'Telefone não informado'}</Typography>
+            <Box display="flex" alignItems="center">
+                <Typography variant="h6">
+                    {record.usuario?.nome} -
+                </Typography>
+
+                <CopyText text={formatPhone(record.usuario?.telefone || '') }/>
+            </Box>
             <Typography variant="body2" color="text.secondary" gutterBottom>
-                {record.usuario?.endereco?.logradouro}, {record.usuario?.endereco?.bairro},
-                {record.usuario?.endereco?.cidade} - {record.usuario?.endereco?.uf}
+                {record.usuario.endereco ?
+                    <CopyText text={`${record.usuario?.endereco?.logradouro}, ${record.usuario?.endereco?.bairro},
+                ${record.usuario?.endereco?.cidade} - ${record.usuario?.endereco?.uf}`} />
+                    : 'Endereço não informado'}
             </Typography>
 
             <Divider sx={{ my: 2 }} />
@@ -327,13 +326,27 @@ const VisualizacaoDados = () => {
     );
 };
 
+const formatPhone = (phone: string) => {
+    if (!phone) return ''; // Retorna vazio se não houver telefone
+    const digits = phone.replace(/\D/g, '');
+
+    if (digits.length === 11) {
+        return digits.replace(/^(\d{2})(\d{1})(\d{4})(\d{4})$/, '($1) $2$3-$4');
+    }
+
+    if (digits.length === 10) {
+        return digits.replace(/^(\d{2})(\d{4})(\d{4})$/, '($1) $2-$3');
+    }
+    return phone;
+};
+
 export const AdocaoEdit = () => (
     <Edit title="Análise de Adoção"
         sx={{ width: '100%', maxWidth: 800, margin: '0 auto', mb: 10 }}
         transform={data => ({
-                    ...data,
-                    status: data.status = "aprovado",
-                })}
+            ...data,
+            status: data.status = "aprovado",
+        })}
     >
         <SimpleForm
             toolbar={

@@ -1,6 +1,6 @@
 import { toast } from "sonner"
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? ''
+const API_URL = process.env.NEXT_PUBLIC_API_URL
 
 function decodeToken(token: string): any {
     try {
@@ -30,9 +30,7 @@ export function getToken(): string | null {
     const token = localStorage.getItem('token')
 
     if (!token) {
-        clearAuthData(true)
-        toast.error('Voce precisa estar autenticado, faça o login.', { richColors: true })
-        return null
+        return null // Não mostra toast aqui, deixa o componente decidir
     }
 
     if (isTokenExpired(token)) {
@@ -56,12 +54,11 @@ export function clearAuthData(shouldRedirect = true, loginPath = '/login') {
 
     try {
         window.location.replace(loginPath)
-
     } catch {
-
         window.location.href = loginPath
     }
 }
+
 async function handlePossibleError(res: Response) {
     if (!res.ok) {
         if (res.status === 401) {
@@ -73,16 +70,30 @@ async function handlePossibleError(res: Response) {
         } catch {
             body = await res.text().catch(() => '')
         }
-        throw new Error(`API error: ${res.status} ${JSON.stringify(body)}`)
+
+        // Cria um erro com mais informações
+        const error: any = new Error(`API error: ${res.status}`)
+        error.status = res.status
+        error.response = { status: res.status, data: body }
+        throw error
     }
     return res
 }
 
+// Função auxiliar para normalizar o endpoint
+function normalizeEndpoint(endpoint: string): string {
+    // Remove barra inicial se existir
+    return endpoint.startsWith('/') ? endpoint.slice(1) : endpoint
+}
+
 export async function apiGet<T>(endpoint: string): Promise<T> {
     const token = getToken()
-    const res = await fetch(`${API_URL}/${endpoint}`, {
+    const normalizedEndpoint = normalizeEndpoint(endpoint)
+
+    const res = await fetch(`${API_URL}/${normalizedEndpoint}`, {
         headers: {
             'Content-Type': 'application/json',
+            'Accept': 'application/json',
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
     })
@@ -93,10 +104,13 @@ export async function apiGet<T>(endpoint: string): Promise<T> {
 
 export async function apiPost<T>(endpoint: string, data: any): Promise<T> {
     const token = getToken()
-    const res = await fetch(`${API_URL}/${endpoint}`, {
+    const normalizedEndpoint = normalizeEndpoint(endpoint)
+
+    const res = await fetch(`${API_URL}/${normalizedEndpoint}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
+            'Accept': 'application/json',
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify(data),
@@ -112,6 +126,7 @@ export async function apiMultipart<T>(
     options?: { method?: 'POST' | 'PUT' | 'PATCH'; useMethodOverride?: boolean }
 ): Promise<T> {
     const token = getToken()
+    const normalizedEndpoint = normalizeEndpoint(endpoint)
     const method = options?.method ?? 'POST'
     const useMethodOverride = options?.useMethodOverride ?? true
 
@@ -121,11 +136,11 @@ export async function apiMultipart<T>(
 
     const fetchMethod = method === 'POST' || useMethodOverride ? 'POST' : (method as RequestInit['method'])
 
-    const res = await fetch(`${API_URL}/${endpoint}`, {
+    const res = await fetch(`${API_URL}/${normalizedEndpoint}`, {
         method: fetchMethod,
         headers: {
+            'Accept': 'application/json',
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
-
         },
         body: formData,
     })

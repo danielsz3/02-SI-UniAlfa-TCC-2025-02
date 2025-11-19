@@ -21,7 +21,8 @@ import {
     useReference,
     Loading,
     Count,
-    ChipField
+    ChipField,
+    DeleteWithConfirmButton
 } from 'react-admin';
 import { FaEye } from 'react-icons/fa';
 import { chipTipos, Situacao, tamanhos } from '../animais/AnimalList';
@@ -47,6 +48,11 @@ const LarTempShowActions = () => (
             backgroundColor: '#fafafb !important',
         }}
     >
+        <DeleteWithConfirmButton
+            confirmTitle="Tem certeza?"
+            confirmContent="Deseja realmente excluir este Lar ?"
+            successMessage="Lar Excluído com sucesso!"
+        />
         <EditButton />
         <ListButton label="Voltar" />
     </TopToolbar>
@@ -192,11 +198,6 @@ const Gallery = ({ images }: { images: any[] }) => {
  */
 const LarTempShow = (props: ShowProps) => {
 
-    // As mesmas escolhas usadas no 'Create' para 'situacao'
-    const situacaoChoices = [
-        { id: 'ativo', name: 'Ativo' },
-        { id: 'inativo', name: 'Inativo' }
-    ];
 
     return (
         <Show

@@ -55,7 +55,6 @@ export default function RegisterPage() {
     function nextStep(data: Partial<FormData> & { imagem?: File | null }) {
         if (data.imagem) {
             setImagemFile(data.imagem)
-            delete data.imagem
         }
         setFormData(prev => ({ ...prev, ...data }))
         setStep(s => s + 1)

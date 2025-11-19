@@ -4,12 +4,13 @@ import React, { createContext, useContext, useEffect, useState } from "react"
 import { ThemeProvider } from "next-themes"
 import { useRouter } from "next/navigation"
 import { GoogleOAuthProvider } from "@react-oauth/google"
+import { getToken } from "@/lib/api"
 
 type User = any | null
 
 type AuthContextType = {
   user: User
-  login: (userObj: any, token?: string, redirectTo?: string) => void
+  login: (userObj: any, token: string, redirectTo?: string) => void
   logout: (redirectTo?: string) => void
   refreshUserFromStorage: () => void
 }
@@ -26,14 +27,20 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User>(null)
   const router = useRouter()
 
+  // Campos obrigatórios
   const camposObrigatorios = ["cpf", "data_nascimento", "telefone"]
 
-  function verificarCadastroIncompleto(u: any) {
-    if (!u) return false
-    return camposObrigatorios.some(c => !u[c] || u[c] === "")
-  }
+  const verificarCadastroIncompleto = (u: any) =>
+    u && camposObrigatorios.some(c => !u[c] || u[c] === "")
 
   useEffect(() => {
+    const token = getToken()
+
+    if (!token) {
+      setUser(null)
+      return
+    }
+
     try {
       const raw = localStorage.getItem("user")
       const parsed = raw ? JSON.parse(raw) : null
@@ -50,7 +57,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   }, [])
 
   useEffect(() => {
-    const onLogin = e => {
+    const onLogin = (e: any) => {
       const detail = e.detail
       if (detail) {
         setUser(detail)
@@ -98,11 +105,11 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     }
   }
 
-  function login(userObj: any, token?: string, redirectTo = "/") {
-    if (token) localStorage.setItem("token", token)
-    if (userObj) localStorage.setItem("user", JSON.stringify(userObj))
-    setUser(userObj ?? null)
+  function login(userObj: any, token: string, redirectTo = "/") {
+    localStorage.setItem("token", token)
+    localStorage.setItem("user", JSON.stringify(userObj))
 
+    setUser(userObj)
     window.dispatchEvent(new CustomEvent("auth:login", { detail: userObj }))
 
     if (verificarCadastroIncompleto(userObj)) {
@@ -117,6 +124,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     localStorage.removeItem("token")
     localStorage.removeItem("user")
     setUser(null)
+
     window.dispatchEvent(new CustomEvent("auth:logout"))
     router.replace(redirectTo)
   }

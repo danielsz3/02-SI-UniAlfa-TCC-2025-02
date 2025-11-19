@@ -3,6 +3,16 @@
 import { useEffect, useMemo, useState, useRef } from "react"
 import Link from "next/link"
 import { Download, FileText, Search, ChevronLeft, ChevronRight, Folder } from "lucide-react"
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  ResponsiveContainer
+} from "recharts"
+import { useTheme } from "next-themes"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -12,7 +22,18 @@ import {
   AccordionContent,
 } from "@/components/ui/accordion"
 
-// Types
+// ------------------------------------------------
+// TIPOS
+// ------------------------------------------------
+
+type Transacao = {
+  id: number
+  tipo: "receita" | "despesa"
+  valor: number
+  data: string
+  categoria: string
+}
+
 type Documento = {
   id: number
   titulo: string
@@ -25,7 +46,20 @@ type Documento = {
   created_at?: string | null
 }
 
-// Helpers
+// ------------------------------------------------
+// HELPERS
+// ------------------------------------------------
+
+// NOVO HELPER: Formatação para Real (R$)
+const formatCurrency = (value: number) => {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value)
+}
+
 function formatBytes(bytes?: number | null) {
   if (!bytes || bytes === 0) return "0 B"
   const sizes = ["B", "KB", "MB", "GB", "TB"]
@@ -40,7 +74,11 @@ function yearFromDocument(doc: Documento) {
   return d.getFullYear()
 }
 
-// Minimal document item (no solid background — uses theme tokens)
+// ------------------------------------------------
+// COMPONENTES DE AJUDA
+// ------------------------------------------------
+
+// Item de Documento Mínimo
 function DocItem({ doc }: { doc: Documento }) {
   const api = process.env.NEXT_PUBLIC_API_URL || ""
   const downloadUrl = `${api}/documentos/${doc.id}/download`
@@ -87,18 +125,164 @@ function DocItemSkeleton() {
   )
 }
 
+// Componente do Gráfico de Arrecadações (Receita)
+function ReceitaChart({ chartData, chartLoading, isDark, gridColor, textColor, receitaColor }: {
+  chartData: any[]
+  chartLoading: boolean
+  isDark: boolean
+  gridColor: string
+  textColor: string
+  receitaColor: string
+}) {
+  return (
+    <div className="border rounded-xl p-4 shadow-sm bg-card">
+      <h3 className="text-center font-semibold mb-2">Arrecadações</h3>
+
+      {chartLoading ? (
+        <div className="h-40 bg-muted/30 rounded animate-pulse" />
+      ) : (
+        <ResponsiveContainer width="100%" height={200}>
+          <LineChart data={chartData}>
+            <CartesianGrid stroke={gridColor} strokeDasharray="3 3" />
+            <XAxis dataKey="mes" stroke={textColor} />
+            {/* MODIFICADO: Adicionado tickFormatter para formatar R$ no eixo Y */}
+            <YAxis stroke={textColor} tickFormatter={formatCurrency} />
+            <Tooltip
+              contentStyle={{
+                background: isDark ? "#1f1f1f" : "#fff",
+                borderRadius: 8,
+                border: "1px solid #444",
+                color: textColor
+              }}
+              // MODIFICADO: Adicionado formatter para formatar R$ no Tooltip
+              formatter={(value: number) => [formatCurrency(value), "Receita"]}
+            />
+            <Line
+              type="monotone"
+              dataKey="receita"
+              stroke={receitaColor}
+              strokeWidth={3}
+              dot={{ r: 4, fill: receitaColor }}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      )}
+    </div>
+  )
+}
+
+// Componente do Gráfico de Despesas
+function DespesaChart({ chartData, chartLoading, isDark, gridColor, textColor, despesaColor }: {
+  chartData: any[]
+  chartLoading: boolean
+  isDark: boolean
+  gridColor: string
+  textColor: string
+  despesaColor: string
+}) {
+  return (
+    <div className="border rounded-xl p-4 shadow-sm bg-card">
+      <h3 className="text-center font-semibold mb-2">Despesas</h3>
+
+      {chartLoading ? (
+        <div className="h-40 bg-muted/30 rounded animate-pulse" />
+      ) : (
+        <ResponsiveContainer width="100%" height={200}>
+          <LineChart data={chartData}>
+            <CartesianGrid stroke={gridColor} strokeDasharray="3 3" />
+            <XAxis dataKey="mes" stroke={textColor} />
+            {/* MODIFICADO: Adicionado tickFormatter para formatar R$ no eixo Y */}
+            <YAxis stroke={textColor} tickFormatter={formatCurrency} />
+            <Tooltip
+              contentStyle={{
+                background: isDark ? "#1f1f1f" : "#fff",
+                borderRadius: 8,
+                border: "1px solid #444",
+                color: textColor
+              }}
+              // MODIFICADO: Adicionado formatter para formatar R$ no Tooltip
+              formatter={(value: number) => [formatCurrency(value), "Despesa"]}
+            />
+            <Line
+              type="monotone"
+              dataKey="despesa"
+              stroke={despesaColor}
+              strokeWidth={3}
+              dot={{ r: 4, fill: despesaColor }}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      )}
+    </div>
+  )
+}
+
+// ------------------------------------------------
+// COMPONENTE PRINCIPAL
+// ------------------------------------------------
+
 export default function TransparenciaPage() {
+  // Estado e Lógica de Transações/Gráfico
+  const [transacoes, setTransacoes] = useState<Transacao[]>([])
+  const [chartLoading, setChartLoading] = useState(true)
+  const { theme } = useTheme()
+
+  // Estado e Lógica de Documentos
   const [documentos, setDocumentos] = useState<Documento[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-
   const [query, setQuery] = useState("")
   const [categoria, setCategoria] = useState<string>("")
   const [page, setPage] = useState(1)
   const perPage = 12
-
   const searchTimeout = useRef<number | null>(null)
 
+  // 1. Cores do Gráfico (dependem do tema)
+  const isDark = theme === "dark"
+  const gridColor = isDark ? "#333" : "#e5e7eb"
+  const textColor = isDark ? "#e5e7eb" : "#111"
+  const receitaColor = "#22c55e" // verde
+  const despesaColor = "#ef4444" // vermelho
+
+  // 2. Buscar Dados de Transações
+  useEffect(() => {
+    const api = process.env.NEXT_PUBLIC_API_URL || ""
+
+    fetch(`${api}/transacoes`)
+      .then((r) => r.json())
+      .then((res) => {
+        const items = Array.isArray(res.data) ? res.data : res
+        setTransacoes(items)
+      })
+      .finally(() => setChartLoading(false))
+  }, [])
+
+  // 3. Agrupar Dados de Transações por mês/ano
+  const chartData = useMemo(() => {
+    const map = new Map<string, { receita: number; despesa: number }>()
+
+    transacoes.forEach((t) => {
+      const dt = new Date(t.data)
+      if (isNaN(dt.getTime())) return
+
+      // Formato MM/AAAA
+      const key = `${dt.getMonth() + 1}/${dt.getFullYear()}`
+
+      if (!map.has(key)) {
+        map.set(key, { receita: 0, despesa: 0 })
+      }
+
+      if (t.tipo === "receita") map.get(key)!.receita += t.valor
+      if (t.tipo === "despesa") map.get(key)!.despesa += t.valor
+    })
+
+    return Array.from(map.entries()).map(([mes, valores]) => ({
+      mes,
+      ...valores,
+    }))
+  }, [transacoes])
+
+  // 4. Buscar Dados de Documentos
   useEffect(() => {
     const controller = new AbortController()
     setLoading(true)
@@ -142,7 +326,7 @@ export default function TransparenciaPage() {
     }
   }, [page, query, categoria])
 
-  // agrupa por ano (do mais recente para o mais antigo)
+  // 5. Agrupar Documentos por ano
   const groups = useMemo(() => {
     const map = new Map<number, Documento[]>()
     documentos.forEach((d) => {
@@ -156,7 +340,7 @@ export default function TransparenciaPage() {
       .map(([year, docs]) => ({ year, docs }))
   }, [documentos])
 
-  // se nenhum doc (ex: carregando), apresentar um grupo padrão (ex.: anos 2025-2022 no wireframe)
+  // Lógica de Renderização do Ano
   const defaultYears = [2025, 2024, 2023, 2022]
   const yearsToRender = groups.length ? groups : defaultYears.map((y) => ({ year: y, docs: [] as Documento[] }))
 
@@ -168,17 +352,24 @@ export default function TransparenciaPage() {
           <div className="bg-transparent rounded-md p-2">
             <h2 className="text-center text-lg font-semibold">Prestação de Contas</h2>
 
-            {/* Substitua por seus componentes de gráfico reais */}
+            {/* Gráficos de Receita e Despesa */}
             <div className="mt-4 space-y-4">
-              <div className="border rounded p-3">
-                <h3 className="text-center font-semibold">Arrecadações</h3>
-                <div className="h-36 bg-muted/30 rounded mt-2"></div>
-              </div>
-
-              <div className="border rounded p-3">
-                <h3 className="text-center font-semibold">Despesas</h3>
-                <div className="h-36 bg-muted/30 rounded mt-2"></div>
-              </div>
+              <ReceitaChart
+                chartData={chartData}
+                chartLoading={chartLoading}
+                isDark={isDark}
+                gridColor={gridColor}
+                textColor={textColor}
+                receitaColor={receitaColor}
+              />
+              <DespesaChart
+                chartData={chartData}
+                chartLoading={chartLoading}
+                isDark={isDark}
+                gridColor={gridColor}
+                textColor={textColor}
+                despesaColor={despesaColor}
+              />
             </div>
           </div>
         </section>

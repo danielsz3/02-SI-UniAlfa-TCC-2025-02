@@ -11,7 +11,8 @@ import { calcularIdade } from '@/lib/animal-utils';
 import { AnimalDetailModal } from '@/components/animal/AnimalDetailModal';
 import { Animal } from '@/types';
 import { getToken } from '@/lib/api';
-import { Eye } from 'lucide-react';
+import { ArrowRight, Eye } from 'lucide-react';
+import Link from 'next/link';
 
 // --- Constantes e Tipos ---
 
@@ -163,12 +164,12 @@ const PageHeader = () => (
   <div className="flex items-center justify-between mb-6">
     <div>
       <h3 className="text-2xl font-semibold">Painel do Adotante</h3>
-      <p className="text-sm text-muted-foreground">
+      <p className="text-sm text-muted-foreground font-medium dark:text-secondary">
         Gerencie seus pedidos e veja afinidades
       </p>
     </div>
     <Button asChild>
-      <a href="/adotar">Animais disponíveis</a>
+      <a href="/adotar" className='text-wrap'>Animais disponíveis</a>
     </Button>
   </div>
 );
@@ -184,7 +185,7 @@ const FilterTabs = ({
   activeFilter,
   onFilterChange,
 }: FilterTabsProps) => (
-  <div className="mb-6 flex items-center gap-3">
+  <div className="mb-6 flex items-center gap-3 flex-wrap">
     {(
       ['em_adocao', 'escolhido', 'rejeitado', 'finalizado'] as StatusFilter[]
     ).map((status) => {
@@ -200,9 +201,9 @@ const FilterTabs = ({
           key={status}
           onClick={() => onFilterChange(status)}
           className={`px-3 py-1 rounded-full text-sm font-medium ${isActive
-              ? 'bg-sky-600 text-white'
-              // Corrigido: bg-muted/30 para melhor contraste
-              : 'bg-muted/30 text-muted-foreground'
+            ? 'bg-sky-600 text-white'
+            // Corrigido: bg-muted/30 para melhor contraste
+            : 'bg-muted/30 text-muted-foreground'
             }`}
         >
           {textMap[status]}
@@ -284,7 +285,7 @@ const MatchItemCard = React.memo(({ item, onSee }: MatchItemCardProps) => {
   };
 
   return (
-    <Card className="flex items-center gap-4 p-3 hover:shadow-lg transition-shadow">
+    <Card className="flex items-center gap-4 p-3 hover:shadow-lg transition-shadow w-full">
       <div className="w-20 h-20 rounded overflow-hidden bg-muted flex items-center justify-center shrink-0">
         <img
           src={`${process.env.NEXT_PUBLIC_API_URL}/imagens/` + img}
@@ -296,7 +297,7 @@ const MatchItemCard = React.memo(({ item, onSee }: MatchItemCardProps) => {
         <div className="flex items-center justify-between gap-3">
           <div>
             <h4 className="font-semibold truncate">{animal.nome}</h4>
-            <p className="text-sm text-muted-foreground truncate">
+            <p className="text-sm text-muted-foreground truncate text-wrap">
               {[idade, porte].filter(Boolean).join(' • ')}
             </p>
             <p className="text-xs text-muted-foreground">
@@ -311,13 +312,22 @@ const MatchItemCard = React.memo(({ item, onSee }: MatchItemCardProps) => {
           </div>
           <div className="flex items-center gap-2 flex-col">
             <div
-              className={`text-xs px-2 py-1 rounded-full ${statusColor} whitespace-nowrap`}
+              className={`text-xs px-2 py-1 rounded-full ${statusColor} font-semibold whitespace-nowrap`}
             >
               {statusText[status]}
             </div>
-            <Button size="icon" onClick={onSee}>
-              <Eye />
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="secondary" className='dark:text-white' onClick={onSee}>
+                <Eye />
+              </Button>
+              {status === 'escolhido' && (
+                <Link href={`/adotar/form?animal_id=${animal.id}`}>
+                <Button size="sm">
+                  Adotar <ArrowRight />
+                </Button>
+              </Link>
+              )}
+            </div>
           </div>
         </div>
       </div>

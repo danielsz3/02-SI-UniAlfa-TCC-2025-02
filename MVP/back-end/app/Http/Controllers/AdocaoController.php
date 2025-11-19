@@ -338,7 +338,7 @@ class AdocaoController extends Controller
                         ->first();
 
                     if ($match) {
-                        $match->status = $data['status'] === 'aprovado' ? 'escolhido' : ($data['status'] === 'negado' ? 'rejeitado' : $match->status);
+                        $match->status = 'finalizado';
                         $match->observacao = "Status da adoção alterado para: " . $data['status'];
                         $match->save();
                     }
@@ -353,7 +353,7 @@ class AdocaoController extends Controller
                             // Cancelar outras adoções abertas para o mesmo animal feitas por outros usuários
                             Adocao::where('animal_id', $animal->id)
                                 ->where('id', '!=', $adocao->id)
-                                ->whereIn('status', ['em_aprovacao', 'em_analise', 'em_adocao']) // ajuste conforme seus status "abertos"
+                                ->whereIn('status', ['em_aprovacao']) // ajuste conforme seus status "abertos"
                                 ->update(['status' => 'negado']);
 
                             // Atualizar os matches dos outros usuários para 'rejeitado'
@@ -361,8 +361,8 @@ class AdocaoController extends Controller
                                 ->where('usuario_id', '!=', $adocao->usuario_id)
                                 ->whereIn('status', ['em_adocao', 'escolhido']) // considere os status que precisam ser rejeitados
                                 ->update([
-                                    'status' => 'rejeitado',
-                                    'observacao' => 'Match rejeitado automaticamente após adoção aprovada para outro usuário.'
+                                    'status' => 'finalizado',
+                                    'observacao' => 'Afinidade cancelada automaticamente após adoção aprovada para outro usuário.'
                                 ]);
                         } elseif ($data['status'] === 'negado') {
                             $existeAprovada = Adocao::where('animal_id', $animal->id)

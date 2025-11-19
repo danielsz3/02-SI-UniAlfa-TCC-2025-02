@@ -231,6 +231,7 @@ export default function AdocaoFormPage() {
       if (res.status === 422) {
         const json = await res.json()
         setValidationErrors(json.errors || {})
+        if(json.error) return setErrorMessage(json.error)
         setErrorMessage("Há erros no formulário. Verifique os campos e tente novamente.")
         setSubmitting(false)
         if (json.errors) {

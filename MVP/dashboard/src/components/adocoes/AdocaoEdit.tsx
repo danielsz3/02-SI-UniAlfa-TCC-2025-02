@@ -15,7 +15,7 @@ import DirectionsRunOutlinedIcon from '@mui/icons-material/DirectionsRunOutlined
 import WindowOutlinedIcon from '@mui/icons-material/WindowOutlined';
 import FenceOutlinedIcon from '@mui/icons-material/FenceOutlined';
 import MonetizationOnOutlinedIcon from '@mui/icons-material/MonetizationOnOutlined';
-import ThumbUpOutlinedIcon from '@mui/icons-material/ThumbUpOutlined';
+import ThumbUpIcon from '@mui/icons-material/ThumbUp';
 import PetsOutlinedIcon from '@mui/icons-material/PetsOutlined';
 import { formatarDiferencaData } from '../../utils/formatDate';
 import ThumbDownIcon from '@mui/icons-material/ThumbDown';
@@ -222,7 +222,7 @@ const VisualizacaoDados = () => {
                     {record.usuario?.nome} -
                 </Typography>
 
-                <CopyText text={formatPhone(record.usuario?.telefone || '') }/>
+                <CopyText text={formatPhone(record.usuario?.telefone || '')} />
             </Box>
             <Typography variant="body2" color="text.secondary" gutterBottom>
                 {record.usuario.endereco ?
@@ -313,7 +313,7 @@ const VisualizacaoDados = () => {
 
                 <Grid size={{ xs: 12, md: 6 }}>
                     <InfoCard
-                        icon={<ThumbUpOutlinedIcon color="primary" />}
+                        icon={<ThumbUpIcon color="primary" />}
                         title="Aceite e Permissão"
                     >
                         <Typography variant="body2">
@@ -340,6 +340,49 @@ const formatPhone = (phone: string) => {
     return phone;
 };
 
+const AdocaoToolbar = () => {
+    const record = useRecordContext<AdocaoRecord>();
+    const isDisabled = record?.status !== 'em_aprovacao' ? true : false;
+
+    return (
+        <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
+            {/* Botão de Aprovar */}
+            <SaveButton
+                transform={
+                    (record: AdocaoRecord) => {
+                        return {
+                            ...record,
+                            status: "aprovado",
+                        };
+                    }
+                }
+                label='Aprovar'
+                type="button"
+                icon={<ThumbUpIcon />}
+                color='primary'
+                alwaysEnable={!isDisabled}
+            />
+
+            {/* Botão de Reprovar */}
+            <SaveButton
+                transform={
+                    (record: AdocaoRecord) => {
+                        return {
+                            ...record,
+                            status: "negado",
+                        };
+                    }
+                }
+                label='Rejeitar'
+                type="button"
+                icon={<ThumbDownIcon />}
+                color='error'
+                alwaysEnable={!isDisabled}
+            />
+        </Toolbar>
+    );
+};
+
 export const AdocaoEdit = () => (
     <Edit title="Análise de Adoção"
         sx={{ width: '100%', maxWidth: 800, margin: '0 auto', mb: 10 }}
@@ -349,19 +392,7 @@ export const AdocaoEdit = () => (
         })}
     >
         <SimpleForm
-            toolbar={
-                <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
-                    <SaveButton
-                        alwaysEnable
-                        label='Aprovar'
-                        icon={<ThumbUpOutlinedIcon />}
-                    />
-                    <DeleteButton
-                        label="Rejeitar"
-                        icon={<ThumbDownIcon />}
-                    />
-                </Toolbar>
-            }
+            toolbar={<AdocaoToolbar />}
         >
             <VisualizacaoDados />
         </SimpleForm>

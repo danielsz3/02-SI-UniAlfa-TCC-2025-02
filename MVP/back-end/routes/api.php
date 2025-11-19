@@ -32,7 +32,7 @@ Route::get('auth/google/redirect', [AuthController::class, 'redirectToGoogle'])-
 Route::get('auth/google/callback', [AuthController::class, 'handleGoogleCallback'])->name('google.callback');
 // Google (fluxo SPA) — envia idToken do frontend
 Route::post('auth/google/token', [AuthController::class, 'googleLoginToken'])->name('google.token');
-
+   
 Route::get('imagens/{folder}/{filename}', [ImageController::class, 'show'])->name('imagens.show');
 Route::get('documentos/{id}/download', [DocumentoController::class, 'download'])->name('documentos.download');
 

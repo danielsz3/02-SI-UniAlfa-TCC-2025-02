@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
@@ -13,9 +13,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
 import {
     LogIn,
     LogOut,
@@ -27,26 +25,25 @@ import {
     HandHeart,
     PawPrint,
 } from "lucide-react"
-
+import Image from "next/image"
 import { useAuth } from "@/components/Providers"
-import { ThemeToggle } from "./theme-toggle"
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000/api"
 
-interface UserProps {
-    nome?: string
-    email?: string
-    imagem?: string
+interface User {
+    nome?: string;
+    email?: string;
+    imagem?: string;
 }
 
 async function apiLogout(token: string) {
     try {
-        const res = await fetch(`${API_BASE}/logout`, {
+        const res = await fetch(${API_BASE}/logout, {
             method: "POST",
             credentials: "include",
             headers: {
                 "Content-Type": "application/json",
-                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                ...(token ? { Authorization: Bearer ${token} } : {}),
             },
         })
         return res.ok
@@ -101,7 +98,7 @@ function DonateMenu() {
                 </DropdownMenuItem>
 
                 <DropdownMenuItem asChild>
-                    <Link href="/lar-temporario">Ser um Lar Temporário</Link>
+                    <Link href="/lar-temporario">Ser um Lar Temporários</Link>
                 </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
@@ -147,34 +144,20 @@ function CenterNav() {
     )
 }
 
-function RightActions({
-    loading,
-    onLogout,
-    user,
-}: {
-    loading: boolean
-    onLogout: () => void
-    user: UserProps | null
-}) {
+function RightActions({ loading, onLogout, user }: { loading: boolean, onLogout: () => void, user: User }) {
     return (
         <div className="flex items-center gap-3">
             <ThemeToggle />
 
             {loading ? (
                 <div className="h-9 w-9 rounded-full bg-muted animate-pulse" />
-
             ) : user ? (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon">
                             <Avatar className="h-8 w-8">
-                                <AvatarImage
-                                    src={`${API_BASE}/imagens/${user.imagem}`}
-                                    alt={user.nome ?? "Usuário"}
-                                />
-                                <AvatarFallback>
-                                    {user.nome?.[0]?.toUpperCase() || "U"}
-                                </AvatarFallback>
+                                <AvatarImage src={${API_BASE}/imagens/${user.imagem}} alt={user.nome ?? "Usuário"} />
+                                <AvatarFallback>{user.nome?.[0]?.toUpperCase() || "U"}</AvatarFallback>
                             </Avatar>
                         </Button>
                     </DropdownMenuTrigger>
@@ -182,10 +165,8 @@ function RightActions({
                     <DropdownMenuContent align="end" className="w-56">
                         <DropdownMenuLabel>
                             <div className="flex flex-col">
-                                <span className="font-medium truncate">{user.nome}</span>
-                                <span className="text-xs text-muted-foreground truncate">
-                                    {user.email}
-                                </span>
+                                <span className="font-medium truncate">{user.nome ?? "Usuário"}</span>
+                                <span className="text-xs text-muted-foreground truncate">{user.email ?? ""}</span>
                             </div>
                         </DropdownMenuLabel>
 
@@ -218,7 +199,6 @@ function RightActions({
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
-
             ) : (
                 <Button asChild variant="ghost" className="gap-2">
                     <Link href="/login">
@@ -234,25 +214,18 @@ function RightActions({
 export function Navbar() {
     const router = useRouter()
     const { user, logout } = useAuth()
-
     const [loading, setLoading] = useState(false)
     const [mobileOpen, setMobileOpen] = useState(false)
 
-    useEffect(() => {
-        if (typeof window === "undefined") return
-
-        const token = localStorage.getItem("token")
-        if (!token && user) {
-            logout()
-        }
-    }, [user, logout])
-
-    async function handleLogout() {
+    const handleLogout = async () => {
         setLoading(true)
-        const token = localStorage.getItem("token") ?? ""
+        const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : ""
 
         await apiLogout(token)
         logout()
+
+        setLoading(false)
+        router.push("/login")
     }
 
     return (
@@ -294,11 +267,9 @@ export function Navbar() {
                                 <Link href="/doar-pet" onClick={() => setMobileOpen(false)} className="text-sm hover:text-primary">
                                     Doar um Pet
                                 </Link>
-
                                 <Link href="/doar-ong" onClick={() => setMobileOpen(false)} className="text-sm hover:text-primary">
                                     Doar para a ONG
                                 </Link>
-
                                 <Link href="/lar-temporario" onClick={() => setMobileOpen(false)} className="text-sm hover:text-primary">
                                     Ser um Lar Temporário
                                 </Link>
@@ -312,7 +283,11 @@ export function Navbar() {
                                     Sobre
                                 </Link>
 
-                                <Link href="/portal-transparencia" onClick={() => setMobileOpen(false)} className="text-sm hover:text-primary">
+                                <Link
+                                    href="/portal-transparencia"
+                                    onClick={() => setMobileOpen(false)}
+                                    className="text-sm hover:text-primary"
+                                >
                                     Portal de Transparência
                                 </Link>
                             </div>

@@ -36,7 +36,7 @@ interface User {
     imagem?: string;
 }
 
-async function apiLogout(token: string) {
+async function apiLogout(token: string | null | undefined) {
     try {
         const res = await fetch(`${API_BASE}/logout`, {
             method: "POST",
@@ -61,7 +61,7 @@ function Brand() {
     )
 }
 
-function TopLevelLink({ href, children }: { href: string; children: React.ReactNode }) {
+function TopLevelLink({ href, children }: { href: string, children: ReactNode }) {
     return (
         <Link
             href={href}

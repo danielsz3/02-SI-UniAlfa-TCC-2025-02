@@ -14,6 +14,11 @@ import {
     Link,
     DeleteWithConfirmButton,
     Loading,
+    ChipField,
+    Labeled,
+    useReference,
+    LinearProgress,
+    useGetList,
 } from "react-admin";
 import { Card, CardContent, Typography, Box, Grid, Dialog, DialogContent, IconButton, Button } from "@mui/material";
 import { FaEye } from "react-icons/fa";
@@ -21,6 +26,8 @@ import { Key, SetStateAction, useState } from "react";
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import CloseIcon from '@mui/icons-material/Close';
 import InboxIcon from '@mui/icons-material/Inbox';
+import { chipTipos, Situacao } from "./AnimalList";
+import WarningIcon from '@mui/icons-material/Warning';
 
 interface ImageDialogProps {
     open: boolean;
@@ -43,6 +50,95 @@ const CastracaoInfo = () => {
             </Typography>
         </Box>
     );
+};
+
+const LocalInfo = () => {
+    const record = useRecordContext();
+
+    const { data: adocoes, isLoading: isLoadingAdocao } = useGetList(
+        'adocoes',
+        {
+            pagination: { page: 1, perPage: 1 },
+            sort: { field: 'id', order: 'DESC' },
+            filter: { animal_id: record?.id }
+        },
+        {
+            enabled: record?.situacao === 'adotado'
+        }
+    );
+
+    if (!record) return null;
+
+    // --- LÓGICA 1: ANIMAL ADOTADO ---
+    if (record.situacao === 'adotado') {
+        if (isLoadingAdocao) return <LinearProgress />;
+
+        const adocao = adocoes && adocoes[0];
+
+        if (adocao && adocao.usuario) {
+            return (
+                <Link
+                    to={`/usuarios/${adocao.usuario.id}`}
+                    rel="noopener noreferrer"
+                    style={{ textDecoration: 'none' }}
+                >
+                    <Labeled label="Localização Atual com Adotante">
+                        <Typography variant="body2" color="primary">
+                            {adocao.usuario.nome}
+                        </Typography>
+                    </Labeled>
+                </Link>
+            );
+        }
+        return <Typography variant="body2">Adotado (usuário não encontrados)</Typography>;
+    }
+
+    // --- LÓGICA 2: EM APROVAÇÃO + SEM LAR (Aviso de Erro) ---
+    if (!record.lar_temporario_id && record.fica_usuario && record.situacao === 'em_aprovacao') {
+        return (
+            <Labeled label="Localização Atual">
+                <Box display="flex" alignItems="center" gap={0.5}>
+                    <WarningIcon color="error" fontSize="small" />
+                    <Typography variant="body2" color="error" sx={{ fontWeight: 'bold'}}>
+                        Precisa indicar um lar temporário
+                    </Typography>
+                </Box>
+            </Labeled>
+        );
+    }
+
+    // --- LÓGICA 3: ESTÁ COM O USUÁRIO CRIADOR ---
+    if (record.fica_usuario) {
+        return (
+            <Link
+                to={`/usuarios/${record.usuario?.id}`}
+                rel="noopener noreferrer"
+                style={{ textDecoration: 'none' }}
+            >
+                <Labeled label="Localização Atual com Usuário">
+                    <TextField source="usuario.nome" />
+                </Labeled>
+            </Link>
+        );
+    }
+
+    // --- LÓGICA 4: ESTÁ EM LAR TEMPORÁRIO ---
+    if (record.lar_temporario_id) {
+        return (
+            <Link
+                to={`/lares-temporarios/${record.lar_temporario_id}`}
+                rel="noopener noreferrer"
+                style={{ textDecoration: 'none' }}
+            >
+                <Labeled label="Alocado no Lar Temporário">
+                    <TextField source="lar_temporario.nome" />
+                </Labeled>
+            </Link>
+        );
+    }
+
+    // Caso padrão se nada acima for atendido
+    return null;
 };
 
 const Aside = () => {
@@ -101,7 +197,16 @@ const Aside = () => {
                                     : ''
                             }
                             primaryText={(record) => record.usuario?.nome || "—"}
-                            secondaryText={(record) => record.status || ""}
+                            secondaryText={(record) => {
+                                 const statusNameMap = {
+                                        em_aprovacao: 'Necessita de aprovação',
+                                        negado: 'Adoção rejeitada',
+                                        aprovado: 'Adoção aceita'
+                                    };
+                                return (
+                                    record.status ? statusNameMap[record.status as keyof typeof statusNameMap] : 'Nenhum status'
+                                )
+                            }}
                         />
                     </ReferenceManyField>
                 </CardContent>
@@ -134,7 +239,17 @@ const Aside = () => {
                                     : ''
                             }
                             primaryText={(record) => record.usuario?.nome || "—"}
-                            secondaryText={(record) => record.status || ""}
+                            secondaryText={(record) => {
+                                 const statusNameMap = {
+                                        escolhido: 'Escolheu o animal',
+                                        rejeitado: 'Rejeitou o animal',
+                                        em_adocao: 'Entrou em processo de adoção',
+                                        finalizado: record.observacao
+                                    };
+                                return (
+                                    record.status ? statusNameMap[record.status as keyof typeof statusNameMap] : 'Nenhum status'
+                                )
+                            }}
                         />
                     </ReferenceManyField>
                 </CardContent>
@@ -215,7 +330,9 @@ const AnimalShowActions = () => (
         }}
     >
         <DeleteWithConfirmButton
-            successMessage="Animal excluído"
+            confirmTitle="Tem certeza?"
+            confirmContent="Deseja realmente excluir o animal?"
+            successMessage="Animal Excluído com sucesso!"
         />
         <EditButton />
         <ListButton label="Voltar" />
@@ -259,6 +376,40 @@ const AnimalShow = () => (
                             <CardContent sx={{ px: 0, py: 0 }}>
                                 <TabbedShowLayout>
                                     <Tab label="Informações">
+                                        <Link
+                                            to={`/usuarios/${record.usuario.id}`}
+                                            rel="noopener noreferrer"
+                                        >
+                                            <Labeled>
+                                                <TextField source="usuario.nome" label="Criado por" />
+                                            </Labeled>
+                                        </Link>
+
+
+
+                                        <SelectField
+                                            label="Situação"
+                                            source="situacao"
+                                            choices={[
+                                                { id: 'em_aprovacao', name: 'Em Aprovação' },
+                                                { id: 'disponivel', name: 'Disponível' },
+                                                { id: 'adotado', name: 'Adotado' },
+                                                { id: 'em_adocao', name: 'Em Adoção' },
+                                            ]}
+                                            optionText={
+                                                <ChipField
+                                                    size='small'
+                                                    source="name"
+                                                    sx={{
+                                                        backgroundColor: chipTipos[record.situacao as Situacao]?.bgCor,
+                                                        color: chipTipos[record.situacao as Situacao]?.textCor,
+                                                        fontWeight: 'bold',
+                                                    }} />
+                                            }
+                                        />
+
+
+
                                         <TextField source="nome" label="Nome" />
                                         <DateField source="data_nascimento" label="Data de Nascimento" />
 
@@ -284,6 +435,8 @@ const AnimalShow = () => (
                                         <CastracaoInfo />
 
                                         <TextField source="descricao" label="Descrição" />
+
+                                        <LocalInfo />
                                     </Tab>
 
                                     <Tab label="Galeria">

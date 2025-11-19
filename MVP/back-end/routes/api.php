@@ -114,7 +114,7 @@ Route::middleware(['jwt.auth'])->group(function () {
 
         // Posts apenas para admin (CRUD completo)
         Route::apiResource('posts', PostController::class);
-        
+
         // Adoções: admin ganha update/destroy + ações extras
         Route::apiResource('adocoes', AdocaoController::class)->except(['index', 'show', 'store']);
         Route::post('adocoes/{id}/restore', [AdocaoController::class, 'restore'])->name('adocoes.restore');
@@ -123,11 +123,10 @@ Route::middleware(['jwt.auth'])->group(function () {
         Route::apiResource('match-afinidades', MatchAfinidadeController::class)->except(['index', 'show', 'store']);
         Route::post('match-afinidades/{id}/restore', [MatchAfinidadeController::class, 'restore'])->name('match-afinidades.restore');
 
-        // Lixeira genérica
-        Route::prefix('trash/{modelName}')->group(function () {
-            Route::get('/', [TrashController::class, 'index']); // /trash/{modelName}
-            Route::post('/{id}/restore', [TrashController::class, 'restore']); // /trash/{modelName}/{id}/restore
-            Route::delete('/{id}/force-delete', [TrashController::class, 'forceDelete']); // /trash/{modelName}/{id}/force-delete
+        Route::prefix('trash')->group(function () {
+            Route::get('/{modelName?}', [TrashController::class, 'index']);
+            Route::post('/{modelName}/{id}/restore', [TrashController::class, 'restore']);
+            Route::delete('/{modelName}/{id}/force-delete', [TrashController::class, 'forceDelete']);
         });
     });
 });

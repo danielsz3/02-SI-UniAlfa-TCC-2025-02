@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { ThemeToggle } from "@/components/Theme-toggle"
+import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
 import {
     DropdownMenu,

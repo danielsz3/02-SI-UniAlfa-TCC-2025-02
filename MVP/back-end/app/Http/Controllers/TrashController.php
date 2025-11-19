@@ -52,8 +52,42 @@ class TrashController extends Controller
     /**
      * Listar itens deletados (soft deleted) com filtros, paginação e ordenação
      */
-    public function index(Request $request, string $modelName): JsonResponse
+    public function index(Request $request, ?string $modelName = null): JsonResponse
     {
+        // Se não passou modelName -> todos
+        if ($modelName === null) {
+            try {
+                $allModels = [
+                    'usuarios' => Usuario::class,
+                    'transacoes' => Transacao::class,
+                    'parceiros' => Parceiro::class,
+                    'lares_temporarios' => LarTemporario::class,
+                    'eventos' => Evento::class,
+                    'documentos' => Documento::class,
+                    'animais' => Animal::class,
+                ];
+
+                $results = [];
+
+                foreach ($allModels as $name => $modelClass) {
+                    $query = $modelClass::onlyTrashed();
+                    $likeFields = $this->getLikeFields($name);
+
+                    $result = $this->SearchIndex($request, $query, $name, $likeFields);
+
+                    $results[$name] = $result->getData();
+                }
+
+                return response()->json($results, 200);
+            } catch (\Exception $e) {
+                return response()->json([
+                    'error' => 'Erro ao listar itens deletados',
+                    'message' => $e->getMessage()
+                ], 500);
+            }
+        }
+
+        // Se veio modelName -> só de um model
         $modelClass = $this->getModelClass($modelName);
         if (!$modelClass) {
             return response()->json(['error' => 'Modelo não encontrado'], 404);
@@ -65,7 +99,10 @@ class TrashController extends Controller
 
             return $this->SearchIndex($request, $query, $modelName, $likeFields);
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Erro ao listar itens deletados', 'message' => $e->getMessage()], 500);
+            return response()->json([
+                'error'   => 'Erro ao listar itens deletados',
+                'message' => $e->getMessage()
+            ], 500);
         }
     }
 

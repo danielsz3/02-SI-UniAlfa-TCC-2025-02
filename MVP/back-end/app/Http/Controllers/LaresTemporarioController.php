@@ -371,31 +371,4 @@ class LaresTemporarioController extends Controller
         }
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Restauração
-    |--------------------------------------------------------------------------
-    */
-    public function restore($id): JsonResponse
-    {
-        $lar = LarTemporario::withTrashed()->find($id);
-
-        if (!$lar) {
-            return response()->json(['error' => 'Lar temporário não encontrado'], 404);
-        }
-
-        if (!$lar->trashed()) {
-            return response()->json(['error' => 'Lar já está ativo'], 400);
-        }
-
-        try {
-            $lar->restore();
-            return response()->json($lar->load(['endereco', 'imagens']), 200);
-        } catch (\Exception $e) {
-            Log::error('Erro ao restaurar lar temporário: ' . $e->getMessage(), [
-                'exception' => $e
-            ]);
-            return response()->json(['error' => 'Erro ao restaurar lar temporário'], 500);
-        }
-    }
 }

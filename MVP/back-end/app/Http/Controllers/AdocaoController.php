@@ -409,25 +409,5 @@ class AdocaoController extends Controller
         }
     }
 
-    public function restore($id): JsonResponse
-    {
-        try {
-            $adocao = Adocao::withTrashed()->find($id);
-
-            if (!$adocao) {
-                return response()->json(['error' => 'Adoção não encontrada'], 404);
-            }
-
-            if (!$adocao->trashed()) {
-                return response()->json(['error' => 'Adoção já está ativa'], 400);
-            }
-
-            $adocao->restore();
-
-            return response()->json($adocao->load(['usuario', 'animal.imagens']), 200);
-        } catch (\Exception $e) {
-            Log::error('Erro ao restaurar adoção: ' . $e->getMessage(), ['id' => $id, 'exception' => $e]);
-            return response()->json(['error' => 'Não foi possível restaurar a adoção'], 500);
-        }
-    }
+    
 }

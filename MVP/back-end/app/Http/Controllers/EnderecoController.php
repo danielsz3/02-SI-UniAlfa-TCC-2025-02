@@ -187,28 +187,4 @@ class EnderecoController extends Controller
         }
     }
 
-    /**
-     * Restaura um endereço soft deleted
-     */
-    public function restore($id): JsonResponse
-    {
-        try {
-            $endereco = Endereco::withTrashed()->find($id);
-
-            if (!$endereco) {
-                return response()->json(['error' => 'Endereço não encontrado'], 404);
-            }
-
-            if (!$endereco->trashed()) {
-                return response()->json(['error' => 'Este endereço já está ativo'], 400);
-            }
-
-            $endereco->restore();
-
-            return response()->json($endereco->fresh(), 200);
-        } catch (\Exception $e) {
-            Log::error('Erro ao restaurar endereço: ' . $e->getMessage(), ['id' => $id, 'exception' => $e]);
-            return response()->json(['error' => 'Não foi possível restaurar o endereço'], 500);
-        }
-    }
 }

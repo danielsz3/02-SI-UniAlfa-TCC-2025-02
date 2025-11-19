@@ -38,12 +38,12 @@ interface User {
 
 async function apiLogout(token: string | null | undefined) {
     try {
-        const res = await fetch(`${API_BASE}/logout`, {
+        const res = await fetch(${API_BASE}/logout, {
             method: "POST",
             credentials: "include",
             headers: {
                 "Content-Type": "application/json",
-                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                ...(token ? { Authorization: Bearer ${token} } : {}),
             },
         })
         return res.ok

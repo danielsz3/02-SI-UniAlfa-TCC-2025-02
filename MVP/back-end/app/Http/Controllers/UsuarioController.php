@@ -54,7 +54,10 @@ class UsuarioController extends Controller
                 'regex:/^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/'
             ],
             'cpf' => 'required|string|size:11|regex:/^[0-9]+$/|unique:usuarios,cpf',
-            'data_nascimento' => 'required|date|before:today|after:1900-01-01',
+            
+            // 🔹 Maior de 18 anos
+            'data_nascimento' => 'required|date|after:1900-01-01|before_or_equal:-18 years',
+            
             'telefone' => 'nullable|string|size:11|regex:/^[0-9]+$/',
             'role' => 'nullable|string|in:user,admin',
 
@@ -98,8 +101,8 @@ class UsuarioController extends Controller
 
             'data_nascimento.required' => 'A data de nascimento é obrigatória.',
             'data_nascimento.date' => 'A data de nascimento deve ser uma data válida.',
-            'data_nascimento.before' => 'A data de nascimento deve ser anterior a hoje.',
             'data_nascimento.after' => 'A data de nascimento deve ser posterior a 01/01/1900.',
+            'data_nascimento.before_or_equal' => 'Você deve ter pelo menos 18 anos.',
 
             'telefone.size' => 'O telefone deve ter exatamente 11 números.',
             'telefone.regex' => 'O telefone deve conter apenas números.',
@@ -196,140 +199,147 @@ class UsuarioController extends Controller
      * Atualizar um usuário e seus relacionamentos
      */
     public function update(Request $request, $id): JsonResponse
-{
-    try {
-        $usuario = Usuario::find($id);
+    {
+        try {
+            $usuario = Usuario::find($id);
 
-        if (!$usuario) {
-            return response()->json(['error' => 'Usuário não encontrado'], 404);
-        }
+            if (!$usuario) {
+                return response()->json(['error' => 'Usuário não encontrado'], 404);
+            }
 
-        $validator = Validator::make($request->all(), [
-            'nome' => 'sometimes|required|string|min:2|max:150',
-            'email' => [
-                'sometimes',
-                'required',
-                'email',
-                'max:150',
-                Rule::unique('usuarios')->ignore($usuario->id)
-            ],
-            'password' => [
-                'sometimes',
-                'required',
-                'string',
-                'min:8',
-                'confirmed',
-                'regex:/^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/'
-            ],
-            'cpf' => [
-                'sometimes',
-                'required',
-                'string',
-                'size:11',
-                'regex:/^[0-9]+$/',
-                Rule::unique('usuarios')->ignore($usuario->id)
-            ],
-            'data_nascimento' => 'sometimes|required|date|before:today|after:1900-01-01',
-            'telefone' => 'nullable|string|size:11|regex:/^[0-9]+$/',
-            'role' => 'nullable|string|in:user,admin',
+            $validator = Validator::make($request->all(), [
+                'nome' => 'sometimes|required|string|min:2|max:150',
+                'email' => [
+                    'sometimes',
+                    'required',
+                    'email',
+                    'max:150',
+                    Rule::unique('usuarios')->ignore($usuario->id)
+                ],
+                'password' => [
+                    'sometimes',
+                    'required',
+                    'string',
+                    'min:8',
+                    'confirmed',
+                    'regex:/^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/'
+                ],
+                'cpf' => [
+                    'sometimes',
+                    'required',
+                    'string',
+                    'size:11',
+                    'regex:/^[0-9]+$/',
+                    Rule::unique('usuarios')->ignore($usuario->id)
+                ],
+                
+                // 🔹 Maior de 18 anos no update
+                'data_nascimento' => 'sometimes|required|date|after:1900-01-01|before_or_equal:-18 years',
+                
+                'telefone' => 'nullable|string|size:11|regex:/^[0-9]+$/',
+                'role' => 'nullable|string|in:user,admin',
 
-            // Validação da imagem no update
-            'imagem' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:10240',
+                // Validação da imagem no update
+                'imagem' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:10240',
 
-            'endereco' => 'nullable|array',
-            'endereco.cep' => 'nullable|string|max:9',
-            'endereco.logradouro' => 'nullable|string|max:255',
-            'endereco.numero' => 'nullable|string|max:10',
-            'endereco.complemento' => 'nullable|string|max:100',
-            'endereco.bairro' => 'nullable|string|max:100',
-            'endereco.cidade' => 'nullable|string|max:100',
-            'endereco.uf' => 'nullable|string|max:2',
+                'endereco' => 'nullable|array',
+                'endereco.cep' => 'nullable|string|max:9',
+                'endereco.logradouro' => 'nullable|string|max:255',
+                'endereco.numero' => 'nullable|string|max:10',
+                'endereco.complemento' => 'nullable|string|max:100',
+                'endereco.bairro' => 'nullable|string|max:100',
+                'endereco.cidade' => 'nullable|string|max:100',
+                'endereco.uf' => 'nullable|string|max:2',
 
-            // Validação das preferências conforme migration
-            'preferencias' => 'nullable|array',
-            'preferencias.tamanho_pet' => 'nullable|string|in:pequeno,medio,grande',
-            'preferencias.tempo_disponivel' => 'nullable|string|in:pouco_tempo,tempo_moderado,muito_tempo',
-            'preferencias.estilo_vida' => 'nullable|string|in:baixa,moderada,alta',
-            'preferencias.espaco_casa' => 'nullable|string|in:area_pequena,area_media,area_externa',
-        ], [
-            'imagem.image' => 'O arquivo deve ser uma imagem.',
-            'imagem.mimes' => 'A imagem deve ser do tipo: jpeg, jpg, png ou webp.',
-            'imagem.max' => 'A imagem deve ter no máximo 10MB.',
+                // Validação das preferências conforme migration
+                'preferencias' => 'nullable|array',
+                'preferencias.tamanho_pet' => 'nullable|string|in:pequeno,medio,grande',
+                'preferencias.tempo_disponivel' => 'nullable|string|in:pouco_tempo,tempo_moderado,muito_tempo',
+                'preferencias.estilo_vida' => 'nullable|string|in:baixa,moderada,alta',
+                'preferencias.espaco_casa' => 'nullable|string|in:area_pequena,area_media,area_externa',
+            ], [
+                'imagem.image' => 'O arquivo deve ser uma imagem.',
+                'imagem.mimes' => 'A imagem deve ser do tipo: jpeg, jpg, png ou webp.',
+                'imagem.max' => 'A imagem deve ter no máximo 10MB.',
 
-            'preferencias.tamanho_pet.in' => 'O tamanho do pet deve ser: pequeno, medio ou grande.',
-            'preferencias.tempo_disponivel.in' => 'O tempo disponível deve ser: pouco_tempo, tempo_moderado ou muito_tempo.',
-            'preferencias.estilo_vida.in' => 'O estilo de vida deve ser: baixa, moderada ou alta.',
-            'preferencias.espaco_casa.in' => 'O espaço da casa deve ser: area_pequena, area_media ou area_externa.',
-        ]);
+                'data_nascimento.date' => 'A data de nascimento deve ser uma data válida.',
+                'data_nascimento.after' => 'A data de nascimento deve ser posterior a 01/01/1900.',
+                'data_nascimento.before_or_equal' => 'Você deve ter pelo menos 18 anos.',
 
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
-
-        $endereco = is_array($request->input('endereco')) ? $request->input('endereco') : [];
-        $preferencias = is_array($request->input('preferencias')) ? $request->input('preferencias') : [];
-
-        return DB::transaction(function () use ($request, $usuario, $endereco, $preferencias) {
-            // Prepara dados do usuário
-            $userData = $request->only([
-                'nome',
-                'email',
-                'cpf',
-                'data_nascimento',
-                'telefone',
-                'role'
+                'preferencias.tamanho_pet.in' => 'O tamanho do pet deve ser: pequeno, medio ou grande.',
+                'preferencias.tempo_disponivel.in' => 'O tempo disponível deve ser: pouco_tempo, tempo_moderado ou muito_tempo.',
+                'preferencias.estilo_vida.in' => 'O estilo de vida deve ser: baixa, moderada ou alta.',
+                'preferencias.espaco_casa.in' => 'O espaço da casa deve ser: area_pequena, area_media ou area_externa.',
             ]);
 
-            // Hash da senha se fornecida
-            if ($request->filled('password')) {
-                $userData['password'] = Hash::make($request->password);
+            if ($validator->fails()) {
+                return response()->json(['errors' => $validator->errors()], 422);
             }
 
-            // Processa upload de nova imagem
-            if ($request->hasFile('imagem')) {
-                // Remove imagem antiga se existir
-                if ($usuario->imagem && Storage::disk('public')->exists($usuario->imagem)) {
-                    Storage::disk('public')->delete($usuario->imagem);
+            $endereco = is_array($request->input('endereco')) ? $request->input('endereco') : [];
+            $preferencias = is_array($request->input('preferencias')) ? $request->input('preferencias') : [];
+
+            return DB::transaction(function () use ($request, $usuario, $endereco, $preferencias) {
+                // Prepara dados do usuário
+                $userData = $request->only([
+                    'nome',
+                    'email',
+                    'cpf',
+                    'data_nascimento',
+                    'telefone',
+                    'role'
+                ]);
+
+                // Hash da senha se fornecida
+                if ($request->filled('password')) {
+                    $userData['password'] = Hash::make($request->password);
                 }
 
-                // Faz upload da nova imagem
-                $imagem = $request->file('imagem');
-                $imagemNome = time() . '_' . uniqid() . '.' . $imagem->getClientOriginalExtension();
-                $userData['imagem'] = $imagem->storeAs('usuarios', $imagemNome, 'public');
-            }
+                // Processa upload de nova imagem
+                if ($request->hasFile('imagem')) {
+                    // Remove imagem antiga se existir
+                    if ($usuario->imagem && Storage::disk('public')->exists($usuario->imagem)) {
+                        Storage::disk('public')->delete($usuario->imagem);
+                    }
 
-            // Atualiza o usuário
-            $usuario->update($userData);
-
-            // Atualiza ou cria endereço
-            if (!empty($endereco) && is_array($endereco) && count(array_filter($endereco, fn($v) => $v !== null && $v !== '')) > 0) {
-                if ($usuario->endereco) {
-                    $usuario->endereco->update($endereco);
-                } else {
-                    $endereco['id_usuario'] = $usuario->id;
-                    Endereco::create($endereco);
+                    // Faz upload da nova imagem
+                    $imagem = $request->file('imagem');
+                    $imagemNome = time() . '_' . uniqid() . '.' . $imagem->getClientOriginalExtension();
+                    $userData['imagem'] = $imagem->storeAs('usuarios', $imagemNome, 'public');
                 }
-            }
 
-            // Atualiza ou cria preferências
-            if (!empty($preferencias) && is_array($preferencias) && count(array_filter($preferencias, fn($v) => $v !== null && $v !== '')) > 0) {
-                if ($usuario->preferencias) {
-                    $usuario->preferencias->update($preferencias);
-                } else {
-                    $preferencias['usuario_id'] = $usuario->id;
-                    PreferenciaUsuario::create($preferencias);
+                // Atualiza o usuário
+                $usuario->update($userData);
+
+                // Atualiza ou cria endereço
+                if (!empty($endereco) && is_array($endereco) && count(array_filter($endereco, fn($v) => $v !== null && $v !== '')) > 0) {
+                    if ($usuario->endereco) {
+                        $usuario->endereco->update($endereco);
+                    } else {
+                        $endereco['id_usuario'] = $usuario->id;
+                        Endereco::create($endereco);
+                    }
                 }
-            }
 
-            return response()->json($usuario->fresh(['endereco', 'preferencias']), 200);
-        });
-    } catch (\Exception $e) {
-        return response()->json([
-            'error' => 'Não foi possível atualizar o usuário',
-            'message' => $e->getMessage()
-        ], 500);
+                // Atualiza ou cria preferências
+                if (!empty($preferencias) && is_array($preferencias) && count(array_filter($preferencias, fn($v) => $v !== null && $v !== '')) > 0) {
+                    if ($usuario->preferencias) {
+                        $usuario->preferencias->update($preferencias);
+                    } else {
+                        $preferencias['usuario_id'] = $usuario->id;
+                        PreferenciaUsuario::create($preferencias);
+                    }
+                }
+
+                return response()->json($usuario->fresh(['endereco', 'preferencias']), 200);
+            });
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Não foi possível atualizar o usuário',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
-}
 
     /**
      * Deletar um usuário (soft delete)
@@ -355,5 +365,4 @@ class UsuarioController extends Controller
             return response()->json(['error' => 'Não foi possível excluir o usuário'], 500);
         }
     }
-
 }

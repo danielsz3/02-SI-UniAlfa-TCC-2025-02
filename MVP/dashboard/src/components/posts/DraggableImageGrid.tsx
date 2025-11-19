@@ -22,12 +22,14 @@ interface DraggableImageGridProps {
   images: ImageData[];
   setImages: Dispatch<SetStateAction<ImageData[]>>; // <-- Tipo correto
   onRemoveImage: (id: string) => void;
+  onCropImage: (id: string) => void;
 }
 
 export const DraggableImageGrid = ({
   images,
   setImages,
   onRemoveImage,
+  onCropImage,
 }: DraggableImageGridProps) => {
 
   const sensors = useSensors(
@@ -76,6 +78,7 @@ export const DraggableImageGrid = ({
               image={img}
               onRemove={onRemoveImage}
               index={index}
+              onCropImage={onCropImage}
             />
           ))}
         </Grid>

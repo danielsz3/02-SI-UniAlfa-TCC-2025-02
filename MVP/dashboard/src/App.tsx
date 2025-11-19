@@ -145,6 +145,12 @@ function App() {
         edit={IntegracaoEdit}
       />
 
+      {/* <Resource
+        options={{ label: "Lixeira" }}
+        name="trash"
+        list={ListGuesser}
+      /> */}
+
     </Admin>
   )
 }

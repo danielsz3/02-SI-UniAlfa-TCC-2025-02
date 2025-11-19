@@ -20,7 +20,6 @@ use App\Http\Controllers\IntegracaoController;
 use App\Http\Controllers\AdocaoController;
 use App\Http\Controllers\MatchAfinidadeController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\RelatorioController;
 
 /**
  * ROTAS PÚBLICAS
@@ -80,48 +79,35 @@ Route::middleware(['jwt.auth'])->group(function () {
 
         // Usuários: admin tem CRUD completo (exceto ‘store’ se preferir manter público)
         Route::apiResource('usuarios', UsuarioController::class)->except(['show', 'store', 'update']);
-        Route::post('usuarios/{id}/restore', [UsuarioController::class, 'restore'])->name('usuarios.restore');
 
         // Recursos com controle total do admin
         Route::apiResource('enderecos', EnderecoController::class)->except(['index', 'show']);
-        Route::post('enderecos/{id}/restore', [EnderecoController::class, 'restore'])->name('enderecos.restore');
 
         Route::apiResource('ongs', OngController::class)->except(['index', 'show']);
-        Route::post('ongs/{id}/restore', [OngController::class, 'restore'])->name('ongs.restore');
 
         Route::apiResource('parceiros', ParceiroController::class)->except(['index', 'show']);
-        Route::post('parceiros/{id}/restore', [ParceiroController::class, 'restore'])->name('parceiros.restore');
 
         // TODO VERIFICAR PERMISSÕES: Route::apiResource('lares-temporarios', LaresTemporarioController::class)->except(['index', 'show', 'store']);
-        Route::post('lares-temporarios/{id}/restore', [LaresTemporarioController::class, 'restore'])->name('lares-temporarios.restore');
-
         Route::apiResource('contato-ongs', ContatoOngController::class)->except(['index', 'show']);
-        Route::post('contato-ongs/{id}/restore', [ContatoOngController::class, 'restore'])->name('contato-ongs.restore');
 
         Route::apiResource('documentos', DocumentoController::class)->except(['index', 'show']);
-        Route::post('documentos/{id}/restore', [DocumentoController::class, 'restore'])->name('documentos.restore');
-
+    
         Route::apiResource('transacoes', TransacaoController::class)->except(['index', 'show']);
-        Route::post('transacoes/{id}/restore', [TransacaoController::class, 'restore'])->name('transacoes.restore');
 
         Route::apiResource('animais', AnimalController::class)->except(['index', 'show', 'store']);
-        Route::post('animais/{id}/restore', [AnimalController::class, 'restore'])->name('animais.restore');
 
         Route::apiResource('integracoes', IntegracaoController::class);
 
         Route::apiResource('eventos', EventoController::class)->except(['index', 'show']);
-        Route::post('eventos/{id}/restore', [EventoController::class, 'restore'])->name('eventos.restore');
 
         // Posts apenas para admin (CRUD completo)
         Route::apiResource('posts', PostController::class);
 
         // Adoções: admin ganha update/destroy + ações extras
         Route::apiResource('adocoes', AdocaoController::class)->except(['index', 'show', 'store']);
-        Route::post('adocoes/{id}/restore', [AdocaoController::class, 'restore'])->name('adocoes.restore');
 
         // Match Afinidades: admin com update/destroy
         Route::apiResource('match-afinidades', MatchAfinidadeController::class)->except(['index', 'show', 'store']);
-        Route::post('match-afinidades/{id}/restore', [MatchAfinidadeController::class, 'restore'])->name('match-afinidades.restore');
 
         Route::prefix('trash')->group(function () {
             Route::get('/{modelName?}', [TrashController::class, 'index']);

@@ -259,27 +259,6 @@ class OngController extends Controller
         }
     }
 
-    public function restore($id): JsonResponse
-    {
-        $ong = Ong::withTrashed()->find($id);
-
-        if (!$ong) {
-            return response()->json(['error' => 'ONG não encontrada'], 404);
-        }
-
-        if (!$ong->trashed()) {
-            return response()->json(['error' => 'ONG já está ativa'], 400);
-        }
-
-        try {
-            $ong->restore();
-            return response()->json($ong, 200);
-        } catch (\Exception $e) {
-            Log::error('Erro ao restaurar ONG: ' . $e->getMessage(), ['id' => $id, 'exception' => $e]);
-            return response()->json(['error' => 'Não foi possível restaurar a ONG'], 500);
-        }
-    }
-
     public function deleteImage($id): JsonResponse
     {
         $imagem = ImagemOng::find($id);

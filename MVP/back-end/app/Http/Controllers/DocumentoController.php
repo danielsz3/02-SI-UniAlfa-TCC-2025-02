@@ -259,35 +259,6 @@ class DocumentoController extends Controller
     }
 
     /**
-     * Restaurar documento deletado
-     */
-    public function restore($id): JsonResponse
-    {
-        try {
-            $documento = Documento::withTrashed()->find($id);
-
-            if (!$documento) {
-                return response()->json(['error' => 'Documento não encontrado'], 404);
-            }
-
-            if (!$documento->trashed()) {
-                return response()->json(['error' => 'Documento já está ativo'], 400);
-            }
-
-            $documento->restore();
-
-            return response()->json($documento->fresh(), 200);
-        } catch (\Exception $e) {
-            Log::error('Erro ao restaurar documento: ' . $e->getMessage(), ['id' => $id, 'exception' => $e]);
-
-            return response()->json([
-                'error' => 'Não foi possível restaurar o documento',
-                'message' => config('app.debug') ? $e->getMessage() : 'Erro interno do servidor'
-            ], 500);
-        }
-    }
-
-    /**
  * Download do arquivo do documento
  */
 /**

@@ -322,31 +322,4 @@ class EventoController extends Controller
         }
     }
 
-    public function restore($id): JsonResponse
-    {
-        $evento = Evento::withTrashed()->find($id);
-
-        if (!$evento) {
-            return response()->json(['error' => 'Evento não encontrado'], 404);
-        }
-
-        if (!$evento->trashed()) {
-            return response()->json(['error' => 'Evento já está ativo'], 400);
-        }
-
-        try {
-            $evento->restore();
-            return response()->json($evento->load('imagens'), 200);
-        } catch (\Exception $e) {
-            Log::error('Erro ao restaurar evento: ' . $e->getMessage(), [
-                'evento_id' => $id,
-                'exception' => $e
-            ]);
-
-            return response()->json([
-                'error' => 'Não foi possível restaurar o evento',
-                'message' => config('app.debug') ? $e->getMessage() : 'Erro interno do servidor'
-            ], 500);
-        }
-    }
 }

@@ -356,27 +356,4 @@ class UsuarioController extends Controller
         }
     }
 
-    /**
-     * Restaurar um usuário deletado
-     */
-    public function restore($id): JsonResponse
-    {
-        try {
-            $usuario = Usuario::withTrashed()->find($id);
-
-            if (!$usuario) {
-                return response()->json(['error' => 'Usuário não encontrado'], 404);
-            }
-
-            if (!$usuario->trashed()) {
-                return response()->json(['error' => 'Usuário já está ativo'], 400);
-            }
-
-            $usuario->restore();
-
-            return response()->json($usuario->load(['endereco', 'preferencias']), 200);
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Não foi possível restaurar o usuário'], 500);
-        }
-    }
 }

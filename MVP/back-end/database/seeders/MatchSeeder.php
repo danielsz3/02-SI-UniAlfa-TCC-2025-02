@@ -29,7 +29,7 @@ class MatchSeeder extends Seeder
         $matches = [];
 
         // Gera matches aleatórios
-        for ($i = 0; $i < 40; $i++) {
+        for ($i = 0; $i < 80; $i++) {
             $usuarioId = $faker->randomElement($usuarioIds);
             $animalId = $faker->randomElement($animalIds);
 

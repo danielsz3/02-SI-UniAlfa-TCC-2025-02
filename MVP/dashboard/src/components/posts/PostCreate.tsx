@@ -207,6 +207,15 @@ const PostCreate = () => {
         }
     };
 
+    const handleCropImage = (id: string) => {
+        const imageToEdit = imagens.find((img) => img.id === id);
+
+        if (imageToEdit) {
+            setImagens((prev) => prev.filter((img) => img.id !== id));
+            setCurrentCrop(imageToEdit);
+        }
+    };
+
     const removeImage = (id: string) => {
         setImagens(imagens.filter((img) => img.id !== id));
     };
@@ -343,15 +352,16 @@ const PostCreate = () => {
                             images={imagens}
                             setImages={setImagens}
                             onRemoveImage={removeImage}
+                            onCropImage={handleCropImage}
                         />
 
                         {imagens.length > 1 && (
                             <Typography
                                 variant="caption"
                                 fontWeight="medium"
-                                sx={{ textAlign: 'center' }}
+                                sx={{ textAlign: 'center', width: '80%', mx: 'auto' }}
                             >
-                                Arraste para mudar a ordem das imagens
+                                Arraste para mudar a ordem das imagens, a primeira imagem definirá o formato de visualização do carrossel.
                             </Typography>
                         )}
 

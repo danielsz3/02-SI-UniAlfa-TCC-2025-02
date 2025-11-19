@@ -178,30 +178,4 @@ class ParceiroController extends Controller
         }
     }
 
-    /**
-     * Restaurar parceiro deletado
-     */
-    public function restore($id): JsonResponse
-    {
-        try {
-            $parceiro = Parceiro::withTrashed()->find($id);
-
-            if (!$parceiro) {
-                return response()->json(['error' => 'Parceiro não encontrado'], 404);
-            }
-
-            if (!$parceiro->trashed()) {
-                return response()->json(['error' => 'Parceiro já está ativo'], 400);
-            }
-
-            $parceiro->restore();
-
-            return response()->json($parceiro->fresh(), 200);
-        } catch (\Exception $e) {
-            return response()->json([
-                'error'   => 'Não foi possível restaurar o parceiro',
-                'message' => config('app.debug') ? $e->getMessage() : null,
-            ], 500);
-        }
-    }
 }

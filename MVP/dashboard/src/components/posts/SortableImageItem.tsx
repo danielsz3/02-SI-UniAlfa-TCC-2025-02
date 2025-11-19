@@ -8,9 +8,10 @@ interface SortableImageItemProps {
   image: ImageData;
   onRemove: (id: string) => void;
   index: number;
+  onCropImage: (id: string) => void
 }
 
-export const SortableImageItem = ({ image, onRemove, index }: SortableImageItemProps) => {
+export const SortableImageItem = ({ image, onRemove, index,onCropImage }: SortableImageItemProps) => {
   const {
     attributes,
     listeners,
@@ -38,6 +39,7 @@ export const SortableImageItem = ({ image, onRemove, index }: SortableImageItemP
         image={image}
         onRemove={onRemove}
         isDragging={isDragging}
+        onCropImage={onCropImage}
         dragHandleProps={{ ...attributes, ...listeners }}
         index={index}
       />

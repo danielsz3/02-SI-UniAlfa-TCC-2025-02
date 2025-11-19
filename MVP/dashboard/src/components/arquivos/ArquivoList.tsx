@@ -25,6 +25,7 @@ const fileTypeStyles = {
     doc: { icon: DocIcon, color: 'primary.main', bgColor: '#e8f0fe' }, // Azul claro
     docx: { icon: DocIcon, color: 'primary.main', bgColor: '#e8f0fe' },
     xls: { icon: DataIcon, color: 'success.main', bgColor: '#e8fef4' }, // Verde claro
+    csv: { icon: DataIcon, color: 'success.main', bgColor: '#e8fef4' }, // Verde claro
     xlsx: { icon: DataIcon, color: 'success.main', bgColor: '#e8fef4' },
     txt: { icon: TextIcon, color: 'text.secondary', bgColor: '#f5f5f5' }, // Cinza claro
     default: { icon: GenericFileIcon, color: 'text.disabled', bgColor: '#eeeeee' }, // Cinza bem claro

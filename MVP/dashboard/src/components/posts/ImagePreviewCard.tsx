@@ -2,6 +2,7 @@ import { Box, Card, CardMedia, Chip, SxProps } from '@mui/material';
 import RemoveCircleOutlinedIcon from '@mui/icons-material/RemoveCircleOutlined';
 import { ImageData } from './types';
 import { IconButtonWithTooltip } from 'react-admin';
+import CropIcon from '@mui/icons-material/Crop';
 
 interface ImagePreviewCardProps {
   image: ImageData;
@@ -9,6 +10,7 @@ interface ImagePreviewCardProps {
   isDragging: boolean;
   dragHandleProps: Record<string, any>;
   index: number;
+  onCropImage: (id: string) => void
 }
 
 export const ImagePreviewCard = ({
@@ -17,6 +19,7 @@ export const ImagePreviewCard = ({
   isDragging,
   dragHandleProps,
   index,
+  onCropImage
 }: ImagePreviewCardProps) => {
   const cardStyles: SxProps = {
     position: 'relative',
@@ -62,14 +65,46 @@ export const ImagePreviewCard = ({
       />
 
       <Box
-        className="remove-button-hover"
         onMouseDown={(e) => {
-          e.stopPropagation(); 
-          onRemove(image.id); 
+          e.stopPropagation();
+          onCropImage(image.id);
         }}
         onTouchStart={(e) => {
-          e.stopPropagation(); 
-          onRemove(image.id); 
+          e.stopPropagation();
+          onCropImage(image.id);
+        }}
+        onClick={(e) => e.stopPropagation()}
+        sx={{
+          position: 'absolute',
+          top: 4,
+          left: 4,
+          zIndex: 2,
+          opacity: 1,
+          padding: '2px',
+        }}
+      >
+        <IconButtonWithTooltip
+          label="Editar"
+          size="small"
+          color="secondary"
+          aria-label="editar"
+        >
+          <CropIcon
+            fontSize="small"
+            sx={{ color: 'white', stroke: 20, strokeWidth: 50 }}
+          />
+        </IconButtonWithTooltip>
+      </Box>
+
+      <Box
+        className="remove-button-hover"
+        onMouseDown={(e) => {
+          e.stopPropagation();
+          onRemove(image.id);
+        }}
+        onTouchStart={(e) => {
+          e.stopPropagation();
+          onRemove(image.id);
         }}
         onClick={(e) => e.stopPropagation()}
         sx={{
@@ -80,7 +115,7 @@ export const ImagePreviewCard = ({
           opacity: 0,
           visibility: 'hidden',
           transition: 'opacity 0.2s, visibility 0.2s',
-          padding: '2px', 
+          padding: '2px',
         }}
       >
         <IconButtonWithTooltip
@@ -95,6 +130,6 @@ export const ImagePreviewCard = ({
           />
         </IconButtonWithTooltip>
       </Box>
-    </Box>
+    </Box >
   );
 };

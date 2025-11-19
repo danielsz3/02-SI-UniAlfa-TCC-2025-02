@@ -17,11 +17,11 @@ class LarTempSeeder extends Seeder
         $faker = Faker::create('pt_BR');
 
         $tipoImagemOptions = [
-            'lares_temporarios/casa-05.jpg',
-            'lares_temporarios/casa-04.jpeg',
-            'lares_temporarios/casa-03.jpeg',
-            'lares_temporarios/casa-02.jpg',
-            'lares_temporarios/casa-01.jpg'
+            'lares_temporarios/casa-5.jpg',
+            'lares_temporarios/casa-4.jpeg',
+            'lares_temporarios/casa-3.jpeg',
+            'lares_temporarios/casa-2.jpg',
+            'lares_temporarios/casa-1.jpg'
         ];
 
         for ($i = 0; $i < 10; $i++) {
@@ -33,6 +33,27 @@ class LarTempSeeder extends Seeder
                 'experiencia' => $faker->optional()->sentence(10, true),
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
+            ]);
+
+            DB::table('enderecos')->insert([
+                'lar_temporario_id' => $i + 1,
+                'logradouro' => $faker->streetName(),
+                'cidade' => $faker->city(),
+                'uf' => 'BR',
+                'cep' => $faker->numerify('########'),
+                'bairro' => $faker->secondaryAddress(),
+                'complemento' => $faker->secondaryAddress(),
+                'numero' => $faker->buildingNumber(),
+            ]);
+
+            DB::table('imagens_lar_temporario')->insert([
+                'id_lar_temporario' => $i + 1,
+                'caminho' => $faker->randomElement($tipoImagemOptions),
+                'width' => 0,
+                'height' => 0,
+                'deleted_at' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
             ]);
 
             DB::table('imagens_lar_temporario')->insert([

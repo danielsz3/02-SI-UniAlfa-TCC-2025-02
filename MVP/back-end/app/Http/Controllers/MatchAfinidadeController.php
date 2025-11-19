@@ -168,28 +168,6 @@ class MatchAfinidadeController extends Controller
         }
     }
 
-    public function restore($id): JsonResponse
-    {
-        try {
-            $match = MatchAfinidade::withTrashed()->find($id);
-
-            if (!$match) {
-                return response()->json(['error' => 'Match não encontrado'], 404);
-            }
-
-            if (!$match->trashed()) {
-                return response()->json(['error' => 'Match já está ativo'], 400);
-            }
-
-            $match->restore();
-
-            return response()->json($match->fresh(['usuario', 'animal']), 200);
-        } catch (\Exception $e) {
-            Log::error('Erro ao restaurar match: ' . $e->getMessage(), ['id' => $id, 'exception' => $e]);
-            return response()->json(['error' => 'Não foi possível restaurar o match'], 500);
-        }
-    }
-
     public function MudarStatus(Request $request): JsonResponse
     {
         $user = $request->user();

@@ -173,7 +173,7 @@ export default function AffinityCarousel({ userId, onAnimalClick }: Props) {
   if (isLoading) {
     return (
       <div className="flex w-full items-center justify-center h-[350px] text-primary">
-        <Loader2 className="size-24 animate-spin" />
+        <Loader2 className="size-20 animate-spin" />
       </div>
     );
   }

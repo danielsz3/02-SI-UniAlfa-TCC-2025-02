@@ -148,7 +148,7 @@ export function AnimalDetailModal({ initialData, onClose, buttonAdotar, carousel
                                 <div>
                                     <p className="text-sm text-muted-foreground">Castrado</p>
                                     <p className="font-semibold text-sm">
-                                        {animal.castrado ? "Sim" : "Não"}{animal.vale_castracao ? " - Vale castração disponível" : ""}
+                                        {animal.castrado ? "Sim" : "Não" + animal.vale_castracao ? " - Vale castração disponível" : ""}
                                     </p>
                                 </div>
                             </Card>
@@ -178,11 +178,11 @@ export function AnimalDetailModal({ initialData, onClose, buttonAdotar, carousel
                                                 Este animal já foi adotado.
                                             </p>
                                         )}
-                                        {animal.id_lar_temporario != null && (
+                                        {animal.lar_temporario_id != null && (
                                             <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap mt-4">
                                                 Este animal se encontra no lar temporário de {animal.lar_temporario?.nome}.
                                             </p>
-                                        )}        
+                                        )}
                                         {animal.fica_usuario != 0 && (
                                             <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap mt-4">
                                                 Este animal está com o dono atualmente.

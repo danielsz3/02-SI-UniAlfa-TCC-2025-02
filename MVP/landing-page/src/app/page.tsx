@@ -51,7 +51,7 @@ function HeroSection() {
               <Button size="lg" asChild>
                 <Link href="/adotar">Adotar um Pet</Link>
               </Button>
-              <Button size="lg" variant="outline" className="hover:text-white dark:hover:text-black dark:hover:bg-foreground" asChild>
+              <Button size="lg" variant="outline" className="hover:text-white dark:hover:text-black dark:hover:bg-foreground dark:bg-accent-foreground" asChild>
                 <Link href="/doar-pet">Doar um Pet</Link>
               </Button>
             </div>
@@ -108,13 +108,13 @@ function EventosSection({ eventos, loading }: { eventos: Evento[]; loading: bool
         <h2 className="text-3xl font-bold mb-8">Eventos</h2>
 
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[...Array(4)].map((_, i) => (
               <EventoCardSkeleton key={i} />
             ))}
           </div>
         ) : eventos.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {eventos.map((evento) => (
               <EventoCard key={evento.id} evento={evento} />
             ))}

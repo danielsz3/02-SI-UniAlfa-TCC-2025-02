@@ -147,8 +147,8 @@ export function AnimalDetailModal({ initialData, onClose, buttonAdotar, carousel
                                 <Heart className="h-5 w-5 text-primary shrink-0" />
                                 <div>
                                     <p className="text-sm text-muted-foreground">Castrado</p>
-                                    <p className="font-semibold">
-                                        {animal.castrado ? "Sim" : "Não"}
+                                    <p className="font-semibold text-sm">
+                                        {animal.castrado ? "Sim" : "Não"}{animal.vale_castracao ? " - Vale castração disponível" : ""}
                                     </p>
                                 </div>
                             </Card>
@@ -178,12 +178,12 @@ export function AnimalDetailModal({ initialData, onClose, buttonAdotar, carousel
                                                 Este animal já foi adotado.
                                             </p>
                                         )}
-                                        {animal.id_lar_temporario != 0 && (
+                                        {animal.id_lar_temporario != null && (
                                             <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap mt-4">
-                                                Este animal no lar temporário de {animal.lar_temporario?.nome}.
+                                                Este animal se encontra no lar temporário de {animal.lar_temporario?.nome}.
                                             </p>
                                         )}        
-                                        {animal.fica_usuario == 0 && (
+                                        {animal.fica_usuario != 0 && (
                                             <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap mt-4">
                                                 Este animal está com o dono atualmente.
                                             </p>

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class Animal extends Model
 {
@@ -27,9 +28,9 @@ class Animal extends Model
         'tempo_necessario',
         'ambiente_ideal',
         'situacao',
-        'usuario_id',         // Novo campo
-        'lar_temporario_id',  // Novo campo
-        'fica_usuario',       // Novo campo
+        'usuario_id',         
+        'lar_temporario_id',  
+        'fica_usuario',       
     ];
 
     protected $casts = [
@@ -52,5 +53,12 @@ class Animal extends Model
     public function imagens()
     {
         return $this->hasMany(ImagemAnimal::class, 'animal_id');
+    }
+
+    protected function larTemporarioId(): Attribute
+    {
+        return Attribute::make(
+            set: fn($value) => ($value == 0 || empty($value)) ? null : $value
+        );
     }
 }

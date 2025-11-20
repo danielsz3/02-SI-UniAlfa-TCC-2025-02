@@ -19,6 +19,7 @@ export interface Animal {
   fica_usuario?: number
   id_lar_temporario?: number
   lar_temporario?: LarTemporario
+  vale_castracao?: boolean
 }
 
 export interface LarTemporario {

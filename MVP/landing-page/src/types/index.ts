@@ -17,7 +17,7 @@ export interface Animal {
   tempo_necessario?: string
   situacao?: string
   fica_usuario?: number
-  id_lar_temporario?: number
+  lar_temporario_id?: number
   lar_temporario?: LarTemporario
   vale_castracao?: boolean
 }
@@ -36,6 +36,26 @@ export interface AnimalAffinity {
   afinidade: number
   afinidade_percent: number
   animal: Animal
+}
+
+export interface LarTemporario {
+  id: number
+  nome: string
+  imagens: Imagens[]
+  endereco: Endereco
+  animais: Animal[]
+  updated_at: string
+}
+
+export interface Endereco {
+  id: number
+  cep: string
+  logradouro: string
+  numero: string
+  complemento: string
+  bairro: string
+  cidade: string
+  uf: string
 }
 
 export type AgeRangeKey = "any" | "0_1" | "1_3" | "3_8" | "8_plus"

@@ -1,13 +1,9 @@
 import { Card, CardContent, CardTitle, CardDescription } from "@/components/ui/card"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
-
-interface LarTemporario {
-  id: number
-  nome: string
-  endereco: string
-  imagemUrl?: string
-}
+import { Imagens, LarTemporario } from "@/types"
+import ImageCarousel from "@/components/ImageCarousel"
+import { calcularIdade } from "@/lib/animal-utils"
 
 async function fetchLares(): Promise<LarTemporario[]> {
   try {
@@ -19,12 +15,7 @@ async function fetchLares(): Promise<LarTemporario[]> {
     }
     const lares = await res.json()
 
-    return lares.map((lar: any) => ({
-      id: lar.id,
-      nome: lar.nome_responsavel || lar.nome || "Responsável",
-      endereco: `${lar.endereco || lar.logradouro || ""} - ${lar.bairro || ""} - ${lar.cep || ""} - ${lar.cidade || ""} ${lar.estado || ""}`,
-      imagemUrl: lar.imagem_url || null,
-    }))
+    return lares
   } catch (error) {
     console.error(error)
     return []
@@ -68,18 +59,16 @@ export default async function AboutPage() {
             )}
             {lares.map((lar) => (
               <Card key={lar.id} className="flex items-center space-x-4 p-4 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm">
-                <Avatar className="w-16 h-16 bg-gray-200 dark:bg-gray-700">
-                  {lar.imagemUrl ? (
-                    <AvatarImage src={lar.imagemUrl} alt={lar.nome} />
-                  ) : (
-                    <AvatarFallback>LT</AvatarFallback>
-                  )}
-                </Avatar>
-                <CardContent className="p-0">
-                  <CardTitle className="text-lg font-bold">{lar.nome}</CardTitle>
-                  <CardDescription className="text-sm text-gray-600 dark:text-gray-400">
-                    {lar.endereco}
-                  </CardDescription>
+                <div className="rounded-lg overflow-hidden w-50 h-50">
+                  <ImageCarousel images={lar.imagens} alt={lar.nome} variant="minimal" showArrows />
+                </div>
+                <CardContent className="pt-5">
+                  <CardTitle className="text-xl font-bold mb-2">{lar.nome}</CardTitle>
+                    <div className="text-md font-medium mb-1">
+                      {lar.endereco.logradouro}, {lar.endereco.bairro}, {lar.endereco.cidade} - {lar.endereco.uf} - CEP: {lar.endereco.cep}
+                    </div>
+                    <div className="text-md text-secondary font-semibold mb-1">Ativo há {calcularIdade(lar.updated_at)}</div>
+                    <div className="text-md font-thin">Lar de {lar.animais.filter((animal) => animal.situacao != 'adotado').length} animais</div>
                 </CardContent>
               </Card>
             ))}

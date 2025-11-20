@@ -118,7 +118,7 @@ export default function ImageCarousel({
       </div>
 
       {/* arrows */}
-      {variant === "default" && showArrows && count > 1 && (
+      {(variant === "default" || showArrows) && count > 1 && (
         <>
           <div className="z-11 absolute left-3 top-1/2 -translate-y-1/2">
             <Button

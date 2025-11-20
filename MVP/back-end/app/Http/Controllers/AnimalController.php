@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Animal;
 use App\Models\ImagemAnimal;
+use App\Models\MatchAfinidade;
 use App\Models\Usuario;
 use App\Traits\ManagerGallery;
 use App\Traits\SearchIndex;
@@ -13,7 +14,6 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Illuminate\Http\UploadedFile;
@@ -132,8 +132,6 @@ class AnimalController extends Controller
                     }
                 }
 
-                Cache::forget('animais_ativos');
-
                 $animal->load(['imagens', 'usuario', 'larTemporario']);
                 $animal->imagens->transform(function ($img) {
                     $img->url = Storage::url($img->caminho);
@@ -204,7 +202,6 @@ class AnimalController extends Controller
             'fica_usuario' => 'nullable|boolean',
         ];
 
-
         $messages = [
             'nome.required' => 'O nome do animal é obrigatório.',
             'nome.max' => 'O nome pode ter no máximo 100 caracteres.',
@@ -267,9 +264,6 @@ class AnimalController extends Controller
                     $this->sincronizarGaleria($request, $animal);
                 }
 
-                // Limpa cache se existir
-                Cache::forget('animais_ativos');
-
                 // Atualiza o modelo com relacionamentos e gera URLs das imagens
                 $fresh = $animal->fresh(['imagens', 'usuario', 'larTemporario']);
                 $fresh->imagens->transform(function ($img) {
@@ -317,8 +311,6 @@ class AnimalController extends Controller
 
             $animal->delete(); // soft delete
 
-            Cache::forget('animais_ativos');
-
             return response()->json(null, 204);
         } catch (\Exception $e) {
             Log::error('Erro ao deletar animal: ' . $e->getMessage(), ['id' => $id, 'exception' => $e]);
@@ -347,14 +339,12 @@ class AnimalController extends Controller
             }
 
             // IDs dos animais que já possuem match com o usuário
-            $animaisComMatch = \App\Models\MatchAfinidade::where('usuario_id', $usuarioId)
+            $animaisComMatch = MatchAfinidade::where('usuario_id', $usuarioId)
                 ->pluck('animal_id')
                 ->toArray();
 
-            // buscar do cache (ou recalcular) — agora trazendo relações relevantes
-            $animais = Cache::remember('animais_ativos', 3600, function () {
-                return Animal::with(['imagens', 'usuario', 'larTemporario'])->get()->whereIn('situacao', ['disponivel', 'em_adocao']);
-            });
+            // Buscar diretamente do banco, sem cache
+            $animais = Animal::with(['imagens', 'usuario', 'larTemporario'])->get();
 
             // Filtrar animais que não estão em match com o usuário
             $animaisFiltrados = $animais->filter(function ($animal) use ($animaisComMatch) {

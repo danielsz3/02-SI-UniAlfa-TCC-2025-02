@@ -155,76 +155,57 @@ class AdocaoController extends Controller
                 }
             }
 
-            // Verifica se já existe um match ativo para este usuário e animal
+            // Normaliza sobre_rotina para array
+            $sobreRotina = $request->input('sobre_rotina', []);
+            if (is_string($sobreRotina)) {
+                $decoded = json_decode($sobreRotina, true);
+                if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                    $sobreRotina = $decoded;
+                } else {
+                    $sobreRotina = array_values(array_filter(array_map('trim', explode(',', $sobreRotina))));
+                }
+            }
+            if (!is_array($sobreRotina)) {
+                $sobreRotina = (array) $sobreRotina;
+            }
+
+            // Cria a adoção com status 'em_aprovacao'
+            $adocao = Adocao::create([
+                'usuario_id' => $user->id,
+                'animal_id' => $animal->id,
+                'status' => 'em_aprovacao',
+                'qtd_pessoas_casa' => $request->qtd_pessoas_casa,
+                'possui_filhos' => $request->possui_filhos,
+                'sobre_rotina' => $sobreRotina,
+                'acesso_rua_janelas' => $request->acesso_rua_janelas,
+                'acesso_rua_portoes_muros' => $request->acesso_rua_portoes_muros,
+                'renda_familiar' => $request->renda_familiar,
+                'aceita_termos' => $request->aceita_termos,
+            ]);
+
+            // Verifica se já existe um match para este usuário e animal
             $match = MatchAfinidade::where('usuario_id', $user->id)
                 ->where('animal_id', $animal->id)
-                ->whereIn('status', ['em_adocao', 'escolhido', 'rejeitado', 'finalizado']) // Ajuste os status conforme necessário
                 ->first();
 
             if ($match) {
-                // Se já existe match ativo, atualiza status do match e da adoção para 'em_adocao'
+                // Se já existe match, atualiza o status para 'em_adocao'
                 $match->status = 'em_adocao';
+                $match->observacao = 'Match atualizado após solicitação de adoção.';
                 $match->save();
-
-                // Atualiza ou cria a adoção com status 'em_adocao'
-                $adocao = Adocao::create(
-                    [
-                        'animal_id' => $animal->id,
-                        'usuario_id' => $user->id,
-                        'status' => 'em_aprovacao',
-                        'qtd_pessoas_casa' => $request->qtd_pessoas_casa,
-                        'possui_filhos' => $request->possui_filhos,
-                        'sobre_rotina' => $request->input('sobre_rotina'),
-                        'acesso_rua_janelas' => $request->acesso_rua_janelas,
-                        'acesso_rua_portoes_muros' => $request->acesso_rua_portoes_muros,
-                        'renda_familiar' => $request->renda_familiar,
-                        'aceita_termos' => $request->aceita_termos,
-                    ]
-                );
-
-                $adocao->load(['usuario', 'animal.imagens']);
-
-                return response()->json($adocao, 200);
             } else {
-                // Se não existe match, cria a adoção com status 'em_aprovacao'
-                $sobreRotina = $request->input('sobre_rotina', []);
-                if (is_string($sobreRotina)) {
-                    $decoded = json_decode($sobreRotina, true);
-                    if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-                        $sobreRotina = $decoded;
-                    } else {
-                        $sobreRotina = array_values(array_filter(array_map('trim', explode(',', $sobreRotina))));
-                    }
-                }
-                if (!is_array($sobreRotina)) {
-                    $sobreRotina = (array) $sobreRotina;
-                }
-
-                $adocao = Adocao::create([
-                    'usuario_id' => $user->id,
-                    'animal_id' => $animal->id,
-                    'status' => 'em_aprovacao',
-                    'qtd_pessoas_casa' => $request->qtd_pessoas_casa,
-                    'possui_filhos' => $request->possui_filhos,
-                    'sobre_rotina' => $sobreRotina,
-                    'acesso_rua_janelas' => $request->acesso_rua_janelas,
-                    'acesso_rua_portoes_muros' => $request->acesso_rua_portoes_muros,
-                    'renda_familiar' => $request->renda_familiar,
-                    'aceita_termos' => $request->aceita_termos,
-                ]);
-
-                // Cria o match com status 'em_adocao'
-                $match = MatchAfinidade::create([
+                // Se não existe match, cria um novo com status 'em_adocao'
+                MatchAfinidade::create([
                     'usuario_id' => $user->id,
                     'animal_id' => $animal->id,
                     'status' => 'em_adocao',
                     'observacao' => 'Match criado automaticamente após solicitação de adoção.',
                 ]);
-
-                $adocao->load(['usuario', 'animal.imagens']);
-
-                return response()->json($adocao, 201);
             }
+
+            $adocao->load(['usuario', 'animal.imagens']);
+
+            return response()->json($adocao, 201);
         });
     } catch (\Exception $e) {
         Log::error('Erro ao criar adoção: ' . $e->getMessage(), [
@@ -337,15 +318,17 @@ class AdocaoController extends Controller
                         ->where('animal_id', $adocao->animal_id)
                         ->first();
 
-                    if ($match) {
-                        $match->status = 'finalizado';
-                        $match->observacao = "Status da adoção alterado para: " . $data['status'];
-                        $match->save();
-                    }
-
                     $animal = $adocao->animal;
-                    if ($animal) {
-                        if ($data['status'] === 'aprovado') {
+
+                    if ($data['status'] === 'aprovado') {
+                        // Atualiza o match para 'finalizado' quando aprovado
+                        if ($match) {
+                            $match->status = 'finalizado';
+                            $match->observacao = "Adoção aprovada.";
+                            $match->save();
+                        }
+
+                        if ($animal) {
                             $animal->situacao = 'adotado';
                             $animal->fica_usuario = true;
                             $animal->save();
@@ -353,26 +336,34 @@ class AdocaoController extends Controller
                             // Cancelar outras adoções abertas para o mesmo animal feitas por outros usuários
                             Adocao::where('animal_id', $animal->id)
                                 ->where('id', '!=', $adocao->id)
-                                ->whereIn('status', ['em_aprovacao']) // ajuste conforme seus status "abertos"
+                                ->whereIn('status', ['em_aprovacao'])
                                 ->update(['status' => 'negado']);
 
-                            // Atualizar os matches dos outros usuários para 'rejeitado'
+                            // Atualizar os matches dos outros usuários para 'finalizado'
                             MatchAfinidade::where('animal_id', $animal->id)
                                 ->where('usuario_id', '!=', $adocao->usuario_id)
-                                ->whereIn('status', ['em_adocao', 'escolhido']) // considere os status que precisam ser rejeitados
+                                ->whereIn('status', ['em_adocao', 'escolhido'])
                                 ->update([
                                     'status' => 'finalizado',
                                     'observacao' => 'Afinidade cancelada automaticamente após adoção aprovada para outro usuário.'
                                 ]);
-                        } elseif ($data['status'] === 'negado') {
-                            $existeAprovada = Adocao::where('animal_id', $animal->id)
-                                ->where('status', 'aprovado')
-                                ->exists();
+                        }
+                    } elseif ($data['status'] === 'negado') {
+                        // Atualiza o match para 'rejeitado' quando negado
+                        if ($match) {
+                            $match->status = 'rejeitado';
+                            $match->observacao = "Adoção negada.";
+                            $match->save();
+                        }
 
-                            if (!$existeAprovada) {
-                                $animal->situacao = 'disponivel';
-                                $animal->save();
-                            }
+                        // Verifica se existe outra adoção aprovada para o animal
+                        $existeAprovada = Adocao::where('animal_id', $animal->id)
+                            ->where('status', 'aprovado')
+                            ->exists();
+
+                        if (!$existeAprovada && $animal) {
+                            $animal->situacao = 'disponivel';
+                            $animal->save();
                         }
                     }
                 }
@@ -381,7 +372,7 @@ class AdocaoController extends Controller
             });
         } catch (\Exception $e) {
             Log::error('Erro ao atualizar adoção: ' . $e->getMessage(), [
-                'id' => $adocao->id,
+                'id' => $adocao->id ?? $id,
                 'exception' => $e,
                 'payload' => $request->except(['aceita_termos'])
             ]);
@@ -391,6 +382,7 @@ class AdocaoController extends Controller
             ], 500);
         }
     }
+    
     public function destroy($id): JsonResponse
     {
         try {
@@ -408,6 +400,4 @@ class AdocaoController extends Controller
             return response()->json(['error' => 'Não foi possível excluir a adoção'], 500);
         }
     }
-
-    
 }

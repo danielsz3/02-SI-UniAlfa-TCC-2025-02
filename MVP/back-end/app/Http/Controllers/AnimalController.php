@@ -80,7 +80,7 @@ class AnimalController extends Controller
             'tipo_animal.required' => 'O tipo do animal é obrigatório.',
             'tipo_animal.in' => 'O tipo do animal deve ser "cao", "gato" ou "outro".',
             'imagens.array' => 'As imagens devem ser enviadas como um array.',
-            'imagens.max' => 'Você pode enviar no máximo 10 imagens.', 
+            'imagens.max' => 'Você pode enviar no máximo 10 imagens.',
             'imagens.*.image' => 'Cada arquivo enviado deve ser uma imagem válida.',
             'imagens.*.max' => 'Cada imagem deve ter no máximo 10MB.',
             'usuario_id.exists' => 'Usuário não encontrado.',
@@ -179,118 +179,118 @@ class AnimalController extends Controller
      * Atualizar animal
      */
     public function update(Request $request, $id): JsonResponse
-{
-    $animal = Animal::find($id);
+    {
+        $animal = Animal::find($id);
 
-    if (!$animal) {
-        return response()->json(['error' => 'Animal não encontrado'], 404);
-    }
+        if (!$animal) {
+            return response()->json(['error' => 'Animal não encontrado'], 404);
+        }
 
-    $rules = [
-        'nome' => 'sometimes|required|string|max:100',
-        'sexo' => 'sometimes|required|in:macho,femea',
-        'data_nascimento' => 'nullable|date|after:1900-01-01|before_or_equal:today',
-        'castrado' => 'nullable|boolean',
-        'vale_castracao' => 'nullable|boolean',
-        'descricao' => 'nullable|string|max:2000',
-        'tipo_animal' => 'sometimes|required|in:cao,gato,outro',
-        'nivel_energia' => 'nullable|in:baixa,moderada,alta',
-        'tamanho' => 'nullable|in:pequeno,medio,grande',
-        'tempo_necessario' => 'nullable|in:pouco_tempo,tempo_moderado,muito_tempo',
-        'ambiente_ideal' => 'nullable|in:area_pequena,area_media,area_externa',
-        'imagens' => 'nullable|array|max:10',
-        'usuario_id' => 'required|exists:usuarios,id',
-        'lar_temporario_id' => 'nullable|exists:lares_temporarios,id',
-        'fica_usuario' => 'nullable|boolean',
-    ];
+        $rules = [
+            'nome' => 'sometimes|required|string|max:100',
+            'sexo' => 'sometimes|required|in:macho,femea',
+            'data_nascimento' => 'nullable|date|after:1900-01-01|before_or_equal:today',
+            'castrado' => 'nullable|boolean',
+            'vale_castracao' => 'nullable|boolean',
+            'descricao' => 'nullable|string|max:2000',
+            'tipo_animal' => 'sometimes|required|in:cao,gato,outro',
+            'nivel_energia' => 'nullable|in:baixa,moderada,alta',
+            'tamanho' => 'nullable|in:pequeno,medio,grande',
+            'tempo_necessario' => 'nullable|in:pouco_tempo,tempo_moderado,muito_tempo',
+            'ambiente_ideal' => 'nullable|in:area_pequena,area_media,area_externa',
+            'imagens' => 'nullable|array|max:10',
+            'usuario_id' => 'required|exists:usuarios,id',
+            'lar_temporario_id' => 'nullable|exists:lares_temporarios,id',
+            'fica_usuario' => 'nullable|boolean',
+        ];
 
 
-    $messages = [
-        'nome.required' => 'O nome do animal é obrigatório.',
-        'nome.max' => 'O nome pode ter no máximo 100 caracteres.',
-        'sexo.in' => 'O sexo deve ser "macho" ou "femea".',
-        'data_nascimento.date' => 'A data de nascimento deve ser uma data válida.',
-        'data_nascimento.after' => 'A data de nascimento deve ser posterior a 01/01/1900.',
-        'data_nascimento.before_or_equal' => 'A data de nascimento não pode ser no futuro.',
-        'tipo_animal.in' => 'O tipo do animal deve ser "cao", "gato" ou "outro".',
-        'imagens.array' => 'As imagens devem ser enviadas como um array.',
-        'imagens.max' => 'Você pode enviar no máximo 10 imagens.',
-        'imagens.*.image' => 'Cada arquivo enviado deve ser uma imagem válida.',
-        'imagens.*.max' => 'Cada imagem deve ter no máximo 10MB.',
-        'usuario_id.exists' => 'Usuário não encontrado.',
-        'lar_temporario_id.exists' => 'Lar temporário não encontrado.',
-        'fica_usuario.boolean' => 'O campo fica_usuario deve ser verdadeiro ou falso.',
-    ];
+        $messages = [
+            'nome.required' => 'O nome do animal é obrigatório.',
+            'nome.max' => 'O nome pode ter no máximo 100 caracteres.',
+            'sexo.in' => 'O sexo deve ser "macho" ou "femea".',
+            'data_nascimento.date' => 'A data de nascimento deve ser uma data válida.',
+            'data_nascimento.after' => 'A data de nascimento deve ser posterior a 01/01/1900.',
+            'data_nascimento.before_or_equal' => 'A data de nascimento não pode ser no futuro.',
+            'tipo_animal.in' => 'O tipo do animal deve ser "cao", "gato" ou "outro".',
+            'imagens.array' => 'As imagens devem ser enviadas como um array.',
+            'imagens.max' => 'Você pode enviar no máximo 10 imagens.',
+            'imagens.*.image' => 'Cada arquivo enviado deve ser uma imagem válida.',
+            'imagens.*.max' => 'Cada imagem deve ter no máximo 10MB.',
+            'usuario_id.exists' => 'Usuário não encontrado.',
+            'lar_temporario_id.exists' => 'Lar temporário não encontrado.',
+            'fica_usuario.boolean' => 'O campo fica_usuario deve ser verdadeiro ou falso.',
+        ];
 
-    $validator = Validator::make($request->all(), $rules, $messages);
+        $validator = Validator::make($request->all(), $rules, $messages);
 
-    if ($validator->fails()) {
-        return response()->json(['errors' => $validator->errors()], 422);
-    }
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
 
-    // Verificar limite TOTAL de imagens (existentes + novas)
-    $imagensExistentes = $animal->imagens()->count();
-    $novasImagens = is_array($request->file('imagens')) ? count($request->file('imagens')) : 0;
-    $total = $imagensExistentes + $novasImagens;
+        // Verificar limite TOTAL de imagens (existentes + novas)
+        $imagensExistentes = $animal->imagens()->count();
+        $novasImagens = is_array($request->file('imagens')) ? count($request->file('imagens')) : 0;
+        $total = $imagensExistentes + $novasImagens;
 
-    if ($total > 10) {
-        return response()->json([
-            'errors' => [
-                'imagens' => ['O total de imagens não pode exceder 10.'],
-            ],
-        ], 422);
-    }
+        if ($total > 10) {
+            return response()->json([
+                'errors' => [
+                    'imagens' => ['O total de imagens não pode exceder 10.'],
+                ],
+            ], 422);
+        }
 
-    try {
-        return DB::transaction(function () use ($request, $animal) {
-            // Atualiza os campos permitidos
-            $animal->update($request->only([
-                'nome',
-                'data_nascimento',
-                'sexo',
-                'castrado',
-                'situacao',
-                'vale_castracao',
-                'descricao',
-                'tipo_animal',
-                'nivel_energia',
-                'tamanho',
-                'tempo_necessario',
-                'ambiente_ideal',
-                'usuario_id',
-                'lar_temporario_id',
-                'fica_usuario',
-            ]));
+        try {
+            return DB::transaction(function () use ($request, $animal) {
+                // Atualiza os campos permitidos
+                $animal->update($request->only([
+                    'nome',
+                    'data_nascimento',
+                    'sexo',
+                    'castrado',
+                    'situacao',
+                    'vale_castracao',
+                    'descricao',
+                    'tipo_animal',
+                    'nivel_energia',
+                    'tamanho',
+                    'tempo_necessario',
+                    'ambiente_ideal',
+                    'usuario_id',
+                    'lar_temporario_id',
+                    'fica_usuario',
+                ]));
 
-            // Sincroniza galeria de imagens via trait ManagerGallery
-            if ($request->has('imagens') || $request->hasFile('imagens')) {
-                $this->sincronizarGaleria($request, $animal);
-            }
+                // Sincroniza galeria de imagens via trait ManagerGallery
+                if ($request->has('imagens') || $request->hasFile('imagens')) {
+                    $this->sincronizarGaleria($request, $animal);
+                }
 
-            // Limpa cache se existir
-            Cache::forget('animais_ativos');
+                // Limpa cache se existir
+                Cache::forget('animais_ativos');
 
-            // Atualiza o modelo com relacionamentos e gera URLs das imagens
-            $fresh = $animal->fresh(['imagens', 'usuario', 'larTemporario']);
-            $fresh->imagens->transform(function ($img) {
-                $img->url = Storage::url($img->caminho);
-                return $img;
+                // Atualiza o modelo com relacionamentos e gera URLs das imagens
+                $fresh = $animal->fresh(['imagens', 'usuario', 'larTemporario']);
+                $fresh->imagens->transform(function ($img) {
+                    $img->url = Storage::url($img->caminho);
+                    return $img;
+                });
+
+                return response()->json($fresh, 200);
             });
-
-            return response()->json($fresh, 200);
-        });
-    } catch (\Exception $e) {
-        Log::error('Erro ao atualizar animal: ' . $e->getMessage(), [
-            'id' => ($animal->id ?? null),
-            'exception' => $e,
-            'payload' => $request->except('imagens'),
-        ]);
-        return response()->json([
-            'error' => 'Não foi possível atualizar o animal',
-            'message' => config('app.debug') ? $e->getMessage() : 'Erro interno do servidor'
-        ], 500);
+        } catch (\Exception $e) {
+            Log::error('Erro ao atualizar animal: ' . $e->getMessage(), [
+                'id' => ($animal->id ?? null),
+                'exception' => $e,
+                'payload' => $request->except('imagens'),
+            ]);
+            return response()->json([
+                'error' => 'Não foi possível atualizar o animal',
+                'message' => config('app.debug') ? $e->getMessage() : 'Erro interno do servidor'
+            ], 500);
+        }
     }
-}
 
     /**
      * Deletar (soft delete)
@@ -333,87 +333,87 @@ class AnimalController extends Controller
      * Recomendar animais para um usuário de acordo com preferências
      */
     public function recomendar(Request $request, $usuarioId): JsonResponse
-{
-    try {
-        $usuario = Usuario::with('preferencias')->find($usuarioId);
+    {
+        try {
+            $usuario = Usuario::with('preferencias')->find($usuarioId);
 
-        if (!$usuario) {
-            return response()->json(['error' => 'Usuário não encontrado'], 404);
+            if (!$usuario) {
+                return response()->json(['error' => 'Usuário não encontrado'], 404);
+            }
+
+            $pref = $usuario->preferencias;
+            if (!$pref) {
+                return response()->json(['error' => 'Usuário não possui preferências definidas'], 400);
+            }
+
+            // IDs dos animais que já possuem match com o usuário
+            $animaisComMatch = \App\Models\MatchAfinidade::where('usuario_id', $usuarioId)
+                ->pluck('animal_id')
+                ->toArray();
+
+            // buscar do cache (ou recalcular) — agora trazendo relações relevantes
+            $animais = Cache::remember('animais_ativos', 3600, function () {
+                return Animal::with(['imagens', 'usuario', 'larTemporario'])->get()->whereIn('situacao', ['disponivel', 'em_adocao']);
+            });
+
+            // Filtrar animais que não estão em match com o usuário
+            $animaisFiltrados = $animais->filter(function ($animal) use ($animaisComMatch) {
+                return !in_array($animal->id, $animaisComMatch);
+            });
+
+            $resultados = $animaisFiltrados->map(function ($animal) use ($pref) {
+                $score = 0;
+                $total = 4;
+
+                if (!empty($pref->tamanho_pet) && $pref->tamanho_pet === $animal->tamanho) {
+                    $score += 1;
+                }
+                if (!empty($pref->tempo_disponivel) && $pref->tempo_disponivel === $animal->tempo_necessario) {
+                    $score += 1;
+                }
+                if (!empty($pref->estilo_vida) && $pref->estilo_vida === $animal->nivel_energia) {
+                    $score += 1;
+                }
+                if (!empty($pref->espaco_casa) && $pref->espaco_casa === $animal->ambiente_ideal) {
+                    $score += 1;
+                }
+
+                $percent = $total > 0 ? intval(($score / $total) * 100) : 0;
+
+                return [
+                    'animal' => $animal,
+                    'afinidade' => $score,
+                    'afinidade_percent' => $percent,
+                ];
+            });
+
+            // ordenar por afinidade (desc) e resetar chaves
+            $ordenados = $resultados->sortByDesc('afinidade')->values();
+
+            // === Paginação manual ===
+            $range = json_decode($request->query('range', '[0,9]'), true);
+            $start = $range[0] ?? 0;
+            $end   = $range[1] ?? 9;
+            $perPage = ($end - $start + 1);
+            $page    = intval($start / $perPage) + 1;
+
+            // Aplicar paginação na collection
+            $itemsForCurrentPage = $ordenados->forPage($page, $perPage)->values();
+            $total = $ordenados->count();
+
+            // Montar resposta com cabeçalhos
+            $response = response()
+                ->json($itemsForCurrentPage->toArray())
+                ->header('Content-Range', "recomendacoes {$start}-{$end}/{$total}")
+                ->header('Access-Control-Expose-Headers', 'Content-Range');
+
+            return $response;
+        } catch (\Exception $e) {
+            Log::error('Erro ao recomendar animais: ' . $e->getMessage(), ['usuario_id' => $usuarioId, 'exception' => $e]);
+            return response()->json([
+                'error' => 'Não foi possível gerar recomendações',
+                'message' => config('app.debug') ? $e->getMessage() : 'Erro interno do servidor'
+            ], 500);
         }
-
-        $pref = $usuario->preferencias;
-        if (!$pref) {
-            return response()->json(['error' => 'Usuário não possui preferências definidas'], 400);
-        }
-
-        // IDs dos animais que já possuem match com o usuário
-        $animaisComMatch = \App\Models\MatchAfinidade::where('usuario_id', $usuarioId)
-            ->pluck('animal_id')
-            ->toArray();
-
-        // buscar do cache (ou recalcular) — agora trazendo relações relevantes
-        $animais = Cache::remember('animais_ativos', 3600, function () {
-            return Animal::with(['imagens', 'usuario', 'larTemporario'])->get();
-        });
-
-        // Filtrar animais que não estão em match com o usuário
-        $animaisFiltrados = $animais->filter(function ($animal) use ($animaisComMatch) {
-            return !in_array($animal->id, $animaisComMatch);
-        });
-
-        $resultados = $animaisFiltrados->map(function ($animal) use ($pref) {
-            $score = 0;
-            $total = 4;
-
-            if (!empty($pref->tamanho_pet) && $pref->tamanho_pet === $animal->tamanho) {
-                $score += 1;
-            }
-            if (!empty($pref->tempo_disponivel) && $pref->tempo_disponivel === $animal->tempo_necessario) {
-                $score += 1;
-            }
-            if (!empty($pref->estilo_vida) && $pref->estilo_vida === $animal->nivel_energia) {
-                $score += 1;
-            }
-            if (!empty($pref->espaco_casa) && $pref->espaco_casa === $animal->ambiente_ideal) {
-                $score += 1;
-            }
-
-            $percent = $total > 0 ? intval(($score / $total) * 100) : 0;
-
-            return [
-                'animal' => $animal,
-                'afinidade' => $score,
-                'afinidade_percent' => $percent,
-            ];
-        });
-
-        // ordenar por afinidade (desc) e resetar chaves
-        $ordenados = $resultados->sortByDesc('afinidade')->values();
-
-        // === Paginação manual ===
-        $range = json_decode($request->query('range', '[0,9]'), true);
-        $start = $range[0] ?? 0;
-        $end   = $range[1] ?? 9;
-        $perPage = ($end - $start + 1);
-        $page    = intval($start / $perPage) + 1;
-
-        // Aplicar paginação na collection
-        $itemsForCurrentPage = $ordenados->forPage($page, $perPage)->values();
-        $total = $ordenados->count();
-
-        // Montar resposta com cabeçalhos
-        $response = response()
-            ->json($itemsForCurrentPage->toArray())
-            ->header('Content-Range', "recomendacoes {$start}-{$end}/{$total}")
-            ->header('Access-Control-Expose-Headers', 'Content-Range');
-
-        return $response;
-    } catch (\Exception $e) {
-        Log::error('Erro ao recomendar animais: ' . $e->getMessage(), ['usuario_id' => $usuarioId, 'exception' => $e]);
-        return response()->json([
-            'error' => 'Não foi possível gerar recomendações',
-            'message' => config('app.debug') ? $e->getMessage() : 'Erro interno do servidor'
-        ], 500);
     }
-}
 }

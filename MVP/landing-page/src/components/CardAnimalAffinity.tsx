@@ -14,7 +14,7 @@ import {
 import ImageCarousel from './ImageCarousel';
 import { calcularIdade } from '@/lib/animal-utils';
 import { Button } from './ui/button';
-import { Heart, Info, X, Loader2 } from 'lucide-react';
+import { Heart, Info, X, Loader2, Icon, PawPrint, Clock, BatteryChargingIcon, TreePalmIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState } from 'react';
 import { getToken } from '@/lib/api';
@@ -28,6 +28,30 @@ interface Props {
   onActionStart: () => void;
   onActionEnd: () => void;
 }
+
+const nivelEnergia = [
+  { id: 'baixa', name: 'Calmo / Tranquilo' },
+  { id: 'moderada', name: 'Ativo / Energético' },
+  { id: 'alta', name: 'Muito Energético' },
+]
+
+const tamanho = [
+  { id: 'pequeno', name: 'Pequeno (até 10kg)' },
+  { id: 'medio', name: 'Médio (10kg a 25kg)' },
+  { id: 'grande', name: 'Grande (acima de 25kg)' },
+]
+
+const tempoNecessario = [
+  { id: 'pouco_tempo', name: 'Baixo' },
+  { id: 'tempo_moderado', name: 'Moderado' },
+  { id: 'muito_tempo', name: 'Alto' },
+]
+
+const ambienteIdeal = [
+  { id: 'area_pequena', name: 'Área Pequena' },
+  { id: 'area_media', name: 'Área Média' },
+  { id: 'area_externa', name: 'Área Externa' },
+]
 
 export default function CardAnimalAffinity({
   animal_afinidade,
@@ -123,17 +147,63 @@ export default function CardAnimalAffinity({
         </Badge>
       </CardHeader>
 
-      <CardContent className="flex-1 p-0 relative">
-        <div className="w-full h-[45vh] md:h-[35vh] overflow-hidden rounded-t-lg">
+      <CardContent className="flex-1 p-0 block">
+        <div className="w-full h-[45vh]  md:h-[35vh] overflow-hidden rounded-t-lg">
           <ImageCarousel images={animal_afinidade.animal.imagens} />
         </div>
         <CardDescription className="mt-2 text-md text-muted-foreground">
-          {animal_afinidade.animal.descricao || 'Sem descrição disponível.'}
+          <div className="grid md:grid-cols-2 grid-cols-4 gap-2 md:gap-4 mt-6 w-full">
+
+            {/* TAMANHO */}
+            <div className="flex flex-col items-center">
+              <div className={`bg-secondary text-white p-3 md:p-4 w-full h-full min-h-[50px] md:min-h-[60px] rounded-lg flex flex-col items-center justify-center`}>
+                <PawPrint className="size-6 md:size-8 mb-1" />
+                <span className="text-xs md:text-sm font-bold mb-1">Tamanho</span>
+                <p className="text-xs md:text-sm text-center font-semibold leading-tight px-2 text-wrap">
+                  {tamanho.find((t) => t.id === animal_afinidade.animal.tamanho)?.name || animal_afinidade.animal.tamanho}
+                </p>
+              </div>
+            </div>
+
+            {/* NÍVEL DE ENERGIA */}
+            <div className="flex flex-col items-center w-full">
+              <div className={`bg-secondary text-white p-3 md:p-4 w-full h-full min-h-[50px] md:min-h-[60px] rounded-lg flex flex-col items-center justify-center`}>
+                <BatteryChargingIcon className="size-6 md:size-8 mb-1" />
+                <span className="text-xs md:text-sm font-bold mb-1">Energia</span>
+                <p className="text-xs md:text-sm text-center font-semibold leading-tight px-2 text-wrap">
+                  {nivelEnergia.find((n) => n.id === animal_afinidade.animal.nivel_energia)?.name || animal_afinidade.animal.nivel_energia}
+                </p>
+              </div>
+            </div>
+
+            {/* TEMPO NECESSÁRIO */}
+            <div className="flex flex-col items-center w-full">
+              <div className={`bg-secondary text-white p-3 md:p-4 w-full h-full min-h-[50px] md:min-h-[60px] rounded-lg flex flex-col items-center justify-center`}>
+                <Clock className="size-6 md:size-8 mb-1" />
+                <span className="text-xs md:text-sm font-bold mb-1 text-center">Tempo Necessário</span>
+                <span className="text-xs md:text-sm text-center font-semibold leading-tight px-2 text-wrap">
+                  {tempoNecessario.find((t) => t.id === animal_afinidade.animal.tempo_necessario)?.name || animal_afinidade.animal.tempo_necessario}
+                </span>
+              </div>
+            </div>
+
+            {/* AMBIENTE IDEAL */}
+            <div className="flex flex-col items-center w-full">
+              <div className={`bg-secondary text-white p-3 md:p-4 w-full h-full min-h-[50px] md:min-h-[60px] rounded-lg flex flex-col items-center justify-center`}>
+                <TreePalmIcon className="size-6 md:size-8 mb-1" />
+                <span className="text-xs md:text-sm font-bold mb-1">Ambiente</span>
+                <span className="text-xs md:text-sm text-center font-semibold leading-tight px-2 text-wrap">
+                  {ambienteIdeal.find((a) => a.id === animal_afinidade.animal.ambiente_ideal)?.name || animal_afinidade.animal.ambiente_ideal}
+                </span>
+              </div>
+            </div>
+
+          </div>
         </CardDescription>
       </CardContent>
 
-      <CardFooter className="mt-auto pt-4 flex justify-between items-center">
-        <Badge className="text-md">
+      <CardFooter className="mt-auto pt-0 flex justify-between items-center">
+        <Badge className="text-lg">
           <strong>Afinidade:</strong>
           {animal_afinidade.afinidade_percent}%
         </Badge>

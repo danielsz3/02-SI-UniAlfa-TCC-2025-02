@@ -202,13 +202,14 @@ export default function AffinityCarousel({ userId, onAnimalClick }: Props) {
           {animais.map((animal, index) => (
             <CarouselItem
               key={animal.animal.id}
-              className="w-full pl-4 basis-full md:basis-1/2 xl:basis-1/3"
+              className="min-w-0 pl-0 basis-full md:basis-1/2 xl:basis-1/3"
             >
               <div
                 aria-hidden={index !== selectedIndex}
                 className={`
-                    p-1 w-full h-full
+                    p-1 md:w-[50vw] w-full pl-0 sm:pl-5 lg:w-full h-full
                     transition-all duration-500 ease-in-out
+                    ${index === 0 ? 'pl-5' : 'xs:pl-10 md:pl-0'}
                     ${index === selectedIndex
                     ? 'opacity-100 scale-100'
                     : 'opacity-60 scale-80 pointer-events-none'

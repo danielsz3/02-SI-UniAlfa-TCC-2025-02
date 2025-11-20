@@ -30,14 +30,14 @@ export function AnimalCard({ animal, onShowDetails }: AnimalCardProps) {
           <div className="flex items-center justify-center h-full text-muted-foreground">Sem imagem</div>
         )}
         <div className="absolute top-2 right-2 flex gap-1">
-          {animal.tamanho && <Badge variant="secondary" className="capitalize">{animal.tamanho}</Badge>}
+          {animal.tamanho && <Badge variant="default" className="capitalize">{animal.tamanho}</Badge>}
         </div>
       </div>
 
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="text-xl">{animal.nome}</CardTitle>
-          <Badge variant="outline" className="capitalize shrink-0">{animal.sexo}</Badge>
+          <Badge variant="outline" className="capitalize shrink-0 dark:text-accent text-primary">{animal.sexo}</Badge>
         </div>
         <CardDescription className="capitalize">{animal.tipo_animal}</CardDescription>
       </CardHeader>

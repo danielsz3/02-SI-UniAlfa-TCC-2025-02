@@ -13,6 +13,17 @@ export interface Animal {
   // Campos dos detalhes (opcionais)
   descricao?: string
   castrado?: boolean
+  ambiente_ideal?: string
+  tempo_necessario?: string
+  situacao?: string
+  fica_usuario?: number
+  id_lar_temporario?: number
+  lar_temporario?: LarTemporario
+}
+
+export interface LarTemporario {
+  id: number
+  nome: string
 }
 
 export interface Imagens {

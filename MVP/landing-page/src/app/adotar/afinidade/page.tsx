@@ -84,6 +84,7 @@ export default function AffinityPage() {
         buttonAdotar={false}
         initialData={selectedAnimal}
         onClose={() => setSelectedAnimal(null)}
+        carousel={false}
       />
 
     </div>

@@ -80,7 +80,7 @@ class AnimalController extends Controller
             'tipo_animal.required' => 'O tipo do animal é obrigatório.',
             'tipo_animal.in' => 'O tipo do animal deve ser "cao", "gato" ou "outro".',
             'imagens.array' => 'As imagens devem ser enviadas como um array.',
-            'imagens.max' => 'Você pode enviar no máximo 10 imagens.', 
+            'imagens.max' => 'Você pode enviar no máximo 10 imagens.',
             'imagens.*.image' => 'Cada arquivo enviado deve ser uma imagem válida.',
             'imagens.*.max' => 'Cada imagem deve ter no máximo 10MB.',
             'usuario_id.exists' => 'Usuário não encontrado.',

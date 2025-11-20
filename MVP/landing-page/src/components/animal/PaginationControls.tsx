@@ -89,7 +89,7 @@ export function PaginationControls({
   const JUMP_SELECT_LIMIT = 500
 
   return (
-    <div className="w-full flex flex-col sm:flex-row items-center gap-3">
+    <div className="w-full flex flex-col md:flex-row items-center gap-3">
       {/* esquerda: seletor de tamanho */}
       <div className="flex items-center gap-3">
         <PageSizeSelect {...{ perPage, pageSizeOptions, onPageSizeChange }} />
@@ -98,7 +98,7 @@ export function PaginationControls({
       {/* centro: paginação (full em sm+, compact em xs) */}
       <div className="flex-1 flex justify-center">
         {/* full pagination para telas sm+ */}
-        <div className="hidden sm:flex items-center gap-2 flex-wrap">
+        <div className="hidden md:flex items-center gap-2 flex-wrap">
           <Button variant="outline" onClick={() => onPageChange(1)} disabled={current <= 1 || loading}><ChevronsLeft /></Button>
           <Button variant="outline" onClick={() => onPageChange(Math.max(1, current - 1))} disabled={current <= 1 || loading}><ChevronLeft /></Button>
 
@@ -123,15 +123,15 @@ export function PaginationControls({
         </div>
 
         {/* compact pagination para xs */}
-        <div className="flex sm:hidden items-center gap-2">
-          <Button variant="outline" onClick={() => onPageChange(Math.max(1, current - 1))} disabled={current <= 1 || loading}>Anterior</Button>
-          <Badge variant="secondary">Página {current} de {total}</Badge>
-          <Button variant="outline" onClick={() => onPageChange(Math.min(total, current + 1))} disabled={current >= total || loading}>Próxima</Button>
+        <div className="flex md:hidden items-center gap-2">
+          <Button variant="outline" className="dark:hover:text-white" onClick={() => onPageChange(Math.max(1, current - 1))} disabled={current <= 1 || loading}>Anterior</Button>
+          <Badge variant="default" >Página {current} de {total}</Badge>
+          <Button variant="outline" className="dark:hover:text-white" onClick={() => onPageChange(Math.min(total, current + 1))} disabled={current >= total || loading}>Próxima</Button>
         </div>
       </div>
 
       {/* direita: jump-to select (sm+) */}
-      <div className="hidden sm:flex items-center gap-2">
+      <div className="hidden md:flex items-center gap-2">
         <label className="text-sm text-muted-foreground">Ir para</label>
 
         {total <= JUMP_SELECT_LIMIT ? (

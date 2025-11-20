@@ -138,6 +138,10 @@ export default function LoginPage() {
                             <p className="text-red-600 text-sm text-center">{error}</p>
                         )}
 
+                        <Button type="submit" className="w-full" disabled={loading}>
+                            {loading ? "Entrando..." : "Entrar"}
+                        </Button>
+
                         <div className="flex items-center gap-3 my-6">
                             <hr className="grow border-gray-300 dark:border-gray-600" />
                             <span className="text-sm font-semibold text-gray-500 dark:text-gray-400 whitespace-nowrap">
@@ -154,9 +158,13 @@ export default function LoginPage() {
                             />
                         </div>
 
-                        <Button type="submit" className="w-full" disabled={loading}>
-                            {loading ? "Entrando..." : "Entrar"}
-                        </Button>
+                        <div className="flex items-center gap-3 my-6">
+                            <hr className="grow border-gray-300 dark:border-gray-600" />
+                            <span className="text-sm font-semibold text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                                Precisa de ajuda
+                            </span>
+                            <hr className="grow border-gray-300 dark:border-gray-600" />
+                        </div>
 
                         <div className="flex justify-center">
                             <Link

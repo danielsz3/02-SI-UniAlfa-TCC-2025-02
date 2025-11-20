@@ -162,7 +162,7 @@ const AnimalEdit = () => (
                         { id: 'cao', name: 'Cachorro' },
                         { id: 'outro', name: 'Outro' },
                     ]}
-                    validate={required('O tamanho é obrigatório')}
+                    validate={required('O tipo é obrigatório')}
                 />
 
                 <RadioButtonGroupInput

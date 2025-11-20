@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Card } from "@/components/ui/card"
-import { Calendar, Heart, Ruler, Zap, Loader2, X } from "lucide-react"
+import { Calendar, Heart, Ruler, Zap, Loader2, X, HeartIcon } from "lucide-react"
 
 import ImageCarousel from "@/components/ImageCarousel"
 
@@ -23,6 +23,7 @@ interface AnimalDetailModalProps {
     initialData: Animal | null
     onClose: () => void
     buttonAdotar: boolean
+    carousel?: boolean
 }
 
 async function fetchAnimal(id: number) {
@@ -41,7 +42,7 @@ async function fetchAnimal(id: number) {
     }
 }
 
-export function AnimalDetailModal({ initialData, onClose, buttonAdotar }: AnimalDetailModalProps) {
+export function AnimalDetailModal({ initialData, onClose, buttonAdotar, carousel = true }: AnimalDetailModalProps) {
     const [animal, setAnimal] = useState<Animal | null>(initialData)
     const [loadingDetails, setLoadingDetails] = useState(false)
     const [error, setError] = useState<string | null>(null)
@@ -83,9 +84,11 @@ export function AnimalDetailModal({ initialData, onClose, buttonAdotar }: Animal
         return (
             <div className="grid lg:grid-cols-2 grid-cols-1 gap-6 md:gap-8">
                 {/* Coluna 1: Imagem */}
-                <div className="rounded-lg overflow-hidden  sm:h-full min-h-[55vh]">
-                    <ImageCarousel images={animal.imagens} alt={animal.nome}/>
-                </div>
+                {carousel && (
+                    <div className="rounded-lg overflow-hidden  sm:h-full min-h-[55vh]">
+                        <ImageCarousel images={animal.imagens} alt={animal.nome} />
+                    </div>
+                )}
 
                 {/* Coluna 2: Informações */}
                 <div className="space-y-6">
@@ -166,9 +169,26 @@ export function AnimalDetailModal({ initialData, onClose, buttonAdotar }: Animal
                                         <span>Carregando detalhes...</span>
                                     </div>
                                 ) : (
-                                    <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                                        {animal.descricao}
-                                    </p>
+                                    <>
+                                        <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                                            {animal.descricao}
+                                        </p>
+                                        {animal.situacao == 'adotado' && (
+                                            <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap mt-4">
+                                                Este animal já foi adotado.
+                                            </p>
+                                        )}
+                                        {animal.id_lar_temporario != 0 && (
+                                            <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap mt-4">
+                                                Este animal no lar temporário de {animal.lar_temporario?.nome}.
+                                            </p>
+                                        )}        
+                                        {animal.fica_usuario == 0 && (
+                                            <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap mt-4">
+                                                Este animal está com o dono atualmente.
+                                            </p>
+                                        )}
+                                    </>
                                 )}
                             </div>
                         </>

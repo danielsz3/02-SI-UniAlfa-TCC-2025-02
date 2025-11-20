@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\LarTemporario;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Faker\Factory as Faker;
@@ -40,8 +41,8 @@ class AnimalSeeder extends Seeder
                 'deleted_at' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
-                "lar_temporario_id" => $faker->numberBetween(1, 10),
-                "fica_usuario" => $faker->boolean(50) ? 1 : 0
+                "lar_temporario_id" =>  $i % 2 == 0 ? LarTemporario::all()->random()->id : null,
+                "fica_usuario" => $i % 2 == 0 ? 0 : 1
             ]);
 
             DB::table('imagens_animais')->insert([

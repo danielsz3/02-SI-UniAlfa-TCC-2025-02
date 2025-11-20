@@ -224,6 +224,12 @@ class AnimalController extends Controller
 
         $validator = Validator::make($request->all(), $rules, $messages);
 
+        if ($request->fica_usuario == 0) {
+            $validator = Validator::make($request->all(), [
+                'lar_temporario_id' => 'required|exists:lares_temporarios,id',
+            ]);
+        }
+
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }

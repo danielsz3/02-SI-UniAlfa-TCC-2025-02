@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Faker\Factory as Faker;
+use App\Models\Animal;
 
 class AdocaoSeeder extends Seeder
 {
@@ -12,7 +13,7 @@ class AdocaoSeeder extends Seeder
     {
         $faker = Faker::create();
 
-        $statusOptions = ['em_aprovacao', 'aprovado'];
+        $statusOptions = ['em_aprovacao', 'negado'];
         $qtdPessoasCasaOptions = ['sozinho', 'uma_pessoa', 'duas_pessoas', 'tres_pessoas', 'quatro_ou_mais'];
         $acessoRuaJanelasOptions = [
             'janelas_telas_sem_acesso_rua',
@@ -27,12 +28,13 @@ class AdocaoSeeder extends Seeder
         $rendaFamiliarOptions = ['acima_2_sm', 'abaixo_2_sm', 'outro'];
 
         for ($i = 0; $i < 50; $i++) {
-            $animalId = $i + 1;
+            $animal = Animal::find($i + 1);
+            $status = $animal->situacao === 'adotado' ? 'aprovado' : $faker->randomElement($statusOptions);
 
             DB::table('adocoes')->insert([
                 'usuario_id' => $faker->numberBetween(5, 15),
-                'animal_id' => $animalId,
-                'status' => $faker->randomElement($statusOptions),
+                'animal_id' => $animal->id,
+                'status' => $status,
                 'qtd_pessoas_casa' => $faker->randomElement($qtdPessoasCasaOptions),
                 'possui_filhos' => $faker->boolean(40) ? 1 : 0,
                 'sobre_rotina' => json_encode([
@@ -50,3 +52,4 @@ class AdocaoSeeder extends Seeder
         }
     }
 }
+

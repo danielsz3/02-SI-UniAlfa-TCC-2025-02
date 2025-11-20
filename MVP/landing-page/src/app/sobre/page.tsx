@@ -64,11 +64,17 @@ export default async function AboutPage() {
                 </div>
                 <CardContent className="pt-5">
                   <CardTitle className="text-xl font-bold mb-2">{lar.nome}</CardTitle>
-                    <div className="text-md font-medium mb-1">
-                      {lar.endereco.logradouro}, {lar.endereco.bairro}, {lar.endereco.cidade} - {lar.endereco.uf} - CEP: {lar.endereco.cep}
-                    </div>
-                    <div className="text-md text-secondary font-semibold mb-1">Ativo há {calcularIdade(lar.updated_at)}</div>
-                    <div className="text-md font-thin">Lar de {lar.animais.filter((animal) => animal.situacao != 'adotado').length} animais</div>
+                  <div className="text-sm font-medium">
+                    {lar.endereco.logradouro}, {lar.endereco.bairro}, {lar.endereco.cidade} - {lar.endereco.uf}
+                  </div>
+                  <div className="text-sm font-medium mb-1">CEP: {lar.endereco.cep}</div>
+                  <div className="text-md text-secondary font-semibold mb-1">Ativo há {calcularIdade(lar.updated_at)}</div>
+                  <div className="text-md font-thin">
+                    Lar de {lar.animais.filter((animal) => animal.situacao != 'adotado').length} animais atualmente
+                  </div>
+                  <div className="text-md font-thin">
+                    Já passaram mais de {lar.animais.filter((animal) => animal.situacao == 'adotado').length} animais neste lar
+                  </div>
                 </CardContent>
               </Card>
             ))}

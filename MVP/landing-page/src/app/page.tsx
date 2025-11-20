@@ -37,8 +37,8 @@ function HeroSection() {
       <div className="relative z-10 mx-auto max-w-6xl px-4 py-16 md:py-24 pointer-events-none">
         <div className="flex flex-col items-center text-center space-y-6 pointer-events-auto">
           <div className="flex flex-col items-center text-center space-y-6 pointer-events-auto 
-      bg-background/30 dark:bg-background/50 backdrop-blur-sm p-8 rounded-2xl border border-white/20 shadow-xl">
-            <h1 className="text-4xl md:text-6xl font-bold text-primary dark:text-white tracking-tight">
+      bg-background/30 dark:bg-background/50 backdrop-blur-sm p-8 rounded-2xl border border-white/20 shadow-xl -mt-10">
+            <h1 className="text-4xl md:text-5xl font-bold text-primary dark:text-white tracking-tight">
               Encontre seu novo melhor amigo
             </h1>
 

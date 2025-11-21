@@ -2,6 +2,7 @@ import { ChipField, DataTable, FunctionField, List, SelectInput, TextInput, RaRe
 import CustomDatePicker from '../datepicker/customDatePicker';
 import { CustomListActions } from '../ExportActions';
 import { CopyText } from '../CopyText';
+import { ca } from 'date-fns/locale';
 
 const calculateAge = (dataNascimento: string | number | Date) => {
     if (!dataNascimento) return null;
@@ -122,7 +123,7 @@ export const LarTempList = () => (
                 <FunctionField
                     render={(record) => {
                         const color = record.situacao === 'ativo' ? 'forestgreen' : 'red';
-                        return <ChipField source="situacao" record={record} style={{ backgroundColor: color, color: 'white' }} />
+                        return <ChipField source="situacao" record={record} sx={{ backgroundColor: color, color: 'white', fontWeight: 'bold', transform: 'capitalize' }} />
                     }}
                 />
             </DataTable.Col>

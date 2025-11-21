@@ -19,6 +19,7 @@ import {
     useReference,
     LinearProgress,
     useGetList,
+    Count,
 } from "react-admin";
 import { Card, CardContent, Typography, Box, Grid, Dialog, DialogContent, IconButton, Button } from "@mui/material";
 import { FaEye } from "react-icons/fa";
@@ -99,7 +100,7 @@ const LocalInfo = () => {
             <Labeled label="Localização Atual">
                 <Box display="flex" alignItems="center" gap={0.5}>
                     <WarningIcon color="error" fontSize="small" />
-                    <Typography variant="body2" color="error" sx={{ fontWeight: 'bold'}}>
+                    <Typography variant="body2" color="error" sx={{ fontWeight: 'bold' }}>
                         Precisa indicar um lar temporário
                     </Typography>
                 </Box>
@@ -151,7 +152,7 @@ const Aside = () => {
             flexDirection="column"
             gap={2}
             sx={{
-                width: { xs: '100%', md: 370 },
+                width: { xs: '100%', md: 400 },
             }}
         >
             {/* --- Adoções Relacionadas --- */}
@@ -164,14 +165,14 @@ const Aside = () => {
                         <Button
                             variant="outlined"
                             size="small"
-                            sx={{ mr: 2 }}
+                            sx={{ mr: 2, fontSize: { xs: 10, md: 12 } }}
                             endIcon={<NavigateNextIcon />}
                         >
                             <Link
                                 to={`/adocoes?filter=${encodeURIComponent(JSON.stringify({ "animal_id": record.id }))}`}
                                 sx={{ textDecoration: 'none', color: 'primary.main' }}
                             >
-                                Ver todas
+                                Ver todos (<Count resource="adocoes" sx={{ fontSize: { xs: 10, md: 12 } }} filter={{ "animal_id": record.id }} />)
                             </Link>
                         </Button>
                     </Box>
@@ -198,11 +199,11 @@ const Aside = () => {
                             }
                             primaryText={(record) => record.usuario?.nome || "—"}
                             secondaryText={(record) => {
-                                 const statusNameMap = {
-                                        em_aprovacao: 'Necessita de aprovação',
-                                        negado: 'Adoção rejeitada',
-                                        aprovado: 'Adoção aceita'
-                                    };
+                                const statusNameMap = {
+                                    em_aprovacao: 'Necessita de aprovação',
+                                    negado: 'Adoção rejeitada',
+                                    aprovado: 'Adoção aceita'
+                                };
                                 return (
                                     record.status ? statusNameMap[record.status as keyof typeof statusNameMap] : 'Nenhum status'
                                 )
@@ -240,12 +241,12 @@ const Aside = () => {
                             }
                             primaryText={(record) => record.usuario?.nome || "—"}
                             secondaryText={(record) => {
-                                 const statusNameMap = {
-                                        escolhido: 'Escolheu o animal',
-                                        rejeitado: 'Rejeitou o animal',
-                                        em_adocao: 'Entrou em processo de adoção',
-                                        finalizado: record.observacao
-                                    };
+                                const statusNameMap = {
+                                    escolhido: 'Escolheu o animal',
+                                    rejeitado: 'Rejeitou o animal',
+                                    em_adocao: 'Entrou em processo de adoção',
+                                    finalizado: record.observacao
+                                };
                                 return (
                                     record.status ? statusNameMap[record.status as keyof typeof statusNameMap] : 'Nenhum status'
                                 )
@@ -326,7 +327,7 @@ const Gallery = ({ images }: { images: any[] }) => {
 const AnimalShowActions = () => (
     <TopToolbar
         sx={{
-            backgroundColor: '#fafafb !important',
+            backgroundColor: '#F2F1F0 !important',
         }}
     >
         <DeleteWithConfirmButton
@@ -365,8 +366,7 @@ const AnimalShow = () => (
                         width: '100%',
                         margin: '0 auto',
                         p: { xs: 1, sm: 2 },
-                        backgroundColor: '#fafafb',
-
+                        backgroundColor: '#F2F1F0',
                     }}
 
                 >

@@ -1,4 +1,4 @@
-import { Box, Button, Card, CardContent, Dialog, DialogContent, Grid, IconButton, Theme, Typography } from '@mui/material';
+import { Box, Button, Card, CardContent, Chip, Dialog, DialogContent, Grid, IconButton, Theme, Typography } from '@mui/material';
 import {
     Show,
     TabbedShowLayout,
@@ -31,6 +31,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import { SetStateAction, useState } from 'react';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import InboxIcon from '@mui/icons-material/Inbox';
+import { CopyText } from '../CopyText';
 
 interface ImageDialogProps {
     open: boolean;
@@ -45,7 +46,7 @@ interface ImageDialogProps {
 const LarTempShowActions = () => (
     <TopToolbar
         sx={{
-            backgroundColor: '#fafafb !important',
+            backgroundColor: '#F2F1F0 !important',
         }}
     >
         <DeleteWithConfirmButton
@@ -68,7 +69,7 @@ const Aside = () => {
             flexDirection="column"
             gap={2}
             sx={{
-                width: { xs: '100%', md: 370 },
+                width: { xs: '100%', md: 400 },
             }}
         >
             <Card sx={{ px: 0 }}>
@@ -81,14 +82,14 @@ const Aside = () => {
                         <Button
                             variant="outlined"
                             size="small"
-                            sx={{ mr: 2 }}
+                            sx={{ mr: 2, fontSize: { xs: 10, md: 12 } }}
                             endIcon={<NavigateNextIcon />}
                         >
                             <Link
                                 to={`/animais?filter=${encodeURIComponent(JSON.stringify({ "lar_temporario_id": record.id }))}`}
                                 sx={{ textDecoration: 'none', color: 'primary.main' }}
                             >
-                                Ver todos ( <Count resource="animais" filter={{ "lar_temporario_id": record.id }} /> )
+                                Ver todos (<Count resource="animais" sx={{ fontSize: { xs: 10, md: 12 } }} filter={{ "lar_temporario_id": record.id }} />)
                             </Link>
                         </Button>
                     </Box>
@@ -98,9 +99,15 @@ const Aside = () => {
                         target="lar_temporario_id"
                         filter={{ situacao: ["disponivel", "em_adocao", "em_aprovacao"] }}
                         sort={{ field: "created_at", order: "DESC" }}
-                        perPage={100}
+                        perPage={5}
                     >
                         <SimpleList
+                            sx={{
+                                '.RaSimpleList-tertiary': {
+                                    opacity: 1,
+                                    zIndex: 1
+                                }
+                            }}
                             empty={
                                 <Box textAlign="center" m={4}>
                                     <InboxIcon fontSize="large" color="disabled" />
@@ -109,7 +116,6 @@ const Aside = () => {
                                     </Typography>
                                 </Box>
                             }
-                            rightIcon={() => <FaEye size={18} style={{ marginTop: '2rem', marginLeft: '2rem', color: '#337ab7' }} />}
                             leftAvatar={(record) =>
                                 record.imagens.caminho ||
                                 import.meta.env.VITE_API_URL + '/imagens/' + record.imagens[0]?.caminho
@@ -117,8 +123,24 @@ const Aside = () => {
                             primaryText={(record) =>
                                 record.nome + ' - ' + tamanhos.find((tamanho) => tamanho.id === record.tamanho)?.name
                             }
-
-                            tertiaryText={(record) => chipTipos[record.situacao as Situacao]?.label ?? 'Indefinido'}
+                            tertiaryText={(record) => {
+                                return (
+                                    <Chip
+                                        size='small'
+                                        label={chipTipos[record.situacao as Situacao]?.label ?? 'Indefinido'}
+                                        sx={{
+                                            position: 'absolute',
+                                            top: 24,
+                                            right: 16,
+                                            opacity: 1,
+                                            zIndex: 1,
+                                            bgcolor: chipTipos[record.situacao as Situacao]?.bgCor ?? '#9e9e9e',
+                                            color: chipTipos[record.situacao as Situacao]?.textCor ?? '#333',
+                                            fontWeight: 'bold',
+                                        }}
+                                    />
+                                )
+                            }}
                             secondaryText={(record) => `${formatarDiferencaData(record.data_nascimento)}`}
                         />
                     </ReferenceManyField>
@@ -193,6 +215,20 @@ const Gallery = ({ images }: { images: any[] }) => {
     );
 };
 
+const formatPhone = (phone: string) => {
+    if (!phone) return ''; // Retorna vazio se não houver telefone
+    const digits = phone.replace(/\D/g, '');
+
+    if (digits.length === 11) {
+        return digits.replace(/^(\d{2})(\d{1})(\d{4})(\d{4})$/, '($1) $2$3-$4');
+    }
+
+    if (digits.length === 10) {
+        return digits.replace(/^(\d{2})(\d{4})(\d{4})$/, '($1) $2-$3');
+    }
+    return phone;
+};
+
 /**
  * Componente de Visualização para o Lar Temporário.
  */
@@ -202,7 +238,7 @@ const LarTempShow = (props: ShowProps) => {
     return (
         <Show
             {...props}
-            title="Detalhes do Lar Temporário"
+            title="Detalhes do Lar"
             actions={<LarTempShowActions />}
             sx={{
                 width: { xs: '100%', md: 800 },
@@ -226,8 +262,7 @@ const LarTempShow = (props: ShowProps) => {
                             width: '100%',
                             margin: '0 auto',
                             p: { xs: 1, sm: 2 },
-                            backgroundColor: '#fafafb',
-
+                            backgroundColor: '#F2F1F0',
                         }}
 
                     >
@@ -245,7 +280,7 @@ const LarTempShow = (props: ShowProps) => {
                                                     { id: 'ativo', name: 'Ativo' },
                                                     { id: 'inativo', name: 'Inativo' },
                                                 ]}
-                                                optionText={<ChipField size='small' source="name" color={record.situacao === 'ativo' ? 'success' : 'error'} />}
+                                                optionText={<ChipField size='small' sx={{ fontWeight: 'bold' }} source="name" color={record.situacao === 'ativo' ? 'success' : 'error'} />}
                                             />
 
                                             <TextField
@@ -253,22 +288,21 @@ const LarTempShow = (props: ShowProps) => {
                                                 label="Nome Completo"
                                             />
 
-                                            <TextField
-                                                source="telefone"
+                                            <FunctionField
                                                 label="Telefone"
+                                                render={(record) => <CopyText sx={{ p: 0 }} text={formatPhone(record.telefone)} />}
                                             />
-
                                             <DateField
                                                 source="data_nascimento"
                                                 label="Data de Nascimento"
                                                 locales="pt-BR"
                                             />
 
-                                            <TextField
-                                                source="Experiência"
+                                            <FunctionField
                                                 label="Experiência com animais (opcional)"
+                                                render={(record) =>  record.experiencia || 'N/A' }
                                             />
-
+                                            
                                             <FunctionField
                                                 label="Endereço"
                                                 render={(record) => {

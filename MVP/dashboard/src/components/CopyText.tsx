@@ -11,8 +11,9 @@ interface CopyTextProps {
 export const CopyText = ({ text, label }: CopyTextProps) => {
     const [copied, setCopied] = useState(false);
 
-    const handleCopy = async () => {
+    const handleCopy = async (event: React.MouseEvent<HTMLButtonElement>) => {
         try {
+            event.stopPropagation();
             // API nativa do navegador para copiar
             await navigator.clipboard.writeText(text);
 
@@ -36,7 +37,8 @@ export const CopyText = ({ text, label }: CopyTextProps) => {
             sx={{
                 p: 1,
                 borderRadius: 1,
-                width: 'fit-content'
+                width: 'fit-content',
+                zIndex: 999,
             }}
         >
             {label || text}

@@ -1,17 +1,56 @@
 import React from 'react';
-import { 
-    SimpleForm, 
-    TextInput, 
-    required, 
-    PasswordInput, 
-    Edit, 
-    ImageInput, 
-    ImageField, 
-    useRecordContext
+import {
+    SimpleForm,
+    TextInput,
+    required,
+    PasswordInput,
+    Edit,
+    ImageInput,
+    ImageField,
+    useRecordContext,
+    useRedirect,
+    SaveButton,
+    Button,
+    DeleteWithConfirmButton
 } from 'react-admin';
 import CustomDatePicker from '../datepicker/customDatePicker';
 import { FilePlaceholder } from '../FilePlaceHolder';
-import { CustomToolbar } from '../CustomToolbar'; 
+import { CustomToolbar } from '../CustomToolbar';
+import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
+
+const validatePasswordMatch = (value: string, allValues : any) => {
+    if (value !== allValues.password) {
+        return 'As senhas não coincidem';
+    }
+    return undefined;
+};
+
+const UsuarioToolbar = () => {
+    const redirect = useRedirect();
+
+    const handleBack = () => redirect('list', 'usuarios');
+
+    return (
+        <CustomToolbar
+            leftButtons={[
+                <SaveButton
+                    type='button'
+                />,
+            ]}
+            rightButtons={[
+                <Button
+                    label="Voltar"
+                    startIcon={<ArrowBackIosNewIcon />}
+                    onClick={handleBack}
+                />,
+                <DeleteWithConfirmButton
+                    confirmTitle="Tem certeza?"
+                    confirmContent="Deseja realmente excluir o usuário?"
+                />,
+            ]}
+        />
+    );
+};
 
 const UserFormContent = () => {
 
@@ -84,12 +123,15 @@ const UserFormContent = () => {
             <PasswordInput
                 source="password"
                 label="Senha"
-                helperText="Deixe em branco para não alterar a senha"
+                validate={[required('A senha é obrigatória'),
+                (value) => value && !/^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/i.test(value) && 'A senha é inválido'
+                ]}
             />
 
             <PasswordInput
                 source="password_confirmation"
                 label="Confirmar Senha"
+                validate={validatePasswordMatch}
             />
         </>
     );
@@ -102,7 +144,9 @@ const UserEdit = () => {
             sx={{ width: '100%', maxWidth: 600, margin: '0 auto', mb: 10 }}
             redirect="list"
         >
-            <SimpleForm>
+            <SimpleForm
+             toolbar={<UsuarioToolbar />}
+            >
                 <UserFormContent key={0} />
             </SimpleForm>
         </Edit>

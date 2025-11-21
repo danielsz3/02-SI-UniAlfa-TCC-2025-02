@@ -1,14 +1,15 @@
 import { useState } from 'react';
-import { Box, IconButton, Tooltip } from '@mui/material';
+import { Box, IconButton, SxProps, Theme, Tooltip } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CheckIcon from '@mui/icons-material/Check';
 
 interface CopyTextProps {
     text: string;
     label?: string; // Opcional: caso queiras mostrar um texto diferente do valor copiado
+    sx?: SxProps<Theme>;
 }
 
-export const CopyText = ({ text, label }: CopyTextProps) => {
+export const CopyText = ({ text, label, sx }: CopyTextProps) => {
     const [copied, setCopied] = useState(false);
 
     const handleCopy = async (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -35,7 +36,7 @@ export const CopyText = ({ text, label }: CopyTextProps) => {
             alignItems="center"
             gap={1}
             sx={{
-                p: 1,
+                ...sx,
                 borderRadius: 1,
                 width: 'fit-content',
                 zIndex: 999,

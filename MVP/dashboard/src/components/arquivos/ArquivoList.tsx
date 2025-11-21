@@ -16,6 +16,7 @@ import {
 import React from 'react';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import EditSquareIcon from '@mui/icons-material/EditSquare';
+import CustomDatePicker from '../datepicker/customDatePicker';
 
 // --- Variáveis de Estilo ---
 
@@ -37,15 +38,17 @@ const fileTypeStyles = {
 const filters = [
     <TextInput label="Título" source="titulo" size="small" alwaysOn />,
     <TextInput label="Categoria" source="categoria" size="small" />,
-    <DateInput
+    <CustomDatePicker
         label="Criado a partir de"
         source="created_at_from"
         alwaysOn
+        past
     />,
-    <DateInput
+    <CustomDatePicker
         label="Criado até"
         source="created_at_to"
         alwaysOn
+        past
     />,
 ];
 

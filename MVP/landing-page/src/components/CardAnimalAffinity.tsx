@@ -19,6 +19,7 @@ import { toast } from 'sonner';
 import { useState } from 'react';
 import { getToken } from '@/lib/api';
 import { useRouter } from 'next/navigation';
+import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 
 interface Props {
   animal_afinidade: AnimalAffinity;
@@ -30,15 +31,15 @@ interface Props {
 }
 
 const nivelEnergia = [
-  { id: 'baixa', name: 'Calmo / Tranquilo' },
-  { id: 'moderada', name: 'Ativo / Energético' },
-  { id: 'alta', name: 'Muito Energético' },
+  { id: 'baixa', name: 'Calmo' },
+  { id: 'moderada', name: 'Ativo' },
+  { id: 'alta', name: 'Muito Ativo' },
 ]
 
 const tamanho = [
-  { id: 'pequeno', name: 'Pequeno (até 10kg)' },
-  { id: 'medio', name: 'Médio (10kg a 25kg)' },
-  { id: 'grande', name: 'Grande (acima de 25kg)' },
+  { id: 'pequeno', name: 'Pequeno' },
+  { id: 'medio', name: 'Médio' },
+  { id: 'grande', name: 'Grande' },
 ]
 
 const tempoNecessario = [
@@ -52,6 +53,36 @@ const ambienteIdeal = [
   { id: 'area_media', name: 'Área Média' },
   { id: 'area_externa', name: 'Área Externa' },
 ]
+
+export function AfinidadeTooltip({ animal_afinidade }: { animal_afinidade: AnimalAffinity }) {
+
+  const [isTooltipOpen, setIsTooltipOpen] = useState(false);
+
+  return (
+    <Tooltip
+      open={isTooltipOpen}
+      onOpenChange={setIsTooltipOpen}
+    >
+      <TooltipTrigger asChild>
+        <Button
+          variant="link"
+          title="Afinidade"
+          className='p-0'
+          onClick={() => setIsTooltipOpen((prev) => !prev)}
+        >
+          <Badge className="text-lg md:text-lg px-3 py-1 whitespace-nowrap shrink-0">
+            <strong className="hidden lg:inline-block mr-1">Afinidade:</strong>
+            <strong>{animal_afinidade.afinidade_percent}%</strong>
+          </Badge>
+        </Button>
+      </TooltipTrigger>
+
+      <TooltipContent>
+        <p>Percentual de afinidade</p>
+      </TooltipContent>
+    </Tooltip>
+  );
+}
 
 export default function CardAnimalAffinity({
   animal_afinidade,
@@ -135,11 +166,35 @@ export default function CardAnimalAffinity({
     }
   };
 
+  const animalAtributos = [
+    {
+      label: "Tamanho",
+      icon: PawPrint,
+      // A lógica de busca fica aqui, limpando o JSX
+      value: tamanho.find((t) => t.id === animal_afinidade.animal.tamanho)?.name || animal_afinidade.animal.tamanho
+    },
+    {
+      label: "Energia",
+      icon: BatteryChargingIcon,
+      value: nivelEnergia.find((n) => n.id === animal_afinidade.animal.nivel_energia)?.name || animal_afinidade.animal.nivel_energia
+    },
+    {
+      label: "Tempo Necessário",
+      icon: Clock,
+      value: tempoNecessario.find((t) => t.id === animal_afinidade.animal.tempo_necessario)?.name || animal_afinidade.animal.tempo_necessario
+    },
+    {
+      label: "Ambiente",
+      icon: TreePalmIcon,
+      value: ambienteIdeal.find((a) => a.id === animal_afinidade.animal.ambiente_ideal)?.name || animal_afinidade.animal.ambiente_ideal
+    }
+  ];
+
   const isGlobalDisabled = isParentProcessing || !!loadingAction;
 
   return (
     <Card className="h-full flex flex-col">
-      <CardHeader>
+      <CardHeader className="pb-3">
         <CardTitle>{animal_afinidade.animal.nome}</CardTitle>
         <p>{calcularIdade(animal_afinidade.animal.data_nascimento)}</p>
         <Badge className="capitalize absolute h-10 w-20 text-md top-7 right-7">
@@ -147,66 +202,51 @@ export default function CardAnimalAffinity({
         </Badge>
       </CardHeader>
 
-      <CardContent className="flex-1 p-0 block">
-        <div className="w-full h-[45vh]  md:h-[35vh] overflow-hidden rounded-t-lg">
+      <CardContent className="flex-1 p-0 pb-6 xs:pb-3 block">
+        <div className="w-full h-[40vh]  md:h-[35vh] overflow-hidden rounded-t-lg">
           <ImageCarousel images={animal_afinidade.animal.imagens} />
         </div>
-        <CardDescription className="mt-2 text-md text-muted-foreground">
-          <div className="grid md:grid-cols-2 grid-cols-4 gap-2 md:gap-4 mt-6 w-full">
+        <div className="text-md text-muted-foreground ">
+          <div className="grid grid-cols-2 gap-2 md:gap-3 mt-6 w-full">
+            {animalAtributos.map((detail, index) => (
+              <div key={index} className="w-full h-full">
 
-            {/* TAMANHO */}
-            <div className="flex flex-col items-center">
-              <div className={`bg-secondary text-white p-3 md:p-4 w-full h-full min-h-[50px] md:min-h-[60px] rounded-lg flex flex-col items-center justify-center`}>
-                <PawPrint className="size-6 md:size-8 mb-1" />
-                <span className="text-xs md:text-sm font-bold mb-1">Tamanho</span>
-                <p className="text-xs md:text-sm text-center font-semibold leading-tight px-2 text-wrap">
-                  {tamanho.find((t) => t.id === animal_afinidade.animal.tamanho)?.name || animal_afinidade.animal.tamanho}
-                </p>
+                <div className="bg-background border-2 text-primary dark:text-white p-2 w-full h-full min-h-[70px] rounded-xl 
+                      flex flex-row items-center justify-start shadow-sm 
+                      hover:shadow-md transition-transform duration-300 hover:scale-[1.04]">
+
+                  {/* BLOCO 1: Ícone */}
+                  <div className="shrink-0 p-2 mr-1 rounded-full">
+                    <detail.icon className="size-5 md:size-6" />
+                  </div>
+
+                  {/* BLOCO 2: Textos (Título e Valor empilhados) */}
+                  <div className="flex flex-col items-start text-left overflow-hidden">
+
+                    {/* Label (Título Pequeno) */}
+                    <span className="text-[11px] md:text-xs uppercase tracking-wide font-bold opacity-80">
+                      {detail.label}
+                    </span>
+
+                    {/* Valor (Informação Principal) */}
+                    <span className="text-sm md:text-sm lg:text-sm font-bold leading-tight truncate w-full" title={detail.value}>
+                      {detail.value || "-"}
+                    </span>
+
+                  </div>
+
+                </div>
               </div>
-            </div>
-
-            {/* NÍVEL DE ENERGIA */}
-            <div className="flex flex-col items-center w-full">
-              <div className={`bg-secondary text-white p-3 md:p-4 w-full h-full min-h-[50px] md:min-h-[60px] rounded-lg flex flex-col items-center justify-center`}>
-                <BatteryChargingIcon className="size-6 md:size-8 mb-1" />
-                <span className="text-xs md:text-sm font-bold mb-1">Energia</span>
-                <p className="text-xs md:text-sm text-center font-semibold leading-tight px-2 text-wrap">
-                  {nivelEnergia.find((n) => n.id === animal_afinidade.animal.nivel_energia)?.name || animal_afinidade.animal.nivel_energia}
-                </p>
-              </div>
-            </div>
-
-            {/* TEMPO NECESSÁRIO */}
-            <div className="flex flex-col items-center w-full">
-              <div className={`bg-secondary text-white p-3 md:p-4 w-full h-full min-h-[50px] md:min-h-[60px] rounded-lg flex flex-col items-center justify-center`}>
-                <Clock className="size-6 md:size-8 mb-1" />
-                <span className="text-xs md:text-sm font-bold mb-1 text-center">Tempo Necessário</span>
-                <span className="text-xs md:text-sm text-center font-semibold leading-tight px-2 text-wrap">
-                  {tempoNecessario.find((t) => t.id === animal_afinidade.animal.tempo_necessario)?.name || animal_afinidade.animal.tempo_necessario}
-                </span>
-              </div>
-            </div>
-
-            {/* AMBIENTE IDEAL */}
-            <div className="flex flex-col items-center w-full">
-              <div className={`bg-secondary text-white p-3 md:p-4 w-full h-full min-h-[50px] md:min-h-[60px] rounded-lg flex flex-col items-center justify-center`}>
-                <TreePalmIcon className="size-6 md:size-8 mb-1" />
-                <span className="text-xs md:text-sm font-bold mb-1">Ambiente</span>
-                <span className="text-xs md:text-sm text-center font-semibold leading-tight px-2 text-wrap">
-                  {ambienteIdeal.find((a) => a.id === animal_afinidade.animal.ambiente_ideal)?.name || animal_afinidade.animal.ambiente_ideal}
-                </span>
-              </div>
-            </div>
-
+            ))}
           </div>
-        </CardDescription>
+        </div>
       </CardContent>
 
       <CardFooter className="mt-auto pt-0 flex justify-between items-center">
-        <Badge className="text-lg">
-          <strong>Afinidade:</strong>
-          {animal_afinidade.afinidade_percent}%
-        </Badge>
+
+        <AfinidadeTooltip
+          animal_afinidade={animal_afinidade}
+        />
         <div className="flex items-center gap-5">
           <Button
             variant="ghost"

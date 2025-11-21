@@ -42,6 +42,12 @@ async function fetchAnimal(id: number) {
     }
 }
 
+const tamanho = [
+  { id: 'pequeno', name: 'Pequeno (até 10kg)' },
+  { id: 'medio', name: 'Médio (10kg a 25kg)' },
+  { id: 'grande', name: 'Grande (acima de 25kg)' },
+]
+
 export function AnimalDetailModal({ initialData, onClose, buttonAdotar, carousel = true }: AnimalDetailModalProps) {
     const [animal, setAnimal] = useState<Animal | null>(initialData)
     const [loadingDetails, setLoadingDetails] = useState(false)
@@ -82,7 +88,7 @@ export function AnimalDetailModal({ initialData, onClose, buttonAdotar, carousel
         if (!animal) return null
 
         return (
-            <div className="grid lg:grid-cols-2 grid-cols-1 gap-6 md:gap-8">
+            <div className={`grid grid-cols-1 ${carousel ? "lg:grid-cols-2" : "lg:grid-cols-1"} gap-6 md:gap-8`}>
                 {/* Coluna 1: Imagem */}
                 {carousel && (
                     <div className="rounded-lg overflow-hidden  sm:h-full min-h-[55vh]">
@@ -125,7 +131,7 @@ export function AnimalDetailModal({ initialData, onClose, buttonAdotar, carousel
                                 <Ruler className="h-5 w-5 text-primary shrink-0" />
                                 <div>
                                     <p className="text-sm text-muted-foreground">Tamanho</p>
-                                    <p className="font-semibold capitalize">{animal.tamanho}</p>
+                                    <p className="font-semibold capitalize">{tamanho.find((t) => t.id === animal.tamanho)?.name || animal.tamanho}</p>
                                 </div>
                             </Card>
                         )}
@@ -184,7 +190,7 @@ export function AnimalDetailModal({ initialData, onClose, buttonAdotar, carousel
                                             </p>
                                         )}
                                         {animal.fica_usuario != 0 && (
-                                            <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap mt-4">
+                                            <p className="text-muted-foreground font-bold leading-relaxed whitespace-pre-wrap mt-4">
                                                 Este animal está com o dono atualmente.
                                             </p>
                                         )}
@@ -220,7 +226,7 @@ export function AnimalDetailModal({ initialData, onClose, buttonAdotar, carousel
                 modal
             >
                 <DialogContent
-                    className="max-h-[90vh] min-w-[90vw] overflow-y-auto p-6 gap-0 "
+                    className={`max-h-[90vh] ${carousel ? "min-w-[90vw]" : "min-w-[90vw] md:min-w-2xl"} overflow-y-auto p-6 gap-0 `}
                 >
                     {renderContent()}
                 </DialogContent>

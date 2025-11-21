@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useState } from "react"
+import { ReactNode, useState } from "react"
 import { useRouter } from "next/navigation"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
@@ -279,6 +279,7 @@ export function Navbar() {
                         <div>
                             <div className="text-xs uppercase text-muted-foreground mb-1">Sobre</div>
                             <div className="flex flex-col gap-2">
+
                                 <Link href="/sobre" onClick={() => setMobileOpen(false)} className="text-sm hover:text-primary">
                                     Sobre
                                 </Link>
@@ -290,6 +291,15 @@ export function Navbar() {
                                 >
                                     Portal de Transparência
                                 </Link>
+
+                                <Link
+                                    href="/parceiros"
+                                    onClick={() => setMobileOpen(false)}
+                                    className="text-sm hover:text-primary"
+                                >
+                                    Parceiros
+                                </Link>
+
                             </div>
                         </div>
 

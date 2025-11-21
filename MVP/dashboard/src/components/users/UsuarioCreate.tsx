@@ -1,7 +1,57 @@
-import { Create, SimpleForm, TextInput, required, PasswordInput, ImageInput, ImageField } from 'react-admin';
+import { Create, SimpleForm, TextInput, required, PasswordInput, ImageInput, ImageField, useRedirect, SaveButton, Button, DeleteWithConfirmButton, useNotify } from 'react-admin';
 import CustomDatePicker from '../datepicker/customDatePicker';
 import { FilePlaceholder } from '../FilePlaceHolder';
 import { CustomToolbar } from '../CustomToolbar';
+import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
+import { useFormContext } from 'react-hook-form';
+
+const validatePasswordMatch = (value: string, allValues: any) => {
+    if (value !== allValues.password) {
+        return 'As senhas não coincidem';
+    }
+    return undefined;
+};
+
+const UsuarioToolbar = () => {
+    const redirect = useRedirect();
+    const notify = useNotify();
+    const form = useFormContext();
+    const handleBack = () => redirect('list', 'usuarios');
+
+    return (
+        <CustomToolbar
+            leftButtons={[
+                <SaveButton
+                    type='button'
+                />,
+                <SaveButton
+                    type='button'
+                    sx={{ fontSize: "0.8rem" }}
+                    label='Salvar e Novo'
+                    variant='outlined'
+                    mutationOptions={{
+                        onSuccess: () => {
+                            notify('Usuário salvo com sucesso! Pronto para criar outro', { type: 'info' });
+                            redirect('create', 'usuarios');
+                            form.reset();
+                        },
+                    }}
+                />,
+            ]}
+            rightButtons={[
+                <Button
+                    label="Voltar"
+                    startIcon={<ArrowBackIosNewIcon />}
+                    onClick={handleBack}
+                />,
+                <DeleteWithConfirmButton
+                    confirmTitle="Tem certeza?"
+                    confirmContent="Deseja realmente excluir o usuário?"
+                />,
+            ]}
+        />
+    );
+};
 
 const UserCreate = () => (
     <Create
@@ -9,7 +59,9 @@ const UserCreate = () => (
         sx={{ width: '100%', maxWidth: 600, margin: '0 auto' }}
         redirect="list"
     >
-        <SimpleForm>
+        <SimpleForm
+            toolbar={<UsuarioToolbar />}
+        >
             <TextInput
                 source="nome"
                 label="Nome"
@@ -26,13 +78,13 @@ const UserCreate = () => (
                 source='data_nascimento'
                 label="Data de Nascimento *"
                 validate={required('A data de nascimento é obrigatória')}
+                past
             />
 
             <TextInput
                 source="telefone"
                 label="Telefone"
-                validate={[required('O telefone é obrigatória')
-                ]}
+                validate={[required('O telefone é obrigatório')]}
             />
 
             <TextInput
@@ -46,14 +98,17 @@ const UserCreate = () => (
             <PasswordInput
                 source="password"
                 label="Senha"
-                validate={required('A senha é obrigatória')}
+                validate={[required('A senha é obrigatória'),
+                (value) => value && !/^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/i.test(value) && 'A senha é inválido'
+                ]}
             />
 
             <PasswordInput
                 source="password_confirmation"
                 label="Confirmar Senha"
-                validate={required('A confirmação de senha é obrigatória')}
+                validate={validatePasswordMatch}
             />
+
             <ImageInput
                 source="imagem"
                 label="Imagem"
@@ -80,3 +135,4 @@ const UserCreate = () => (
 );
 
 export default UserCreate;
+

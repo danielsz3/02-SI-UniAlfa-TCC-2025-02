@@ -14,15 +14,27 @@ import { getToken } from '@/lib/api';
 import { ArrowRight, Eye } from 'lucide-react';
 import Link from 'next/link';
 
-// --- Constantes e Tipos ---
+// --- Configurações e Tipos ---
 
 const API_BASE = (process.env.NEXT_PUBLIC_API_URL ?? '').replace(/\/$/, '');
-const USER_KEY = 'user'; // Chave do usuário no localStorage
+const USER_KEY = 'user';
+
+// Configuração de Chips/Badges fornecida
+// Nota: Substituí 'primary.main' por '#1976d2' (azul padrão) para garantir que funcione no style inline
+const chipTipos: Record<string, { label: string; bgCor: string; textCor: string }> = {
+  disponivel: { label: 'Disponível', bgCor: '#1976d2', textCor: '#fff' },
+  adotado: { label: 'Adotado', bgCor: '#9c27b0', textCor: '#fff' },
+  em_adocao: { label: 'Em Adoção', bgCor: '#425a8fff', textCor: '#fff' },
+  em_aprovacao: { label: 'Em Aprovação', bgCor: '#296b2c', textCor: '#fff' },
+};
+
+// Adicionamos 'anunciados' como um status virtual para a interface
+type MatchStatus = 'em_adocao' | 'escolhido' | 'rejeitado' | 'finalizado' | 'anunciados';
 
 type MatchItem = {
   id: number;
-  status: 'em_adocao' | 'escolhido' | 'rejeitado' | 'finalizado';
-  animal: Animal;
+  status: MatchStatus;
+  animal: Animal & { situacao?: string }; // Estendemos para garantir que o TS saiba que pode ter situacao
   observacao: string;
   created_at?: string | null;
   usuario_id: number;
@@ -31,14 +43,14 @@ type MatchItem = {
 
 type User = { id: number;[key: string]: any };
 
-type StatusFilter = 'em_adocao' | 'escolhido' | 'rejeitado' | 'finalizado';
+type StatusFilter = MatchStatus;
 
-// Lista de status válidos para validar o parâmetro da URL
 const VALID_STATUSES: StatusFilter[] = [
   'em_adocao',
   'escolhido',
   'rejeitado',
   'finalizado',
+  'anunciados',
 ];
 
 // --- Serviço de API Centralizado ---
@@ -51,7 +63,6 @@ const apiService = {
     try {
       const storedUser = localStorage.getItem(USER_KEY);
       if (!storedUser) return null;
-
       const user: User = JSON.parse(storedUser);
       return user?.id || null;
     } catch (e) {
@@ -83,31 +94,35 @@ const apiService = {
     return res.json().catch(() => null);
   },
 
-  /**
-   * Busca TODOS os matches do usuário.
-   */
+  // Busca Matches (Adoções)
   fetchMatches: async (userId: number): Promise<MatchItem[]> => {
     const filter = encodeURIComponent(JSON.stringify({ usuario_id: userId }));
     const order = encodeURIComponent(JSON.stringify(['created_at', 'DESC']));
-
-    // Corrigido: Usar '&' para separar query params
     const json = await apiService.fetch(
       `/match-afinidades?filter=${filter}&order=${order}`
     );
+    return Array.isArray(json) ? json : json.data ?? json.items ?? json ?? [];
+  },
 
+  // Busca Meus Anúncios (Animais cadastrados pelo usuário)
+  fetchMyAnimals: async (userId: number): Promise<Animal[]> => {
+    const filter = encodeURIComponent(JSON.stringify({ usuario_id: userId }));
+    const order = encodeURIComponent(JSON.stringify(['updated_at', 'DESC']));
+    const json = await apiService.fetch(
+      `/animais?filter=${filter}&order=${order}`
+    );
     return Array.isArray(json) ? json : json.data ?? json.items ?? json ?? [];
   },
 };
 
-// --- Hook Customizado (simplificado para apenas buscar dados) ---
+// --- Hook Customizado ---
 
 function useAdotanteData() {
   const [userId, setUserId] = useState<number | null>(null);
-  const [allMatches, setAllMatches] = useState<MatchItem[]>([]);
+  const [allItems, setAllItems] = useState<MatchItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Efeito 1: Pega o ID do usuário
   useEffect(() => {
     const id = apiService.getStoredUserId();
     if (id) {
@@ -119,43 +134,53 @@ function useAdotanteData() {
     }
   }, []);
 
-  // Efeito 2: Busca TODOS os matches (quando o userId for encontrado)
   useEffect(() => {
-    if (!userId) return; // Só roda se tivermos um ID
+    if (!userId) return;
 
     setLoading(true);
     setError(null);
 
-    apiService
-      .fetchMatches(userId)
-      .then(setAllMatches)
+    // Executa as duas requisições em paralelo
+    Promise.all([
+      apiService.fetchMatches(userId),
+      apiService.fetchMyAnimals(userId)
+    ])
+      .then(([matchesData, animalsData]) => {
+        // Normaliza os dados dos animais para o formato MatchItem
+        const formattedAnimals: MatchItem[] = animalsData.map((animal) => ({
+          id: animal.id,
+          status: 'anunciados',
+          animal: animal,
+          observacao: '',
+          created_at: animal.created_at,
+          usuario_id: userId,
+          animal_id: animal.id,
+        }));
+
+        setAllItems([...matchesData, ...formattedAnimals]);
+      })
       .catch((e) => {
-        console.error('Erro ao buscar matches', e);
+        console.error('Erro ao buscar dados', e);
         setError(e.message || 'Falha ao carregar dados.');
-        setAllMatches([]);
+        setAllItems([]);
       })
       .finally(() => {
         setLoading(false);
       });
   }, [userId]);
 
-  // Memo: Calcula as contagens
   const counts = useMemo(
     () => ({
-      em_adocao: allMatches.filter((m) => m.status === 'em_adocao').length,
-      escolhido: allMatches.filter((m) => m.status === 'escolhido').length,
-      rejeitado: allMatches.filter((m) => m.status === 'rejeitado').length,
-      finalizado: allMatches.filter((m) => m.status === 'finalizado').length,
+      em_adocao: allItems.filter((m) => m.status === 'em_adocao').length,
+      escolhido: allItems.filter((m) => m.status === 'escolhido').length,
+      rejeitado: allItems.filter((m) => m.status === 'rejeitado').length,
+      finalizado: allItems.filter((m) => m.status === 'finalizado').length,
+      anunciados: allItems.filter((m) => m.status === 'anunciados').length,
     }),
-    [allMatches]
+    [allItems]
   );
 
-  return {
-    allMatches, // Retorna a lista completa
-    counts,
-    isLoading: loading,
-    error,
-  };
+  return { allItems, counts, isLoading: loading, error };
 }
 
 // --- Componentes de UI ---
@@ -165,7 +190,7 @@ const PageHeader = () => (
     <div>
       <h3 className="text-2xl font-semibold">Painel do Adotante</h3>
       <p className="text-sm text-muted-foreground font-medium dark:text-secondary">
-        Gerencie seus pedidos e veja afinidades
+        Gerencie seus pedidos, afinidades e anúncios
       </p>
     </div>
     <Button asChild>
@@ -180,31 +205,27 @@ interface FilterTabsProps {
   onFilterChange: (filter: StatusFilter) => void;
 }
 
-const FilterTabs = ({
-  counts,
-  activeFilter,
-  onFilterChange,
-}: FilterTabsProps) => (
+const FilterTabs = ({ counts, activeFilter, onFilterChange }: FilterTabsProps) => (
   <div className="mb-6 flex items-center gap-3 flex-wrap">
-    {(
-      ['em_adocao', 'escolhido', 'rejeitado', 'finalizado'] as StatusFilter[]
-    ).map((status) => {
+    {(VALID_STATUSES).map((status) => {
       const isActive = activeFilter === status;
       const textMap: Record<StatusFilter, string> = {
         em_adocao: 'Em adoção',
         escolhido: 'Escolhidos',
         rejeitado: 'Rejeitados',
         finalizado: 'Finalizados',
+        anunciados: 'Meus Anúncios',
       };
+      
+      const activeClass = isActive 
+        ? 'bg-sky-600 text-white' 
+        : 'bg-muted/30 text-muted-foreground hover:bg-muted/50';
+
       return (
         <button
           key={status}
           onClick={() => onFilterChange(status)}
-          className={`px-3 py-1 rounded-full text-sm font-medium ${isActive
-            ? 'bg-sky-600 text-white'
-            // Corrigido: bg-muted/30 para melhor contraste
-            : 'bg-muted/30 text-muted-foreground'
-            }`}
+          className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${activeClass}`}
         >
           {textMap[status]}
           <span className="ml-2 text-xs px-2 py-0.5 rounded-full">
@@ -223,34 +244,16 @@ interface MatchListProps {
   onSeeAnimal: (animal: Animal) => void;
 }
 
-const MatchList: React.FC<MatchListProps> = ({
-  loading,
-  matches,
-  error,
-  onSeeAnimal,
-}) => {
-  if (loading) {
-    return (
-      <div className="text-center py-20 text-muted-foreground">
-        Carregando...
-      </div>
-    );
-  }
-  if (error) {
-    return <div className="text-center py-20 text-rose-600">{error}</div>;
-  }
-  if (matches.length === 0) {
-    return (
-      <div className="text-center text-muted-foreground py-10">
-        Nenhum registro encontrado.
-      </div>
-    );
-  }
+const MatchList: React.FC<MatchListProps> = ({ loading, matches, error, onSeeAnimal }) => {
+  if (loading) return <div className="text-center py-20 text-muted-foreground">Carregando...</div>;
+  if (error) return <div className="text-center py-20 text-rose-600">{error}</div>;
+  if (matches.length === 0) return <div className="text-center text-muted-foreground py-10">Nenhum registro encontrado.</div>;
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {matches.map((item) => (
         <MatchItemCard
-          key={item.id}
+          key={`${item.status}-${item.id}`} // Key composta para evitar colisão de IDs entre tabelas
           item={item}
           onSee={() => onSeeAnimal(item.animal)}
         />
@@ -264,35 +267,59 @@ interface MatchItemCardProps {
   onSee: () => void;
 }
 
+// --- Componente do Card (Lógica de Cores Aplicada Aqui) ---
 const MatchItemCard = React.memo(({ item, onSee }: MatchItemCardProps) => {
   const { animal, status, created_at, observacao } = item;
   const img = animal.imagens?.[0]?.caminho;
   const idade = calcularIdade(animal.data_nascimento || '');
   const porte = animal.tamanho ?? '';
-  const statusColor =
-    status === 'escolhido'
-      ? 'bg-emerald-100 text-emerald-700'
-      : status === 'rejeitado'
-        ? 'bg-rose-100 text-rose-700'
-        : status === 'finalizado'
-          ? 'bg-sky-100 text-sky-700'
-          : 'bg-yellow-50 text-yellow-800';
-  const statusText: Record<StatusFilter, string> = {
-    em_adocao: 'Em adoção',
-    escolhido: 'Escolhido',
-    rejeitado: 'Rejeitado',
-    finalizado: 'Finalizado',
-  };
+
+  // Variáveis para estilo dinâmico
+  let badgeLabel = '';
+  let badgeStyle: React.CSSProperties = {};
+  let badgeClass = 'text-xs px-2 py-1 rounded-full font-semibold whitespace-nowrap';
+
+  if (status === 'anunciados') {
+    // === LÓGICA PARA ANÚNCIOS (Usa chipTipos) ===
+    const situacaoKey = animal.situacao || 'em_aprovacao'; // Fallback
+    const config = chipTipos[situacaoKey] || chipTipos['em_aprovacao'];
+
+    badgeLabel = config.label;
+    badgeStyle = {
+      backgroundColor: config.bgCor,
+      color: config.textCor,
+    };
+  } else {
+    // === LÓGICA PARA MATCHES (Classes Tailwind padrão) ===
+    const statusTextMap: Record<string, string> = {
+      em_adocao: 'Em adoção',
+      escolhido: 'Escolhido',
+      rejeitado: 'Rejeitado',
+      finalizado: 'Finalizado',
+    };
+    
+    badgeLabel = statusTextMap[status] || status;
+
+    if (status === 'escolhido') badgeClass += ' bg-emerald-600 text-white';
+    else if (status === 'rejeitado') badgeClass += ' bg-rose-700 text-white';
+    else if (status === 'finalizado') badgeClass += ' bg-sky-600 text-white';
+    else badgeClass += ' bg-yellow-600 text-white';
+  }
 
   return (
     <Card className="flex items-center gap-4 p-3 hover:shadow-lg transition-shadow w-full">
       <div className="w-20 h-20 rounded overflow-hidden bg-muted flex items-center justify-center shrink-0">
-        <img
-          src={`${process.env.NEXT_PUBLIC_API_URL}/imagens/` + img}
-          alt={animal.nome}
-          className="w-full h-full object-cover"
-        />
+        {img ? (
+          <img
+            src={`${process.env.NEXT_PUBLIC_API_URL}/imagens/` + img}
+            alt={animal.nome}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="text-xs text-muted-foreground">Sem foto</div>
+        )}
       </div>
+      
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-3">
           <div>
@@ -301,31 +328,33 @@ const MatchItemCard = React.memo(({ item, onSee }: MatchItemCardProps) => {
               {[idade, porte].filter(Boolean).join(' • ')}
             </p>
             <p className="text-xs text-muted-foreground">
-              Pedido:{' '}
+              {status === 'anunciados' ? 'Criado em: ' : 'Pedido: '}
               {new Date(created_at ?? Date.now()).toLocaleDateString('pt-BR')}
             </p>
             {observacao && (
-              <p className="text-xs text-muted-foreground">
-                Observação: {observacao}
+              <p className="text-xs text-muted-foreground truncate max-w-[200px]">
+                {observacao}
               </p>
             )}
           </div>
-          <div className="flex items-center gap-2 flex-col">
-            <div
-              className={`text-xs px-2 py-1 rounded-full ${statusColor} font-semibold whitespace-nowrap`}
-            >
-              {statusText[status]}
+
+          <div className="flex items-center gap-2 flex-col min-w-[20%]">
+            {/* Badge de Status Dinâmico */}
+            <div className={badgeClass} style={badgeStyle}>
+              {badgeLabel}
             </div>
+
             <div className="flex items-center gap-2">
-              <Button size="sm" variant="secondary" className='dark:text-white' onClick={onSee}>
-                <Eye />
+              <Button size="sm" variant="secondary" className="dark:text-white" onClick={onSee}>
+                <Eye className="w-4 h-4" />
               </Button>
+              
               {status === 'escolhido' && (
                 <Link href={`/adotar/form?animal_id=${animal.id}`}>
-                <Button size="sm">
-                  Adotar <ArrowRight />
-                </Button>
-              </Link>
+                  <Button size="sm">
+                    Adotar <ArrowRight className="w-4 h-4 ml-1" />
+                  </Button>
+                </Link>
               )}
             </div>
           </div>
@@ -337,38 +366,26 @@ const MatchItemCard = React.memo(({ item, onSee }: MatchItemCardProps) => {
 
 MatchItemCard.displayName = 'MatchItemCard';
 
-// --- Componente Principal da Página ---
+// --- Componente Principal ---
 
 export default function PainelAdotantePage() {
-  // 1. Busca todos os dados e contagens
-  const { allMatches, counts, isLoading, error } = useAdotanteData();
-
-  // 2. Hooks do Next.js para ler e escrever na URL
+  const { allItems, counts, isLoading, error } = useAdotanteData();
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
 
-  // 3. Determina o filtro ativo a partir da URL
-  //    Lê o ?status=...
   const urlStatus = searchParams.get('status') as StatusFilter;
-  // Valida o status da URL; se for inválido ou nulo, usa 'em_adocao'
-  const statusFilter = VALID_STATUSES.includes(urlStatus)
-    ? urlStatus
-    : 'em_adocao';
+  const statusFilter = VALID_STATUSES.includes(urlStatus) ? urlStatus : 'em_adocao';
 
-  // 4. Função para mudar o filtro (agora atualiza a URL)
   const handleFilterChange = (newStatus: StatusFilter) => {
     const params = new URLSearchParams(searchParams);
     params.set('status', newStatus);
-    // Atualiza a URL (ex: /painel-adotante?status=escolhido)
-    // 'replace' é melhor que 'push' aqui para não poluir o histórico
     router.replace(`${pathname}?${params.toString()}`);
   };
 
-  // 5. Filtra a lista completa (allMatches) com base no statusFilter da URL
   const filteredMatches = useMemo(
-    () => allMatches.filter((m) => m.status === statusFilter),
-    [allMatches, statusFilter] // Re-filtra quando a lista ou o status da URL mudam
+    () => allItems.filter((m) => m.status === statusFilter),
+    [allItems, statusFilter]
   );
 
   const [selectedAnimal, setSelectedAnimal] = useState<Animal | null>(null);
@@ -379,18 +396,17 @@ export default function PainelAdotantePage() {
 
       <FilterTabs
         counts={counts}
-        activeFilter={statusFilter} // Passa o filtro da URL
-        onFilterChange={handleFilterChange} // Passa a função que atualiza a URL
+        activeFilter={statusFilter}
+        onFilterChange={handleFilterChange}
       />
 
       <MatchList
         loading={isLoading}
-        matches={filteredMatches} // Passa a lista já filtrada
+        matches={filteredMatches}
         error={error}
         onSeeAnimal={(animal) => setSelectedAnimal(animal)}
       />
 
-      {/* Modal para ver detalhes */}
       <AnimalDetailModal
         buttonAdotar={false}
         initialData={selectedAnimal}

@@ -8,9 +8,10 @@ type CustomDatePickerProps = InputProps & {
     label: string;
     future?: boolean;
     past?: boolean;
+    helperText?: string;
 };
 
-const CustomDatePicker: React.FC<CustomDatePickerProps> = ({ source, label, ...props }) => {
+const CustomDatePicker = ({ source, label,helperText, ...props }: CustomDatePickerProps) => {
     const { field, fieldState } = useInput({ source, ...props });
 
     const cleanMessage = (msg?: any) => {
@@ -29,7 +30,7 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({ source, label, ...p
                 disableFuture={!props.future}
                 value={field.value ? new Date(field.value) : null}
                 onChange={field.onChange}
-                sx={{ mb: 0}}
+                sx={{ mb: helperText != '' ? 2 : 0 }}
                 slotProps={{
                     toolbar: {
                         toolbarFormat: "EEE, d 'de' MMM",
@@ -37,7 +38,7 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({ source, label, ...p
                     textField: {
                         fullWidth: true,
                         error: !!fieldState.error,
-                        helperText: cleanMessage(fieldState.error?.message) || " ",
+                        helperText: cleanMessage(fieldState.error?.message) || helperText || " ",
                         size: 'small',
                     },
 

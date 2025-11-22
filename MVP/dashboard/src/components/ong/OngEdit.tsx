@@ -19,6 +19,7 @@ import {
     regex,
     Edit,
     useRedirect,
+    useRefresh,
 } from 'react-admin';
 import CustomDatePicker from '../datepicker/customDatePicker';
 import { useFormContext } from 'react-hook-form';
@@ -73,19 +74,24 @@ const CepInput = () => {
 const OngEdit = (props: EditProps) => {
     const notify = useNotify();
     const navigate = useRedirect();
+    const refresh = useRefresh();
+
     return (
         <Edit
             {...props}
             resource="ongs"
             title="Editar ONG"
-            redirect='edit'
+            mutationMode="pessimistic"
             sx={{
-                maxWidth: { xs: '100%', sm: 600, md: 800 }, margin: { sm: 0, md: '0 auto' }, mt: 2
+                maxWidth: { xs: '100%', sm: 600, md: 800 }, margin: { xs: 0, sm: '0 auto' }, mt: 2
             }}
             mutationOptions={{
                 onSuccess: () => {
                     notify('ONG atualizada com sucesso!', { type: 'info' });
-                    navigate('/ongs/edit/1');
+                    refresh()
+                },
+                onError: (error) => {
+                    notify(`Erro ao atualizar: ${error.message}`, { type: 'error' });
                 }
             }}
         >

@@ -189,6 +189,12 @@ const AnimalList = () => {
         >
             {isSmall ? (
                 <SimpleList
+                    sx={{
+                        '.RaSimpleList-tertiary': {
+                            opacity: 1,
+                            zIndex: 1
+                        }
+                    }}
                     leftAvatar={(record) =>
                         record.imagens.caminho ||
                         import.meta.env.VITE_API_URL + '/imagens/' + record.imagens[0]?.caminho
@@ -196,7 +202,24 @@ const AnimalList = () => {
                     primaryText={(record) =>
                         record.nome + ' - ' + tamanhos.find((tamanho) => tamanho.id === record.tamanho)?.name
                     }
-                    tertiaryText={(record) => chipTipos[record.situacao as Situacao]?.label ?? 'Indefinido'}
+                    tertiaryText={(record) => {
+                        return (
+                            <Chip
+                                size='small'
+                                label={chipTipos[record.situacao as Situacao]?.label ?? 'Indefinido'}
+                                sx={{
+                                    position: 'absolute',
+                                    top: 24,
+                                    right: 16,
+                                    opacity: 1,
+                                    zIndex: 1,
+                                    bgcolor: chipTipos[record.situacao as Situacao]?.bgCor ?? '#9e9e9e',
+                                    color: chipTipos[record.situacao as Situacao]?.textCor ?? '#333',
+                                    fontWeight: 'bold',
+                                }}
+                            />
+                        )
+                    }}
                     secondaryText={(record) => `${formatarDiferencaData(record.data_nascimento)}`}
                 />
             ) : (

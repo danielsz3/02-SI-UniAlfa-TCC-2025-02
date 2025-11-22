@@ -1,10 +1,7 @@
 'use client'
 
-// Importações do React e Next.js
 import React, { useEffect, useMemo, useState } from 'react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
-
-// Importações de Componentes e Tipos
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { calcularIdade } from '@/lib/animal-utils'
@@ -13,14 +10,11 @@ import { Animal } from '@/types'
 import { getToken } from '@/lib/api'
 import { ArrowRight, Eye } from 'lucide-react'
 import Link from 'next/link'
-
-// --- Configurações e Tipos ---
+import LoadMoreList from '@/components/LoadMoreList'
 
 const API_BASE = (process.env.NEXT_PUBLIC_API_URL ?? '').replace(/\/$/, '')
 const USER_KEY = 'user'
 
-// Configuração de Chips/Badges fornecida
-// Nota: Substituí 'primary.main' por '#1976d2' (azul padrão) para garantir que funcione no style inline
 const chipTipos: Record<string, { label: string; bgCor: string; textCor: string }> = {
   disponivel: { label: 'Disponível', bgCor: '#1976d2', textCor: '#fff' },
   adotado: { label: 'Adotado', bgCor: '#9c27b0', textCor: '#fff' },
@@ -28,20 +22,19 @@ const chipTipos: Record<string, { label: string; bgCor: string; textCor: string 
   em_aprovacao: { label: 'Em Aprovação', bgCor: '#296b2c', textCor: '#fff' },
 }
 
-// Adicionamos 'anunciados' como um status virtual para a interface
 type MatchStatus = 'em_adocao' | 'escolhido' | 'rejeitado' | 'finalizado' | 'anunciados'
 
 type MatchItem = {
   id: number
   status: MatchStatus
-  animal: Animal & { situacao?: string } // Estendemos para garantir que o TS saiba que pode ter situacao
+  animal: Animal & { situacao?: string }
   observacao: string
   created_at?: string | null
   usuario_id: number
   animal_id: number
 }
 
-type User = { id: number;[key: string]: any }
+type User = { id: number; [key: string]: any }
 
 type StatusFilter = MatchStatus
 
@@ -52,8 +45,6 @@ const VALID_STATUSES: StatusFilter[] = [
   'finalizado',
   'anunciados',
 ]
-
-// --- Serviço de API Centralizado ---
 
 const apiService = {
   getToken: () => getToken(),
@@ -94,28 +85,24 @@ const apiService = {
     return res.json().catch(() => null)
   },
 
-  // Busca Matches (Adoções)
   fetchMatches: async (userId: number): Promise<MatchItem[]> => {
     const filter = encodeURIComponent(JSON.stringify({ usuario_id: userId }))
-    const order = encodeURIComponent(JSON.stringify(['created_at', 'DESC']))
+    const sort = encodeURIComponent(JSON.stringify(['created_at', 'DESC']))
     const json = await apiService.fetch(
-      `/match-afinidades?filter=${filter}&order=${order}`
+      `/match-afinidades?filter=${filter}&sort=${sort}`
     )
     return Array.isArray(json) ? json : json.data ?? json.items ?? json ?? []
   },
 
-  // Busca Meus Anúncios (Animais cadastrados pelo usuário)
   fetchMyAnimals: async (userId: number): Promise<Animal[]> => {
     const filter = encodeURIComponent(JSON.stringify({ usuario_id: userId }))
-    const order = encodeURIComponent(JSON.stringify(['updated_at', 'DESC']))
+    const sort = encodeURIComponent(JSON.stringify(['updated_at', 'DESC']))
     const json = await apiService.fetch(
-      `/animais?filter=${filter}&order=${order}`
+      `/animais?filter=${filter}&sort=${sort}`
     )
     return Array.isArray(json) ? json : json.data ?? json.items ?? json ?? []
   },
 }
-
-// --- Hook Customizado ---
 
 function useAdotanteData() {
   const [userId, setUserId] = useState<number | null>(null)
@@ -140,13 +127,11 @@ function useAdotanteData() {
     setLoading(true)
     setError(null)
 
-    // Executa as duas requisições em paralelo
     Promise.all([
       apiService.fetchMatches(userId),
       apiService.fetchMyAnimals(userId)
     ])
       .then(([matchesData, animalsData]) => {
-        // Normaliza os dados dos animais para o formato MatchItem
         const formattedAnimals: MatchItem[] = animalsData.map((animal) => ({
           id: animal.id,
           status: 'anunciados',
@@ -182,8 +167,6 @@ function useAdotanteData() {
 
   return { allItems, counts, isLoading: loading, error }
 }
-
-// --- Componentes de UI ---
 
 const PageHeader = () => (
   <div className="flex items-center justify-between mb-6">
@@ -237,51 +220,23 @@ const FilterTabs = ({ counts, activeFilter, onFilterChange }: FilterTabsProps) =
   </div>
 )
 
-interface MatchListProps {
-  loading: boolean
-  matches: MatchItem[]
-  error: string | null
-  onSeeAnimal: (animal: Animal) => void
-}
-
-const MatchList: React.FC<MatchListProps> = ({ loading, matches, error, onSeeAnimal }) => {
-  if (loading) return <div className="text-center py-20 text-muted-foreground">Carregando...</div>
-  if (error) return <div className="text-center py-20 text-rose-600">{error}</div>
-  if (matches.length === 0) return <div className="text-center text-muted-foreground py-10">Nenhum registro encontrado.</div>
-
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {matches.map((item) => (
-        <MatchItemCard
-          key={`${item.status}-${item.id}`} // Key composta para evitar colisão de IDs entre tabelas
-          item={item}
-          onSee={() => onSeeAnimal(item.animal)}
-        />
-      ))}
-    </div>
-  )
-}
-
 interface MatchItemCardProps {
   item: MatchItem
   onSee: () => void
 }
 
-// --- Componente do Card (Lógica de Cores Aplicada Aqui) ---
 const MatchItemCard = React.memo(({ item, onSee }: MatchItemCardProps) => {
   const { animal, status, created_at, observacao } = item
   const img = animal.imagens?.[0]?.caminho
   const idade = calcularIdade(animal.data_nascimento || '')
   const porte = animal.tamanho ?? ''
 
-  // Variáveis para estilo dinâmico
   let badgeLabel = ''
   let badgeStyle: React.CSSProperties = {}
   let badgeClass = 'text-xs px-2 py-1 rounded-full font-semibold whitespace-nowrap'
 
   if (status === 'anunciados') {
-    // === LÓGICA PARA ANÚNCIOS (Usa chipTipos) ===
-    const situacaoKey = animal.situacao || 'em_aprovacao' // Fallback
+    const situacaoKey = animal.situacao || 'em_aprovacao'
     const config = chipTipos[situacaoKey] || chipTipos['em_aprovacao']
 
     badgeLabel = config.label
@@ -290,7 +245,6 @@ const MatchItemCard = React.memo(({ item, onSee }: MatchItemCardProps) => {
       color: config.textCor,
     }
   } else {
-    // === LÓGICA PARA MATCHES (Classes Tailwind padrão) ===
     const statusTextMap: Record<string, string> = {
       em_adocao: 'Em adoção',
       escolhido: 'Escolhido',
@@ -339,7 +293,6 @@ const MatchItemCard = React.memo(({ item, onSee }: MatchItemCardProps) => {
           </div>
 
           <div className="flex items-center gap-2 flex-col min-w-[20%]">
-            {/* Badge de Status Dinâmico */}
             <div className={badgeClass} style={badgeStyle}>
               {badgeLabel}
             </div>
@@ -366,8 +319,6 @@ const MatchItemCard = React.memo(({ item, onSee }: MatchItemCardProps) => {
 
 MatchItemCard.displayName = 'MatchItemCard'
 
-// --- Componente Principal ---
-
 export default function PainelAdotantePage() {
   const { allItems, counts, isLoading, error } = useAdotanteData()
   const searchParams = useSearchParams()
@@ -390,6 +341,28 @@ export default function PainelAdotantePage() {
 
   const [selectedAnimal, setSelectedAnimal] = useState<Animal | null>(null)
 
+  if (isLoading) {
+    return (
+      <div className="p-6 max-w-6xl mx-auto">
+        <PageHeader />
+        <div className="flex justify-center items-center py-12">
+          <div className="text-muted-foreground">Carregando dados...</div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="p-6 max-w-6xl mx-auto">
+        <PageHeader />
+        <div className="flex justify-center items-center py-12">
+          <div className="text-red-500">Erro: {error}</div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <PageHeader />
@@ -400,11 +373,17 @@ export default function PainelAdotantePage() {
         onFilterChange={handleFilterChange}
       />
 
-      <MatchList
-        loading={isLoading}
-        matches={filteredMatches}
-        error={error}
-        onSeeAnimal={(animal) => setSelectedAnimal(animal)}
+      <LoadMoreList
+        localData={filteredMatches}
+        step={8}
+        className="grid grid-cols-1 lg:grid-cols-2 gap-4"
+        renderItem={(item: MatchItem) => (
+          <MatchItemCard
+            key={`${item.status}-${item.id}`}
+            item={item}
+            onSee={() => setSelectedAnimal(item.animal)}
+          />
+        )}
       />
 
       <AnimalDetailModal

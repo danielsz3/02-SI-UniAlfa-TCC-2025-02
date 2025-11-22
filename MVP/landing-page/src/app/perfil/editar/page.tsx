@@ -9,14 +9,16 @@ import { useAuth } from "@/components/Providers"
 import { AvatarUpload } from "@/components/forms/inputs/AvatarUpload"
 import { Label } from "@/components/ui/label"
 import RadioCardGroup from "@/components/forms/inputs/RadioCardGroup"
+import { getToken } from "@/lib/api"
 
 const legendClass = "text-sm text-gray-600 dark:text-gray-400 mb-4"
 
-const API = process.env.NEXT_PUBLIC_API_BASE_URL
+const API = process.env.NEXT_PUBLIC_API_URL
 
 export default function EditarPerfilPage() {
-  const { user } = useAuth()
   const router = useRouter()
+  const [isLoading, setIsLoading] = useState(true)
+  const { user, } = useAuth()
 
   const [form, setForm] = useState({
     nome: "",
@@ -42,30 +44,68 @@ export default function EditarPerfilPage() {
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!user) return
 
-    setForm({
-      nome: user.nome || "",
-      email: user.email || "",
-      cpf: user.cpf || "",
-      dataNascimento: user.data_nascimento || "",
-      telefone: user.telefone || "",
-      cep: user.endereco?.cep || "",
-      logradouro: user.endereco?.logradouro || "",
-      numero: user.endereco?.numero || "",
-      complemento: user.endereco?.complemento || "",
-      bairro: user.endereco?.bairro || "",
-      cidade: user.endereco?.cidade || "",
-      estado: user.endereco?.uf || "",
-      tamanhoPet: user.preferencias?.tamanho_pet || "",
-      tempoCuidar: user.preferencias?.tempo_disponivel || "",
-      estiloVida: user.preferencias?.estilo_vida || "",
-      espaco: user.preferencias?.espaco_casa || "",
-    })
+    async function carregarDadosUsuario() {
+      try {
+        const token = getToken()
 
-    setImagePreviewUrl(user.imagem_url || null)
-  }, [user])
+        if (user?.id === undefined) {
+          return
+        }
 
+        const res = await fetch(`${API}/usuarios/${user?.id}`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        })
+
+        if (!res.ok) {
+          throw new Error("Falha ao validar token ou buscar dados")
+        }
+
+        const dadosUsuario = await res.json()
+
+        setForm({
+          nome: dadosUsuario.nome || "",
+          email: dadosUsuario.email || "",
+          cpf: dadosUsuario.cpf || "",
+          dataNascimento: new Date(dadosUsuario.data_nascimento).toISOString().split("T")[0] || "",
+          telefone: dadosUsuario.telefone || "",
+          cep: dadosUsuario.endereco?.cep || "",
+          logradouro: dadosUsuario.endereco?.logradouro || "",
+          numero: dadosUsuario.endereco?.numero || "",
+          complemento: dadosUsuario.endereco?.complemento || "",
+          bairro: dadosUsuario.endereco?.bairro || "",
+          cidade: dadosUsuario.endereco?.cidade || "",
+          estado: dadosUsuario.endereco?.uf || "",
+          tamanhoPet: dadosUsuario.preferencias?.tamanho_pet || "",
+          tempoCuidar: dadosUsuario.preferencias?.tempo_disponivel || "",
+          estiloVida: dadosUsuario.preferencias?.estilo_vida || "",
+          espaco: dadosUsuario.preferencias?.espaco_casa || "",
+        })
+
+        setImagePreviewUrl(`${API}/imagens/${dadosUsuario.imagem}`)
+
+
+      } catch (error) {
+        console.error("Erro ao carregar perfil:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    carregarDadosUsuario()
+  }, [router, user])
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p>Carregando dados...</p>
+      </div>
+    )
+  }
   const handleImageChange = (file: File | null) => {
     setImageFile(file)
 
@@ -154,6 +194,7 @@ export default function EditarPerfilPage() {
           </h2>
 
           <AvatarUpload
+            key={imagePreviewUrl || "sem-imagem"}
             label="Foto de Perfil"
             name="imagem"
             defaultPreviewUrl={imagePreviewUrl}
@@ -334,20 +375,20 @@ export default function EditarPerfilPage() {
                 onValueChange={(v) => setForm({ ...form, tempoCuidar: v })}
                 options={[
                   {
-                    value: "pouco",
+                    value: "pouco_tempo",
                     id: "tempo-pouco",
                     title: "Pouco",
                     description: "Prefiro pets mais independentes que não precisem de atenção.",
                   },
                   {
-                    value: "moderado",
+                    value: "tempo_moderado",
                     id: "tempo-moderado",
                     title: "Moderado",
                     description:
                       "Posso dedicar algumas horas para passeios, brincadeiras e cuidados.",
                   },
                   {
-                    value: "muito",
+                    value: "muito_tempo",
                     id: "tempo-muito",
                     title: "Muito",
                     description: "Tenho bastante tempo livre e gosto de me dedicar ao meu pet",
@@ -373,20 +414,20 @@ export default function EditarPerfilPage() {
                 onValueChange={(v) => setForm({ ...form, estiloVida: v })}
                 options={[
                   {
-                    value: "tranquila",
+                    value: "baixa",
                     id: "vida-tranquila",
                     title: "Tranquila",
                     description: "Meu tempo livre é para descansar e recarregar as energias.",
                   },
                   {
-                    value: "equilibrado",
+                    value: "moderada",
                     id: "vida-equilibrado",
                     title: "Equilibrado",
                     description:
                       "Intercalo períodos de atividade com momentos de descanso.",
                   },
                   {
-                    value: "acao",
+                    value: "alta",
                     id: "vida-acao",
                     title: "Sempre em ação",
                     description:
@@ -411,20 +452,20 @@ export default function EditarPerfilPage() {
                 onValueChange={(v) => setForm({ ...form, espaco: v })}
                 options={[
                   {
-                    value: "pequeno",
+                    value: "area_pequena",
                     id: "espaco-pequeno",
                     title: "Pequeno",
                     description: "Apartamento pequeno ou casa sem quintal/jardim.",
                   },
                   {
-                    value: "area_interna",
+                    value: "area_media",
                     id: "espaco-interno",
                     title: "Área interna",
                     description:
                       "Casa ou apartamento espaçoso, mas sem área externa própria",
                   },
                   {
-                    value: "quintal",
+                    value: "area_externa",
                     id: "espaco-quintal",
                     title: "Quintal",
                     description:

@@ -40,7 +40,7 @@ export default function RadioCardGroup({ name, value, onValueChange, options, co
             <RadioGroupItem value={opt.value} id={opt.id} className="mb-1 hidden" />
             <span className="font-medium">{opt.title}</span>
             {opt.description && (
-              <span className="text-xs text-muted-foreground">{opt.description}</span>
+              <span className="text-xs text-muted-foreground font-semibold">{opt.description}</span>
             )}
           </label>
         </div>

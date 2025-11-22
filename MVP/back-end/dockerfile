@@ -37,9 +37,12 @@ RUN apt-get update && apt-get install -y \
 RUN a2enmod rewrite
 
 # Ajusta a configuração do Apache para apontar para /var/www/public
-# Isso substitui o padrão /var/www/html pelo nosso caminho correto
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
+
+# --- AJUSTE PARA CLOUD RUN: Muda Apache da porta 80 para 8080 ---
+RUN sed -i 's/Listen 80/Listen 8080/' /etc/apache2/ports.conf \
+    && sed -i 's/:80>/:8080>/' /etc/apache2/sites-available/000-default.conf
 
 # Define o diretório de trabalho
 WORKDIR /var/www
@@ -54,9 +57,8 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 ENTRYPOINT ["entrypoint.sh"]
 # ----------------------------------------------
 
-# O Apache escuta na porta 80 por padrão.
-# O Cloud Run vai redirecionar o tráfego para cá automaticamente.
-EXPOSE 80
+# Cloud Run espera que o container escute na porta 8080
+EXPOSE 8080
 
 # Inicia o Apache em primeiro plano
 CMD ["apache2-foreground"]

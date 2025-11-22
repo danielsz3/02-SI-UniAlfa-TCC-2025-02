@@ -207,13 +207,13 @@ export default function CardAnimalAffinity({
           <ImageCarousel images={animal_afinidade.animal.imagens} />
         </div>
         <div className="text-md text-muted-foreground ">
-          <div className="grid grid-cols-2 gap-2 md:gap-3 mt-6 w-full">
+          <div className="grid grid-cols-2 gap-3 mt-6 w-full">
             {animalAtributos.map((detail, index) => (
               <div key={index} className="w-full h-full">
 
                 <div className="bg-background border-2 text-primary dark:text-white p-2 w-full h-full min-h-[70px] rounded-xl 
                       flex flex-row items-center justify-start shadow-sm 
-                      hover:shadow-md transition-transform duration-300 hover:scale-[1.04]">
+                      hover:shadow-md transition-transform duration-300 hover:scale-[1.02]">
 
                   {/* BLOCO 1: Ícone */}
                   <div className="shrink-0 p-2 mr-1 rounded-full">

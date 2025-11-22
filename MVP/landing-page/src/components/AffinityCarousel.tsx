@@ -207,9 +207,9 @@ export default function AffinityCarousel({ userId, onAnimalClick }: Props) {
               <div
                 aria-hidden={index !== selectedIndex}
                 className={`
-                    p-1 md:w-[50vw] w-full pl-0 sm:pl-5 lg:w-full h-full
+                    p-1 md:w-[50vw] w-full lg:w-full h-full
                     transition-all duration-500 ease-in-out
-                    ${index === 0 ? 'pl-5' : 'xs:pl-10 md:pl-0'}
+                    ${index == 0 ? 'pl-5' : 'pl-5'}
                     ${index === selectedIndex
                     ? 'opacity-100 scale-100'
                     : 'opacity-60 scale-80 pointer-events-none'
@@ -239,8 +239,21 @@ export default function AffinityCarousel({ userId, onAnimalClick }: Props) {
 
         {!isProcessing && (
           <>
+            {/* Controles Desktop (Laterais - padrão) */}
             <CarouselPrevious className="hidden lg:flex" />
             <CarouselNext className="hidden lg:flex" />
+
+            {/* Controles Mobile (Inferiores - centralizados) */}
+            <div className="flex justify-center gap-4 mt-4 lg:hidden">
+              <CarouselPrevious
+                variant="outline"
+                className="static translate-y-0"
+              />
+              <CarouselNext
+                variant="outline"
+                className="static translate-y-0"
+              />
+            </div>
           </>
         )}
       </Carousel>

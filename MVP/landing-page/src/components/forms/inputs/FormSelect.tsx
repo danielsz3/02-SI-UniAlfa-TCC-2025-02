@@ -8,6 +8,7 @@ interface FormSelectProps {
   options: { value: string; label: string }[]
   onValueChange: (value: string) => void
   value?: string
+  disabled?: boolean
 }
 
 export function FormSelect({ 

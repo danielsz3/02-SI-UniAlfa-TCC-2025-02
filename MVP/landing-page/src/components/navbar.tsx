@@ -24,6 +24,7 @@ import {
     HeartHandshake,
     HandHeart,
     PawPrint,
+    UserIcon,
 } from "lucide-react"
 import Image from "next/image"
 import { useAuth } from "@/components/Providers"
@@ -145,6 +146,10 @@ function CenterNav() {
 }
 
 function RightActions({ loading, onLogout, user }: { loading: boolean, onLogout: () => void, user: User }) {
+    function handleLogout() {
+        throw new Error("Function not implemented.")
+    }
+
     return (
         <div className="flex items-center gap-3">
             <ThemeToggle />
@@ -156,8 +161,15 @@ function RightActions({ loading, onLogout, user }: { loading: boolean, onLogout:
                     <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon">
                             <Avatar className="h-8 w-8">
-                                <AvatarImage src={`${API_BASE}/imagens/${user.imagem}`} alt={user.nome ?? "Usuário"} />
-                                <AvatarFallback>{user.nome?.[0]?.toUpperCase() || "U"}</AvatarFallback>
+                                {user.imagem && (
+                                    <AvatarImage
+                                        src={`${API_BASE}/imagens/${user.imagem}`}
+                                        alt={user.nome ?? "Usuário"}
+                                    />
+                                )}
+                                <AvatarFallback className="bg-muted flex items-center justify-center">
+                                    <UserIcon className="h-4 w-4 text-muted-foreground" />
+                                </AvatarFallback>
                             </Avatar>
                         </Button>
                     </DropdownMenuTrigger>
@@ -192,10 +204,12 @@ function RightActions({ loading, onLogout, user }: { loading: boolean, onLogout:
                             onClick={onLogout}
                             className="text-red-600 focus:text-red-600 cursor-pointer"
                         >
+                                <Link href="/login">
                             <div className="flex items-center gap-2 hover:text-white size-full">
-                                <LogOut className="h-4 w-4 hover:text-red-500" />
-                                <span>Sair</span>
+                                    <LogOut className="h-4 w-4 hover:text-red-500" />
+                                    <span>Sair</span>
                             </div>
+                                </Link>
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>

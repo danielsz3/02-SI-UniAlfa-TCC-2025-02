@@ -1,14 +1,16 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import ImageCarousel from "@/components/ImageCarousel"
 import { calcularIdade } from "@/lib/animal-utils"
 import { LarTemporario } from "@/types"
 import LoadMoreList from "@/components/LoadMoreList"
+import type { Ong } from "@/types" // certifique-se de ter esse tipo definido
 
 // ==============================
-// TYPES
+// TYPES LOCAIS
 // ==============================
 interface Parceiro {
   id: number
@@ -23,12 +25,9 @@ interface Parceiro {
 // ==============================
 function ParceiroCard({ parceiro }: { parceiro: Parceiro }) {
   const storageUrl =
-    process.env.NEXT_PUBLIC_STORAGE_URL ??
-    "http://127.0.0.1:8000/api/imagens"
+    process.env.NEXT_PUBLIC_STORAGE_URL ?? "http://127.0.0.1:8000/api/imagens"
 
-  const imagemUrl = parceiro.imagem
-    ? `${storageUrl}/${parceiro.imagem}`
-    : null
+  const imagemUrl = parceiro.imagem ? `${storageUrl}/${parceiro.imagem}` : null
 
   const content = (
     <Card className="group relative overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
@@ -112,29 +111,163 @@ function ParceiroCard({ parceiro }: { parceiro: Parceiro }) {
 // ==============================
 export default function AboutPage() {
   const apiBase = process.env.NEXT_PUBLIC_API_URL
+  const storageUrl =
+    process.env.NEXT_PUBLIC_STORAGE_URL ?? "http://127.0.0.1:8000/storage"
+
+  const [ong, setOng] = useState<Ong | null>(null)
+  const [loadingOng, setLoadingOng] = useState(true)
+  const [errorOng, setErrorOng] = useState<string | null>(null)
+
+  // Busca da ONG (ajuste o ID conforme sua regra: 1, ou vindo de rota, etc.)
+  useEffect(() => {
+    if (!apiBase) return
+
+    const fetchOng = async () => {
+      try {
+        setLoadingOng(true)
+        setErrorOng(null)
+
+        const res = await fetch(`${apiBase}/ongs/1`)
+        if (!res.ok) {
+          throw new Error(`Erro ao buscar ONG: ${res.statusText}`)
+        }
+
+        const data: Ong = await res.json()
+        setOng(data)
+      } catch (err: any) {
+        setErrorOng(err.message ?? "Erro ao carregar dados da ONG")
+      } finally {
+        setLoadingOng(false)
+      }
+    }
+
+    fetchOng()
+  }, [apiBase])
+
+  // Montagem da URL da imagem de capa da ONG
+  const imagemOngUrl =
+    ong?.imagem && !ong.imagem.startsWith("http")
+      ? `${storageUrl}/${ong.imagem}`
+      : ong?.imagem ?? null
+
+  // Endereço formatado da ONG
+  const enderecoFormatado =
+    ong &&
+    (ong.logradouro ||
+      ong.numero ||
+      ong.bairro ||
+      ong.cidade ||
+      ong.uf ||
+      ong.cep)
+      ? [
+          [ong.logradouro, ong.numero].filter(Boolean).join(", "),
+          [ong.bairro, ong.cidade].filter(Boolean).join(" - "),
+          ong.uf,
+          ong.cep && `CEP: ${ong.cep}`,
+        ]
+          .filter(Boolean)
+          .join(" | ")
+      : null
 
   return (
     <main className="min-h-screen bg-background flex flex-col items-center px-4 py-10">
       <div className="max-w-3xl w-full">
         {/* ====================== */}
-        {/* QUEM SOMOS */}
+        {/* QUEM SOMOS (DINÂMICO) */}
         {/* ====================== */}
         <section className="mb-12 flex flex-col md:flex-row items-center gap-8">
+          {/* IMAGEM DA ONG */}
           <div className="w-full md:w-1/3 rounded-lg overflow-hidden border border-gray-300 dark:border-gray-700">
-            <img
-              src="https://ilfattoalimentare.it/wp-content/uploads/2020/12/AdobeStock_211878265.jpeg"
-              alt="Quem Somos"
-              className="w-full h-auto object-cover rounded-lg"
-            />
+            {loadingOng ? (
+              <div className="w-full h-48 flex items-center justify-center text-sm text-muted-foreground">
+                Carregando...
+              </div>
+            ) : imagemOngUrl ? (
+              <img
+                src={imagemOngUrl}
+                alt={ong?.nome ?? "ONG"}
+                className="w-full h-auto object-cover rounded-lg"
+              />
+            ) : (
+              <div className="w-full h-48 flex items-center justify-center text-sm text-muted-foreground">
+                Sem imagem da ONG
+              </div>
+            )}
           </div>
-          <p className="w-full md:w-2/3 text-lg leading-relaxed text-gray-700 dark:text-gray-300 flex flex-col justify-center space-y-2">
-            <span>Página destinada à adoção responsável</span>
-            <span>🚫 Não recolhemos animais</span>
-            <span>⚠️ Projeto Independente</span>
-            <span>🐾 Adote e mude uma vida 😸</span>
-            <span>📍 Umuarama/PR</span>
-            <span>CNPJ 61.706.437/0001-30</span>
-          </p>
+
+          {/* TEXTO DA ONG */}
+          <div className="w-full md:w-2/3 text-lg leading-relaxed text-gray-700 dark:text-gray-300 flex flex-col justify-center space-y-2">
+            {loadingOng && (
+              <span className="text-sm text-muted-foreground">
+                Carregando informações da ONG...
+              </span>
+            )}
+
+            {errorOng && (
+              <span className="text-sm text-destructive">
+                {errorOng}
+              </span>
+            )}
+
+            {ong && (
+              <>
+                <span className="font-semibold text-xl">
+                  {ong.nome}
+                </span>
+
+                {ong.descricao && <span>{ong.descricao}</span>}
+
+                {enderecoFormatado && (
+                  <span className="text-sm text-muted-foreground">
+                    {enderecoFormatado}
+                  </span>
+                )}
+
+                {ong.cnpj && (
+                  <span className="text-sm text-muted-foreground">
+                    CNPJ {ong.cnpj}
+                  </span>
+                )}
+
+                {/* Contatos da ONG */}
+                {ong.contatos && ong.contatos.length > 0 && (
+                  <div className="pt-2 space-y-1 text-sm">
+                    {ong.contatos.map((c) => (
+                      <div key={c.id}>
+                        <strong className="capitalize">
+                          {c.tipo}:
+                        </strong>{" "}
+                        {c.link ? (
+                          <a
+                            href={c.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline"
+                          >
+                            {c.contato}
+                          </a>
+                        ) : (
+                          c.contato
+                        )}
+                        {c.descricao && (
+                          <span className="text-xs text-muted-foreground ml-1">
+                            ({c.descricao})
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Fallback caso não retorne ONG e não haja erro explícito */}
+            {!loadingOng && !ong && !errorOng && (
+              <span className="text-sm text-muted-foreground">
+                Nenhuma informação de ONG cadastrada.
+              </span>
+            )}
+          </div>
         </section>
 
         <Separator className="my-8" />

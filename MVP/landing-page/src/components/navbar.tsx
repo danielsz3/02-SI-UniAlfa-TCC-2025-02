@@ -291,15 +291,6 @@ export function Navbar() {
                                 >
                                     Portal de Transparência
                                 </Link>
-
-                                <Link
-                                    href="/parceiros"
-                                    onClick={() => setMobileOpen(false)}
-                                    className="text-sm hover:text-primary"
-                                >
-                                    Parceiros
-                                </Link>
-
                             </div>
                         </div>
 

@@ -113,8 +113,11 @@ export default function Home() {
 
           <LoadMoreList
             url={`${process.env.NEXT_PUBLIC_API_URL}/eventos`}
-            step={4}
-            renderItem={(evento: Evento) => <EventoCard evento={evento} />}
+            step={6} // 3 linhas x 3 colunas
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+            renderItem={(evento: Evento, index) => (
+              <EventoCard key={evento.id ?? index} evento={evento} />
+            )}
           />
         </div>
       </section>

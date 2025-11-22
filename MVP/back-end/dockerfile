@@ -25,7 +25,7 @@ COPY . .
 FROM php:8.2-apache
 
 # Define a variável para a pasta public do Laravel
-ENV APACHE_DOCUMENT_ROOT /var/www/public
+ENV APACHE_DOCUMENT_ROOT=/var/www/public
 
 # Instala dependências de execução e o netcat (para o entrypoint)
 RUN apt-get update && apt-get install -y \

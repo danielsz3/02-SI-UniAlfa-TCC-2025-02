@@ -123,9 +123,22 @@ const baseTheme = deepmerge(defaultTheme, {
                     backgroundColor: colors.background,
                     '& .RaLayout-content': {
                         backgroundColor: colors.background,
+                    },
+                    "& .RaList-actions": {
+                        backgroundColor: colors.background,
+                    },
+                    '[class*="RaTopToolbar"]': {
+                        backgroundColor: colors.background,
                     }
                 }
             }
+        },
+        MuiTopToolbar: {
+            styleOverrides: {
+                root: {
+                    backgroundColor: colors.background,
+                },
+            },
         },
         // Estilo do Menu Lateral (Sidebar Links)
         RaMenuItemLink: {

@@ -114,7 +114,7 @@ interface CustomListActionsProps {
 
 export const CustomListActions = ({ formatter, nomeArquivo }: CustomListActionsProps) => (
     <TopToolbar
-        sx={{ display: 'flex', alignItems: 'center' }}
+        sx={{ display: 'flex', alignItems: 'center', backgroundColor: '#F2F1F0 !important' }}
     >
         <FilterButton />
         <CreateButton />

@@ -95,7 +95,7 @@ const LocalInfo = () => {
     }
 
     // --- LÓGICA 2: EM APROVAÇÃO + SEM LAR (Aviso de Erro) ---
-    if (!record.lar_temporario_id && record.fica_usuario && record.situacao === 'em_aprovacao') {
+    if (!record.lar_temporario_id && record.fica_usuario == 0 && record.situacao === 'em_aprovacao') {
         return (
             <Labeled label="Localização Atual">
                 <Box display="flex" alignItems="center" gap={0.5}>

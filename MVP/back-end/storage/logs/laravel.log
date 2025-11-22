@@ -2686,3 +2686,20 @@ Entre em contato para saber mais e fazer parte dessa história de amor e adoçã
 #42 C:\\TCC\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\resources\\server.php(23): require_once('C:\\\\TCC\\\\02-SI-Un...')
 #43 {main}
 "} 
+[2025-11-21 23:53:22] local.ERROR: Command "server" is not defined.
+
+Did you mean one of these?
+    make:observer
+    serve {"exception":"[object] (Symfony\\Component\\Console\\Exception\\CommandNotFoundException(code: 0): Command \"server\" is not defined.
+
+Did you mean one of these?
+    make:observer
+    serve at C:\\Users\\joaox\\OneDrive\\Área de Trabalho\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\symfony\\console\\Application.php:740)
+[stacktrace]
+#0 C:\\Users\\joaox\\OneDrive\\Área de Trabalho\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\symfony\\console\\Application.php(298): Symfony\\Component\\Console\\Application->find('server')
+#1 C:\\Users\\joaox\\OneDrive\\Área de Trabalho\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\symfony\\console\\Application.php(195): Symfony\\Component\\Console\\Application->doRun(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#2 C:\\Users\\joaox\\OneDrive\\Área de Trabalho\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Console\\Kernel.php(197): Symfony\\Component\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#3 C:\\Users\\joaox\\OneDrive\\Área de Trabalho\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Application.php(1235): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#4 C:\\Users\\joaox\\OneDrive\\Área de Trabalho\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\artisan(16): Illuminate\\Foundation\\Application->handleCommand(Object(Symfony\\Component\\Console\\Input\\ArgvInput))
+#5 {main}
+"} 

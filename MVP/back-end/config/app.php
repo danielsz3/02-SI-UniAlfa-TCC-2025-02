@@ -29,7 +29,7 @@ return [
         Illuminate\Cookie\CookieServiceProvider::class,
         Illuminate\Database\DatabaseServiceProvider::class,
         Illuminate\Encryption\EncryptionServiceProvider::class,
-        Illuminate\Filesystem\FilesystemServiceProvider::class, // ✅ ESSENCIAL
+        Illuminate\Filesystem\FilesystemServiceProvider::class, 
         Illuminate\Foundation\Providers\FoundationServiceProvider::class,
         Illuminate\Hashing\HashServiceProvider::class,
         Illuminate\Mail\MailServiceProvider::class,
@@ -109,8 +109,6 @@ return [
         'Validator' => Illuminate\Support\Facades\Validator::class,
         'View' => Illuminate\Support\Facades\View::class,
 
-        // Pacotes adicionais
-        'PDF' => Barryvdh\DomPDF\Facade\Pdf::class,
     ],
 ];
 

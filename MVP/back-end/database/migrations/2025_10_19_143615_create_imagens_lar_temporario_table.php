@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('imagens_lar_temporario', function (Blueprint $table) {
@@ -21,7 +18,6 @@ return new class extends Migration
             $table->softDeletes();
             $table->timestamps();
 
-            // Foreign key
             $table->foreign('id_lar_temporario')
                   ->references('id')
                   ->on('lares_temporarios')
@@ -29,9 +25,6 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('imagens_lar_temporario');

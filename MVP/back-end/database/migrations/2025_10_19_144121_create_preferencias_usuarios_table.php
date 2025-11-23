@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('preferencias_usuarios', function (Blueprint $table) {
@@ -21,17 +18,12 @@ return new class extends Migration
             $table->softDeletes();
             $table->timestamps();
 
-            // Foreign key
             $table->foreign('usuario_id')
                   ->references('id')
                   ->on('usuarios')
                   ->onDelete('cascade');
         });
     }
-
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('preferencias_usuarios');

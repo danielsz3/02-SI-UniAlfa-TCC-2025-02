@@ -10,14 +10,11 @@ return new class extends Migration
     {
         Schema::create('imagens_ongs', function (Blueprint $table) {
             $table->id();
-            // FK correta: ong_id referenciando ongs.id
-            $table->foreignId('ong_id')->constrained('ongs')->cascadeOnDelete();
-
             $table->string('caminho');
             $table->string('nome_original')->nullable();
             $table->integer('width')->nullable();
             $table->integer('height')->nullable();
-
+            $table->foreignId('ong_id')->constrained('ongs')->cascadeOnDelete();
             $table->softDeletes();
             $table->timestamps();
         });

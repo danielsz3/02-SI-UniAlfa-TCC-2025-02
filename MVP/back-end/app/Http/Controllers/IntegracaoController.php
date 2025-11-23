@@ -56,14 +56,18 @@ class IntegracaoController extends Controller
             }
 
             $data = $request->only([
-                'service', 'username', 'access_token', 'user_id', 'status'
+                'service',
+                'username',
+                'access_token',
+                'user_id',
+                'status'
             ]);
 
             $integracao->update($data);
 
             return response()->json($integracao, 200);
         } catch (\Exception $e) {
-            Log::error('Erro ao atualizar integração: '.$e->getMessage(), [
+            Log::error('Erro ao atualizar integração: ' . $e->getMessage(), [
                 'id' => $id,
                 'trace' => $e->getTraceAsString(),
             ]);

@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('ongs', function (Blueprint $table) {
@@ -17,9 +14,8 @@ return new class extends Migration
             $table->string('cnpj', 14)->unique();
             $table->string('razao_social');
             $table->text('descricao')->nullable();
-            $table->string('imagem')->nullable(); // Imagem de capa
+            $table->string('imagem')->nullable();
 
-            // Atributos de endereço
             $table->string('cep')->nullable();
             $table->string('logradouro')->nullable();
             $table->string('numero')->nullable();
@@ -28,7 +24,6 @@ return new class extends Migration
             $table->string('cidade')->nullable();
             $table->string('uf', 2)->nullable();
 
-            // Dados bancários
             $table->string('banco')->nullable();
             $table->string('agencia')->nullable();
             $table->string('numero_conta')->nullable();
@@ -40,9 +35,6 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('ongs');

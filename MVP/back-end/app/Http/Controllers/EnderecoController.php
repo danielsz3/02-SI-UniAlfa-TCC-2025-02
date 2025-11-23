@@ -11,9 +11,7 @@ use Illuminate\Support\Facades\Log;
 
 class EnderecoController extends Controller
 {
-    /**
-     * Lista todos os endereços (suporta paginação via _page e _limit)
-     */
+
     public function index(Request $request): JsonResponse
     {
         try {
@@ -33,9 +31,6 @@ class EnderecoController extends Controller
         }
     }
 
-    /**
-     * Cadastra um novo endereço
-     */
     public function store(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
@@ -88,9 +83,6 @@ class EnderecoController extends Controller
         }
     }
 
-    /**
-     * Exibe um endereço específico
-     */
     public function show($id): JsonResponse
     {
         try {
@@ -107,9 +99,6 @@ class EnderecoController extends Controller
         }
     }
 
-    /**
-     * Atualiza um endereço
-     */
     public function update(Request $request, $id): JsonResponse
     {
         $endereco = Endereco::find($id);
@@ -167,9 +156,6 @@ class EnderecoController extends Controller
         }
     }
 
-    /**
-     * Remove um endereço (soft delete)
-     */
     public function destroy($id): JsonResponse
     {
         $endereco = Endereco::find($id);
@@ -186,5 +172,4 @@ class EnderecoController extends Controller
             return response()->json(['error' => 'Não foi possível deletar o endereço'], 500);
         }
     }
-
 }

@@ -47,18 +47,6 @@ return [
         ],
     ],
 
-    /*
-    |--------------------------------------------------------------------------
-    | Configuração do Frontend
-    |--------------------------------------------------------------------------
-    |
-    | Aqui definimos a URL do seu aplicativo frontend, usada principalmente
-    | para o link de redefinição de senha nos e-mails. Essa configuração
-    | ajuda a manter a separação entre backend (Laravel) e frontend (SPA).
-    |
-    | Exemplo: http://localhost:3000 ou https://app.seusite.com
-    |
-    */
 
     'frontend' => [
         'url' => env('FRONTEND_URL', 'http://localhost:3000'),

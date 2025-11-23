@@ -29,9 +29,6 @@ class AnimalController extends Controller
     protected $modeloRelacaoGaleria = ImagemAnimal::class;
     protected $foreignKeyGaleria = 'animal_id';
 
-    /**
-     * Listar animais (suporta paginação, filtros e ordenação)
-     */
     public function index(Request $request): JsonResponse
     {
         try {
@@ -47,9 +44,6 @@ class AnimalController extends Controller
         }
     }
 
-    /**
-     * Criar animal
-     */
     public function store(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
@@ -149,9 +143,6 @@ class AnimalController extends Controller
         }
     }
 
-    /**
-     * Mostrar um animal
-     */
     public function show($id): JsonResponse
     {
         try {
@@ -173,9 +164,6 @@ class AnimalController extends Controller
         }
     }
 
-    /**
-     * Atualizar animal
-     */
     public function update(Request $request, $id): JsonResponse
     {
         $animal = Animal::find($id);
@@ -231,7 +219,6 @@ class AnimalController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        // Verificar limite TOTAL de imagens (existentes + novas)
         $imagensExistentes = $animal->imagens()->count();
         $novasImagens = is_array($request->file('imagens')) ? count($request->file('imagens')) : 0;
         $total = $imagensExistentes + $novasImagens;
@@ -246,7 +233,7 @@ class AnimalController extends Controller
 
         try {
             return DB::transaction(function () use ($request, $animal) {
-                // Atualiza os campos permitidos
+
                 $animal->update($request->only([
                     'nome',
                     'data_nascimento',
@@ -265,12 +252,10 @@ class AnimalController extends Controller
                     'fica_usuario',
                 ]));
 
-                // Sincroniza galeria de imagens via trait ManagerGallery
                 if ($request->has('imagens') || $request->hasFile('imagens')) {
                     $this->sincronizarGaleria($request, $animal);
                 }
 
-                // Atualiza o modelo com relacionamentos e gera URLs das imagens
                 $fresh = $animal->fresh(['imagens', 'usuario', 'larTemporario']);
                 $fresh->imagens->transform(function ($img) {
                     $img->url = Storage::url($img->caminho);
@@ -292,9 +277,6 @@ class AnimalController extends Controller
         }
     }
 
-    /**
-     * Deletar (soft delete)
-     */
     public function destroy($id): JsonResponse
     {
         try {
@@ -303,7 +285,6 @@ class AnimalController extends Controller
                 return response()->json(['error' => 'Animal não encontrado'], 404);
             }
 
-            // Apagar arquivos do storage e soft-delete imagens em lote
             $toDelete = [];
             foreach ($animal->imagens as $img) {
                 if ($img->caminho && Storage::disk('public')->exists($img->caminho)) {
@@ -315,7 +296,7 @@ class AnimalController extends Controller
                 ImagemAnimal::whereIn('id', $toDelete)->delete();
             }
 
-            $animal->delete(); // soft delete
+            $animal->delete();
 
             return response()->json(null, 204);
         } catch (\Exception $e) {
@@ -327,9 +308,6 @@ class AnimalController extends Controller
         }
     }
 
-    /**
-     * Recomendar animais para um usuário de acordo com preferências
-     */
     public function recomendar(Request $request, $usuarioId): JsonResponse
     {
         try {
@@ -344,15 +322,12 @@ class AnimalController extends Controller
                 return response()->json(['error' => 'Usuário não possui preferências definidas'], 400);
             }
 
-            // IDs dos animais que já possuem match com o usuário
             $animaisComMatch = MatchAfinidade::where('usuario_id', $usuarioId)
                 ->pluck('animal_id')
                 ->toArray();
 
-            // Buscar diretamente do banco, sem cache
             $animais = Animal::with(['imagens', 'usuario', 'larTemporario'])->get();
 
-            // Filtrar animais que não estão em match com o usuário
             $animaisFiltrados = $animais->filter(function ($animal) use ($animaisComMatch) {
                 return !in_array($animal->id, $animaisComMatch);
             });
@@ -383,21 +358,17 @@ class AnimalController extends Controller
                 ];
             });
 
-            // ordenar por afinidade (desc) e resetar chaves
             $ordenados = $resultados->sortByDesc('afinidade')->values();
 
-            // === Paginação manual ===
             $range = json_decode($request->query('range', '[0,9]'), true);
             $start = $range[0] ?? 0;
             $end   = $range[1] ?? 9;
             $perPage = ($end - $start + 1);
             $page    = intval($start / $perPage) + 1;
 
-            // Aplicar paginação na collection
             $itemsForCurrentPage = $ordenados->forPage($page, $perPage)->values();
             $total = $ordenados->count();
 
-            // Montar resposta com cabeçalhos
             $response = response()
                 ->json($itemsForCurrentPage->toArray())
                 ->header('Content-Range', "recomendacoes {$start}-{$end}/{$total}")

@@ -187,7 +187,6 @@ class MatchAfinidadeController extends Controller
         }
 
         try {
-            // Verifica autorização antes de qualquer operação
             if ($user->id !== (int)$request->usuario_id && ($user->role ?? '') !== 'admin') {
                 return response()->json(['error' => 'Não autorizado a alterar este match'], 403);
             }
@@ -196,7 +195,6 @@ class MatchAfinidadeController extends Controller
                 ->where('animal_id', $request->animal_id)
                 ->first();
 
-            // Se não existe match, cria um novo
             if (!$match) {
                 $match = MatchAfinidade::create([
                     'usuario_id' => $request->usuario_id,
@@ -212,16 +210,14 @@ class MatchAfinidadeController extends Controller
                 $statusAnterior = $match->status;
                 $newStatus = $request->status;
 
-                // Atualiza o status e observação do match
                 $match->status = $newStatus;
                 if ($request->has('observacao')) {
                     $match->observacao = $request->input('observacao');
                 }
                 $match->save();
 
-                // Lógica quando o status muda para 'escolhido'
                 if ($newStatus === 'escolhido' && $statusAnterior !== 'escolhido') {
-                    // Verifica se já existe uma adoção aprovada para este animal
+
                     $existeAprovada = Adocao::where('animal_id', $match->animal_id)
                         ->where('status', 'aprovado')
                         ->exists();
@@ -229,14 +225,10 @@ class MatchAfinidadeController extends Controller
                     if ($existeAprovada) {
                         return response()->json(['error' => 'Este animal já possui uma adoção aprovada.'], 422);
                     }
-
-                    // Não cria adoção automaticamente, apenas atualiza o match
-                    // O usuário precisará criar a adoção manualmente através do formulário
                 }
 
-                // Lógica quando o status muda para 'rejeitado'
                 if ($newStatus === 'rejeitado') {
-                    // Marca a adoção vinculada como negada (se existir)
+
                     $adocao = Adocao::where('usuario_id', $match->usuario_id)
                         ->where('animal_id', $match->animal_id)
                         ->first();
@@ -246,7 +238,6 @@ class MatchAfinidadeController extends Controller
                         $adocao->save();
                     }
 
-                    // Se não existir nenhuma adoção aprovada para o animal, liberar a situação do animal
                     $existeAprovada = Adocao::where('animal_id', $match->animal_id)
                         ->where('status', 'aprovado')
                         ->exists();

@@ -28,28 +28,25 @@ class Animal extends Model
         'tempo_necessario',
         'ambiente_ideal',
         'situacao',
-        'usuario_id',         
-        'lar_temporario_id',  
-        'fica_usuario',       
+        'usuario_id',
+        'lar_temporario_id',
+        'fica_usuario',
     ];
 
     protected $casts = [
         'data_nascimento' => 'date',
     ];
 
-    // Relacionamento com Usuario
     public function usuario()
     {
         return $this->belongsTo(Usuario::class, 'usuario_id');
     }
 
-    // Relacionamento com LarTemporario
     public function larTemporario()
     {
         return $this->belongsTo(LarTemporario::class, 'lar_temporario_id');
     }
 
-    // Relacionamento com Imagens
     public function imagens()
     {
         return $this->hasMany(ImagemAnimal::class, 'animal_id');

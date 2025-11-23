@@ -10,16 +10,15 @@ class MatchAfinidade extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $table = 'matches'; // nome da tabela no plural snake_case
+    protected $table = 'matches'; 
 
     protected $fillable = [
         'usuario_id',
         'animal_id',
-        'status', // 'em_adocao' | 'escolhido' | 'rejeitado'
+        'status', 
         'observacao',
     ];
 
-    // Relacionamentos
     public function usuario()
     {
         return $this->belongsTo(Usuario::class, 'usuario_id');
@@ -30,7 +29,6 @@ class MatchAfinidade extends Model
         return $this->belongsTo(Animal::class, 'animal_id');
     }
 
-    // Scopes para facilitar consultas por status
     public function scopeEmAdocao($query)
     {
         return $query->where('status', 'em_adocao');

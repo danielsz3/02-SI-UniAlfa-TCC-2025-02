@@ -20,17 +20,12 @@ class LaresTemporarioController extends Controller
 {
     use SearchIndex;
     use ManagerGallery;
-    // Define as propriedades para a trait ManagerGallery
+
     protected $campoGaleria = 'imagens';
     protected $storagePath = 'lares_temporarios';
     protected $modeloRelacaoGaleria = ImagemLarTemporario::class;
     protected $foreignKeyGaleria = 'id_lar_temporario';
 
-    /*
-    |--------------------------------------------------------------------------
-    | Listagem
-    |--------------------------------------------------------------------------
-    */
     public function index(Request $request): JsonResponse
     {
         return $this->SearchIndex(
@@ -41,39 +36,30 @@ class LaresTemporarioController extends Controller
         );
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Criação
-    |--------------------------------------------------------------------------
-    */
     public function store(Request $request): JsonResponse
     {
-        // Decodifica o campo 'endereco' (string JSON) para array, pois pode vir via FormData
+
         if ($request->has('endereco') && is_string($request->input('endereco'))) {
             $request->merge(['endereco' => json_decode($request->input('endereco'), true)]);
         }
 
-        // Normaliza data_nascimento para Y-m-d quando vier como ISO com T/Z
         if ($request->filled('data_nascimento') && is_string($request->input('data_nascimento'))) {
             try {
                 $dt = Carbon::parse($request->input('data_nascimento'))->startOfDay();
                 $request->merge(['data_nascimento' => $dt->toDateString()]);
             } catch (\Throwable $e) {
-                // deixa o validator acusar caso inválida
             }
         }
 
         $validator = Validator::make($request->all(), [
             'nome'            => 'required|string|min:2|max:150',
 
-            // Idade mínima de 18 anos
             'data_nascimento' => 'required|date|after:1900-01-01|before_or_equal:-18 years',
 
             'telefone'        => 'required|string|size:11|regex:/^[0-9]+$/',
             'situacao'        => 'required|in:ativo,inativo',
             'experiencia'     => 'nullable|string|max:1000',
 
-            // Endereço
             'endereco.cep'          => 'nullable|string|max:9',
             'endereco.logradouro'   => 'nullable|string|max:255',
             'endereco.numero'       => 'nullable|string|max:10',
@@ -82,7 +68,6 @@ class LaresTemporarioController extends Controller
             'endereco.cidade'       => 'nullable|string|max:100',
             'endereco.uf'           => 'nullable|string|max:2',
 
-            // Imagens (até 10MB cada)
             'imagens.*' => 'file|image|mimes:jpeg,png,jpg,webp|max:10240',
         ], [
             'nome.required' => 'O nome é obrigatório.',
@@ -121,7 +106,6 @@ class LaresTemporarioController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        // 🔹 Validação: não permitir outro lar com o mesmo endereço
         if ($request->has('endereco') && is_array($request->endereco)) {
             $enderecoData = $request->endereco;
 
@@ -153,7 +137,6 @@ class LaresTemporarioController extends Controller
                     'experiencia'
                 ]));
 
-                // Endereço
                 if ($request->has('endereco') && is_array($request->endereco) && !empty(array_filter($request->endereco))) {
                     $enderecoData = $request->endereco;
                     $enderecoData['lar_temporario_id'] = $lar->id;
@@ -192,11 +175,6 @@ class LaresTemporarioController extends Controller
         }
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Detalhes
-    |--------------------------------------------------------------------------
-    */
     public function show($id): JsonResponse
     {
         $lar = LarTemporario::with(['endereco', 'imagens'])->find($id);
@@ -208,11 +186,6 @@ class LaresTemporarioController extends Controller
         return response()->json($lar, 200);
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Atualização
-    |--------------------------------------------------------------------------
-    */
     public function update(Request $request, $id): JsonResponse
     {
         $lar = LarTemporario::find($id);
@@ -221,22 +194,18 @@ class LaresTemporarioController extends Controller
             return response()->json(['error' => 'Lar temporário não encontrado'], 404);
         }
 
-        // Decodifica o campo 'endereco' (string JSON) para array, caso venha por FormData
         if ($request->has('endereco') && is_string($request->input('endereco'))) {
             $request->merge(['endereco' => json_decode($request->input('endereco'), true)]);
         }
 
-        // Normaliza data_nascimento para Y-m-d quando vier como ISO com T/Z
         if ($request->filled('data_nascimento') && is_string($request->input('data_nascimento'))) {
             try {
                 $dt = Carbon::parse($request->input('data_nascimento'))->startOfDay();
                 $request->merge(['data_nascimento' => $dt->toDateString()]);
             } catch (\Throwable $e) {
-                // deixa o validator acusar caso inválida
             }
         }
 
-        // Validação condicional: só aplica file|image se houver arquivos de fato
         $rules = [
             'nome'            => 'sometimes|required|string|min:2|max:150',
             'data_nascimento' => 'sometimes|required|date|after:1900-01-01|before_or_equal:-18 years',
@@ -244,7 +213,6 @@ class LaresTemporarioController extends Controller
             'situacao'        => 'sometimes|required|in:ativo,inativo',
             'experiencia'     => 'nullable|string|max:1000',
 
-            // Endereço
             'endereco.id'           => 'nullable|integer|exists:enderecos,id',
             'endereco.cep'          => 'nullable|string|max:9',
             'endereco.logradouro'   => 'nullable|string|max:255',
@@ -254,7 +222,6 @@ class LaresTemporarioController extends Controller
             'endereco.cidade'       => 'nullable|string|max:100',
             'endereco.uf'           => 'nullable|string|max:2',
 
-            // Imagens - validação condicional
             'imagens' => 'nullable|array',
             'imagem' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240',
 
@@ -296,7 +263,6 @@ class LaresTemporarioController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        // 🔹 Validação: ao atualizar, não deixar este lar ficar com endereço igual ao de outro lar
         if ($request->has('endereco') && is_array($request->endereco)) {
             $enderecoData = $request->endereco;
 
@@ -320,7 +286,6 @@ class LaresTemporarioController extends Controller
             }
         }
 
-        // Verificar limite TOTAL de imagens (existentes + novas)
         $imagensExistentes = $lar->imagens()->count();
         $novasImagens = is_array($request->file('imagens')) ? count($request->file('imagens')) : 0;
         $total = $imagensExistentes + $novasImagens;
@@ -343,7 +308,6 @@ class LaresTemporarioController extends Controller
                     'experiencia'
                 ]));
 
-                // Atualiza endereço
                 if ($request->has('endereco') && is_array($request->endereco) && !empty(array_filter($request->endereco))) {
                     $enderecoData = $request->endereco;
 
@@ -364,7 +328,6 @@ class LaresTemporarioController extends Controller
                     }
                 }
 
-                // Usa a trait para sincronizar a galeria de imagens
                 if ($request->has($this->campoGaleria) || $request->hasFile($this->campoGaleria)) {
                     $this->sincronizarGaleria($request, $lar);
                 }
@@ -383,11 +346,6 @@ class LaresTemporarioController extends Controller
         }
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Exclusão
-    |--------------------------------------------------------------------------
-    */
     public function destroy($id): JsonResponse
     {
         $lar = LarTemporario::with(['imagens'])->find($id);
@@ -397,7 +355,7 @@ class LaresTemporarioController extends Controller
         }
 
         try {
-            // remover arquivos do storage (caso existam)
+
             foreach ($lar->imagens as $imagem) {
                 if ($imagem->caminho) {
                     $oldPath = ltrim(str_replace('/storage/', '', $imagem->caminho), '/');
@@ -407,7 +365,7 @@ class LaresTemporarioController extends Controller
                 }
             }
 
-            $lar->delete(); // SoftDelete
+            $lar->delete();
 
             return response()->json(null, 204);
         } catch (\Exception $e) {

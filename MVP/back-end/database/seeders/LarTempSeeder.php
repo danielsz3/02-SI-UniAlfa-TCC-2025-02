@@ -27,7 +27,7 @@ class LarTempSeeder extends Seeder
                 'nome' => $faker->name(),
                 'data_nascimento' => $faker->dateTimeBetween('-60 years', '-18 years')->format('Y-m-d'),
                 'telefone' => $faker->phoneNumber(),
-                'situacao' => $faker->randomElement(['ativo', 'inativo']),
+                'situacao' => $faker->randomElement(['ativo']),
                 'experiencia' => $faker->optional()->sentence(10, true),
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),

@@ -37,10 +37,6 @@ class AdocaoSeeder extends Seeder
                 'status' => $status,
                 'qtd_pessoas_casa' => $faker->randomElement($qtdPessoasCasaOptions),
                 'possui_filhos' => $faker->boolean(40) ? 1 : 0,
-                'sobre_rotina' => json_encode([
-                    'atividade' => $faker->randomElement(['trabalho', 'estudo', 'lar']),
-                    'horario' => $faker->randomElement(['manhã', 'tarde', 'noite'])
-                ]),
                 'acesso_rua_janelas' => $faker->randomElement($acessoRuaJanelasOptions),
                 'acesso_rua_portoes_muros' => $faker->randomElement($acessoRuaPortoesMurosOptions),
                 'renda_familiar' => $faker->randomElement($rendaFamiliarOptions),

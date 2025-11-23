@@ -8,9 +8,10 @@ import { calcularIdade } from '@/lib/animal-utils'
 import { AnimalDetailModal } from '@/components/animal/AnimalDetailModal'
 import { Animal } from '@/types'
 import { getToken } from '@/lib/api'
-import { ArrowRight, Eye } from 'lucide-react'
+import { ArrowRight, CheckCheckIcon, Eye, X } from 'lucide-react'
 import Link from 'next/link'
 import LoadMoreList from '@/components/LoadMoreList'
+import { toast } from 'sonner'
 
 const API_BASE = (process.env.NEXT_PUBLIC_API_URL ?? '').replace(/\/$/, '')
 const USER_KEY = 'user'
@@ -201,6 +202,71 @@ interface MatchItemCardProps {
 }
 
 const MatchItemCard = React.memo(({ item, onSee }: MatchItemCardProps) => {
+  const router = useRouter();
+
+  const [loadingAction, setLoadingAction] = useState<
+    'escolhido' | 'rejeitado' | null
+  >(null);
+
+  const handleMudarStatus = async (status: 'escolhido' | 'rejeitado') => {
+    if (loadingAction) return;
+
+    setLoadingAction(status);
+
+    const toastId = toast.loading(
+      status === 'escolhido'
+        ? 'A escolher o animal...'
+        : 'A rejeitar o animal...'
+    );
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/match-afinidades/mudar-status`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${getToken()}`,
+          },
+          body: JSON.stringify({
+            status,
+            animal_id: item.animal.id,
+            usuario_id: JSON.parse(localStorage.getItem('user') || '{}').id,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Falha ao mudar status');
+      }
+
+      toast.success(`Animal ${status} com sucesso!`, {
+        id: toastId,
+        action: {
+          label: 'Ver lista',
+          onClick: () => {
+            router.push(`/painel-adotante?status=${status}`);
+          },
+        },
+        actionButtonStyle: {
+          backgroundColor: '#0367A6',
+          color: 'white',
+          fontSize: '0.8rem',
+        },
+        duration: 3000,
+      });;
+
+
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Erro desconhecido';
+      toast.error(`Erro: ${errorMessage}`, { id: toastId, richColors: true });
+
+      setLoadingAction(null);
+    }
+  };
+
   const { animal, status, created_at, observacao } = item
   const img = animal.imagens?.[0]?.caminho
   const idade = calcularIdade(animal.data_nascimento || '')
@@ -236,7 +302,10 @@ const MatchItemCard = React.memo(({ item, onSee }: MatchItemCardProps) => {
   }
 
   return (
-    <Card className="flex items-center gap-4 p-3 hover:shadow-lg transition-shadow w-full">
+    <Card
+      onClick={onSee}
+      className="flex items-center gap-4 p-3 hover:shadow-lg hover:bg-muted/5 transition-all w-full cursor-pointer relative group"
+    >
       <div className="w-20 h-20 rounded overflow-hidden bg-muted flex items-center justify-center shrink-0">
         {img ? (
           <img
@@ -252,7 +321,7 @@ const MatchItemCard = React.memo(({ item, onSee }: MatchItemCardProps) => {
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h4 className="font-semibold truncate">{animal.nome}</h4>
+            <h4 className="font-semibold truncate group-hover:text-primary transition-colors">{animal.nome}</h4>
             <p className="text-sm text-muted-foreground truncate text-wrap">
               {[idade, porte].filter(Boolean).join(' • ')}
             </p>
@@ -273,16 +342,41 @@ const MatchItemCard = React.memo(({ item, onSee }: MatchItemCardProps) => {
             </div>
 
             <div className="flex items-center gap-2">
-              <Button size="sm" variant="secondary" className="dark:text-white" onClick={onSee}>
-                <Eye className="w-4 h-4" />
-              </Button>
+
+              {status === 'rejeitado' && (
+                <Button
+                  size="sm"
+                  className="dark:text-white"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleMudarStatus('escolhido');
+                  }}
+                >
+                  <CheckCheckIcon className="w-4 h-4" />
+                </Button>
+              )}
 
               {status === 'escolhido' && (
-                <Link href={`/adotar/form?animal_id=${animal.id}`}>
-                  <Button size="sm">
-                    Adotar <ArrowRight className="w-4 h-4 ml-1" />
+                <>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    className="dark:text-white"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleMudarStatus('rejeitado');
+                    }}
+                  >
+                    <X className="w-4 h-4" />
                   </Button>
-                </Link>
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <Link href={`/adotar/form?animal_id=${animal.id}`}>
+                      <Button size="sm">
+                        Adotar <ArrowRight className="w-4 h-4 ml-1" />
+                      </Button>
+                    </Link>
+                  </div>
+                </>
               )}
             </div>
           </div>

@@ -44,17 +44,17 @@ export default function LoadMoreList({
     setLoading(true)
 
     try {
-      const end = start + step - 1
+      const end = start + step
 
       let data: any[] = []
       let totalCount = 0
 
       if (fetchData) {
-        const result = await fetchData(start, end)
+        const result = await fetchData(start, end - 1)
         data = result.data
         totalCount = result.total
       } else {
-        const response = await fetch(`${url}?range=[${start},${end}]`)
+        const response = await fetch(`${url}?range=[${start},${end - 1}]`)
         data = await response.json()
 
         const contentRange = response.headers.get("Content-Range")
@@ -62,7 +62,7 @@ export default function LoadMoreList({
       }
 
       setItems(prev => [...prev, ...data])
-      setStart(prev => prev + step)
+      setStart(prev => prev + data.length)
       setTotal(totalCount)
 
       if (data.length < step || start + data.length >= totalCount) {
@@ -108,7 +108,7 @@ export default function LoadMoreList({
             ? `item-${item.id}`
             : item?.slug
               ? `slug-${item.slug}`
-              : `local-${start}-${i}`
+              : `index-${i}`
 
           return <div key={key}>{renderItem(item, i)}</div>
         })}

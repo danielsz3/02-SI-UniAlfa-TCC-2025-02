@@ -39,7 +39,7 @@ interface Parceiro {
 
 function ParceiroCard({ parceiro }: { parceiro: Parceiro }) {
   const storageUrl =
-    process.env.NEXT_PUBLIC_STORAGE_URL ?? "http://127.0.0.1:8000/api/imagens"
+    process.env.NEXT_PUBLIC_STORAGE_URL
 
   const imagemUrl = parceiro.imagem ? `${storageUrl}/${parceiro.imagem}` : null
 
@@ -120,7 +120,7 @@ function ParceiroCard({ parceiro }: { parceiro: Parceiro }) {
 export default function AboutPage() {
   const apiBase = process.env.NEXT_PUBLIC_API_URL
   const storageUrl =
-    process.env.NEXT_PUBLIC_STORAGE_URL ?? "http://127.0.0.1:8000/storage"
+    process.env.NEXT_PUBLIC_STORAGE_URL
 
   const [ong, setOng] = useState<Ong | null>(null)
   const [loadingOng, setLoadingOng] = useState(true)
@@ -256,79 +256,82 @@ export default function AboutPage() {
           </div>
         </section>
 
-        <Separator className="my-8" />
+          <Separator className="my-8" />
 
-        <h2 className="text-2xl font-semibold mb-6 text-center">
-          Lares Temporários
-        </h2>
+          <h2 className="text-2xl font-semibold mb-6 text-center">
+            Lares Temporários
+          </h2>
+          <section className="flex flex-col gap-4">
+            <LoadMoreList
+              url={`${apiBase}/lares-temporarios`}
+              step={4}
+              className="space-y-4"
+              renderItem={(lar: LarTemporario) => (
+                <Card
+                  key={lar.id}
+                  className="flex flex-col md:flex-row items-center md:items-start md:space-x-4 p-4 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm"
+                >
+                  <div className="rounded-lg overflow-hidden w-full md:w-48 h-48 mb-4 md:mb-0">
+                    <ImageCarousel
+                      images={lar.imagens}
+                      alt={lar.nome}
+                      variant="minimal"
+                      showArrows
+                    />
+                  </div>
 
-        <section className="flex flex-col gap-4">
+                  <CardContent className="pt-0 md:pt-5 w-full">
+                    <CardTitle className="text-xl font-bold mb-2">
+                      {lar.nome}
+                    </CardTitle>
+                    <div className="text-sm font-medium">
+                      {lar.endereco.logradouro}, {lar.endereco.bairro},{" "}
+                      {lar.endereco.cidade} - {lar.endereco.uf}
+                    </div>
+                    <div className="text-sm font-medium mb-1">
+                      CEP: {lar.endereco.cep}
+                    </div>
+
+                    <div className="text-md text-secondary font-semibold mb-1">
+                      Ativo há {calcularIdade(lar.updated_at)}
+                    </div>
+
+                    <div className="text-md font-thin">
+                      Lar de{" "}
+                      {
+                        lar.animais.filter(
+                          (a) => a.situacao !== "adotado",
+                        ).length
+                      }{" "}
+                      animais atualmente
+                    </div>
+                    <div className="text-md font-thin">
+                      Já passaram mais de{" "}
+                      {
+                        lar.animais.filter(
+                          (a) => a.situacao === "adotado",
+                        ).length
+                      }{" "}
+                      animais neste lar
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            />
+          </section>
+          
+          <Separator className="my-12" />
+
+          <h2 className="text-2xl font-semibold mb-6 text-center">
+            Parceiros
+          </h2>
+
           <LoadMoreList
-            url={`${apiBase}/lares-temporarios`}
-            step={4}
-            className="space-y-4"
-            renderItem={(lar: LarTemporario) => (
-              <Card
-                key={lar.id}
-                className="flex flex-col md:flex-row items-center md:items-start md:space-x-4 p-4 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm"
-              >
-                <div className="rounded-lg overflow-hidden w-full md:w-48 h-48 mb-4 md:mb-0">
-                  <ImageCarousel
-                    images={lar.imagens}
-                    alt={lar.nome}
-                    variant="minimal"
-                    showArrows
-                  />
-                </div>
-
-                <CardContent className="pt-0 md:pt-5 w-full">
-                  <CardTitle className="text-xl font-bold mb-2">
-                    {lar.nome}
-                  </CardTitle>
-                  <div className="text-sm font-medium">
-                    {lar.endereco.logradouro}, {lar.endereco.bairro},{" "}
-                    {lar.endereco.cidade} - {lar.endereco.uf}
-                  </div>
-                  <div className="text-sm font-medium mb-1">
-                    CEP: {lar.endereco.cep}
-                  </div>
-
-                  <div className="text-md text-secondary font-semibold mb-1">
-                    Ativo há {calcularIdade(lar.updated_at)}
-                  </div>
-
-                  <div className="text-md font-thin">
-                    Lar de{" "}
-                    {
-                      lar.animais.filter((a) => a.situacao !== "adotado").length
-                    }{" "}
-                    animais atualmente
-                  </div>
-                  <div className="text-md font-thin">
-                    Já passaram mais de{" "}
-                    {
-                      lar.animais.filter((a) => a.situacao === "adotado").length
-                    }{" "}
-                    animais neste lar
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+            url={`${apiBase}/parceiros`}
+            step={6}
+            renderItem={(p: Parceiro) => <ParceiroCard key={p.id} parceiro={p} />}
           />
-        </section>
-
-        <Separator className="my-12" />
-
-        <h2 className="text-2xl font-semibold mb-6 text-center">
-          Parceiros
-        </h2>
-
-        <LoadMoreList
-          url={`${apiBase}/parceiros`}
-          step={6}
-          renderItem={(p: Parceiro) => <ParceiroCard parceiro={p} />}
-        />
-      </div>
-    </main>
-  )
-}
+        </div>
+      </main>
+    )
+  }

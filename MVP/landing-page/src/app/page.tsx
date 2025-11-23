@@ -1,12 +1,20 @@
 "use client"
 
 import Link from "next/link"
+import { useState } from "react"
+
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import ImageCarousel from "@/components/ImageCarousel"
 import Ballpit from "@/components/Ballpit"
 import LoadMoreList from "@/components/LoadMoreList"
+
+import EventoModal from "@/components/EventoModal"
 import { Imagens } from "@/types"
+
+// =============================
+// TYPES
+// =============================
 
 type Evento = {
   id: number
@@ -17,6 +25,10 @@ type Evento = {
   data_fim: string
   imagens: Imagens[]
 }
+
+// =============================
+// HERO SECTION
+// =============================
 
 function HeroSection() {
   return (
@@ -67,9 +79,22 @@ function HeroSection() {
   )
 }
 
-function EventoCard({ evento }: { evento: Evento }) {
+// =============================
+// CARD DO EVENTO (AGORA ABRE MODAL)
+// =============================
+
+function EventoCard({
+  evento,
+  onClick,
+}: {
+  evento: Evento
+  onClick: () => void
+}) {
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+    <Card
+      onClick={onClick}
+      className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+    >
       <div className="h-50 bg-muted">
         {evento.imagem ? (
           <ImageCarousel
@@ -101,22 +126,43 @@ function EventoCard({ evento }: { evento: Evento }) {
   )
 }
 
+// =============================
+// PAGE: HOME
+// =============================
+
 export default function Home() {
+  const [eventoSelecionado, setEventoSelecionado] = useState<Evento | null>(null)
+  const [modalOpen, setModalOpen] = useState(false)
+
   return (
     <>
       <HeroSection />
 
-      {/* Seção de Eventos com paginação */}
+      {/* MODAL */}
+      <EventoModal
+        evento={eventoSelecionado}
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+      />
+
+      {/* LISTA DE EVENTOS */}
       <section className="w-full py-16 bg-background">
         <div className="mx-auto max-w-6xl px-4">
           <h2 className="text-3xl font-bold mb-8">Eventos</h2>
 
           <LoadMoreList
             url={`${process.env.NEXT_PUBLIC_API_URL}/eventos`}
-            step={6} // 3 linhas x 3 colunas
+            step={6}
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
             renderItem={(evento: Evento, index) => (
-              <EventoCard key={evento.id ?? index} evento={evento} />
+              <EventoCard
+                key={evento.id ?? index}
+                evento={evento}
+                onClick={() => {
+                  setEventoSelecionado(evento)
+                  setModalOpen(true)
+                }}
+              />
             )}
           />
         </div>

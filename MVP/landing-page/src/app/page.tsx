@@ -154,9 +154,8 @@ export default function Home() {
             url={`${process.env.NEXT_PUBLIC_API_URL}/eventos`}
             step={6}
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
-            renderItem={(evento: Evento, index) => (
+            renderItem={(evento: Evento) => (
               <EventoCard
-                key={evento.id ?? index}
                 evento={evento}
                 onClick={() => {
                   setEventoSelecionado(evento)

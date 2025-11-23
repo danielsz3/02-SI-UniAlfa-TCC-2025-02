@@ -425,7 +425,6 @@ export default function PainelAdotantePage() {
         fetchData={fetchMatchesPage}
         renderItem={(item: MatchItem) => (
           <MatchItemCard
-            key={`${item.status}-${item.id}`}
             item={item}
             onSee={() => setSelectedAnimal(item.animal)}
           />

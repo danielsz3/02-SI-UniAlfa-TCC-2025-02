@@ -27,6 +27,7 @@ export default function LoadMoreList({
   const [total, setTotal] = useState(0)
 
   const didLoadInitial = useRef(false)
+  const itemCounter = useRef(0) // Contador global para garantir keys únicas
 
   const loadLocalData = () => {
     const end = start + step
@@ -89,6 +90,7 @@ export default function LoadMoreList({
     setHasMore(true)
     setTotal(localData ? localData.length : 0)
     didLoadInitial.current = false
+    itemCounter.current = 0
   }, [localData, url])
 
   useEffect(() => {
@@ -104,13 +106,13 @@ export default function LoadMoreList({
     <div className="space-y-6">
       <div className={className ?? defaultClassName}>
         {items.map((item, i) => {
-          const key = item?.id
-            ? `item-${item.id}`
+          const uniqueKey = item?.id
+            ? `item-${item.id}-${i}`
             : item?.slug
-              ? `slug-${item.slug}`
-              : `index-${i}`
+              ? `slug-${item.slug}-${i}`
+              : `index-${start - items.length + i}`
 
-          return <div key={key}>{renderItem(item, i)}</div>
+          return <div key={uniqueKey}>{renderItem(item, i)}</div>
         })}
       </div>
 

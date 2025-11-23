@@ -152,9 +152,8 @@ class UsuarioController extends Controller
                     PreferenciaUsuario::create($prefsData);
                 }
 
-                $usuario->load(['endereco', 'preferencias']);
+               return response()->json($usuario->load(['endereco', 'preferencias']), 201);
 
-                return response()->json($usuario, 201);
             });
         } catch (\Exception $e) {
             return response()->json([

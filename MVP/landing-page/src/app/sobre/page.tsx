@@ -274,14 +274,13 @@ export default function AboutPage() {
           Lares Temporários
         </h2>
         <section className="flex flex-col gap-4">
+          
           <LoadMoreList
             url={`${apiBase}/lares-temporarios`}
             step={4}
             className="space-y-4"
             renderItem={(lar: LarTemporario) => (
-              <Card
-                className="flex flex-col md:flex-row items-center md:items-start md:space-x-4 p-4 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm"
-              >
+              <Card className="flex flex-col md:flex-row items-center md:items-start md:space-x-4 p-4 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm">
                 <div className="rounded-lg overflow-hidden w-full md:w-48 h-48 mb-4 md:mb-0">
                   <ImageCarousel
                     images={lar.imagens}
@@ -295,10 +294,12 @@ export default function AboutPage() {
                   <CardTitle className="text-xl font-bold mb-2">
                     {lar.nome}
                   </CardTitle>
+
                   <div className="text-sm font-medium">
                     {lar.endereco.logradouro}, {lar.endereco.bairro},{" "}
                     {lar.endereco.cidade} - {lar.endereco.uf}
                   </div>
+
                   <div className="text-sm font-medium mb-1">
                     CEP: {lar.endereco.cep}
                   </div>
@@ -308,27 +309,17 @@ export default function AboutPage() {
                   </div>
 
                   <div className="text-md font-thin">
-                    Lar de{" "}
-                    {
-                      lar.animais.filter(
-                        (a) => a.situacao !== "adotado",
-                      ).length
-                    }{" "}
-                    animais atualmente
+                    Lar de {lar.animais.filter(a => a.situacao !== "adotado").length} animais atualmente
                   </div>
+
                   <div className="text-md font-thin">
-                    Já passaram mais de{" "}
-                    {
-                      lar.animais.filter(
-                        (a) => a.situacao === "adotado",
-                      ).length
-                    }{" "}
-                    animais neste lar
+                    Já passaram mais de {lar.animais.filter(a => a.situacao === "adotado").length} animais neste lar
                   </div>
                 </CardContent>
               </Card>
             )}
           />
+
         </section>
       </div>
     </main>

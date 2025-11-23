@@ -26,8 +26,8 @@ export default function LoadMoreList({
   const [hasMore, setHasMore] = useState(true)
   const [total, setTotal] = useState(0)
 
-  const didLoadInitial = useRef(false)
-  const itemCounter = useRef(0) // Contador global para garantir keys únicas
+  const didLoadInitialRef = useRef(false)
+  const currentSourceRef = useRef<string>("")
 
   const loadLocalData = () => {
     const end = start + step
@@ -85,20 +85,26 @@ export default function LoadMoreList({
   }
 
   useEffect(() => {
-    setItems([])
-    setStart(0)
-    setHasMore(true)
-    setTotal(localData ? localData.length : 0)
-    didLoadInitial.current = false
-    itemCounter.current = 0
-  }, [localData, url])
+    const newSource = url || (fetchData ? "fetchData" : "localData")
+
+    // Só reseta se a fonte de dados mudou
+    if (currentSourceRef.current !== newSource) {
+      currentSourceRef.current = newSource
+      setItems([])
+      setStart(0)
+      setHasMore(true)
+      setTotal(localData ? localData.length : 0)
+      didLoadInitialRef.current = false
+    }
+  }, [localData, url, fetchData])
 
   useEffect(() => {
-    if (!didLoadInitial.current) {
-      didLoadInitial.current = true
+    if (!didLoadInitialRef.current && items.length === 0) {
+      didLoadInitialRef.current = true
       loadData()
     }
-  }, [url, localData])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items.length])
 
   const defaultClassName = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
 
@@ -107,10 +113,10 @@ export default function LoadMoreList({
       <div className={className ?? defaultClassName}>
         {items.map((item, i) => {
           const uniqueKey = item?.id
-            ? `item-${item.id}-${i}`
+            ? `item-${item.id}`
             : item?.slug
-              ? `slug-${item.slug}-${i}`
-              : `index-${start - items.length + i}`
+              ? `slug-${item.slug}`
+              : `index-${i}`
 
           return <div key={uniqueKey}>{renderItem(item, i)}</div>
         })}

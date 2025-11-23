@@ -154,7 +154,7 @@ export function AnimalDetailModal({ initialData, onClose, buttonAdotar, carousel
                                 <div>
                                     <p className="text-sm text-muted-foreground">Castrado</p>
                                     <p className="font-semibold text-sm">
-                                        {animal.castrado ? "Sim" : "Não" + animal.vale_castracao ? " - Vale castração disponível" : ""}
+                                        {animal.castrado ? "Sim" : "Não"}{animal.vale_castracao && !animal.castrado ? " - Vale castração disponível" : ""}
                                     </p>
                                 </div>
                             </Card>

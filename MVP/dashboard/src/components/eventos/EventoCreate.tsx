@@ -226,13 +226,13 @@ const EventoCreate = () => {
                     <ImageInput
                         source="imagem"
                         label="Imagem de Capa"
-                        accept={{ 'image/*': ['.png', '.jpg', '.jpeg', '.gif'] }}
+                        accept={{ 'image/*': ['.png', '.jpg', '.jpeg', 'webp'] }}
                         maxSize={10_500_000}
                         validate={required('A imagem de capa é obrigatória')}
                         placeholder={
                             <FilePlaceholder
                                 maxSize={10_500_000}
-                                accept={['.png', '.jpg', '.jpeg', '.gif']}
+                                accept={['.png', '.jpg', '.jpeg', 'webp']}
                             />
                         }
                         sx={{
@@ -245,14 +245,14 @@ const EventoCreate = () => {
                     <ImageInput
                         source="imagens"
                         label="Imagens do Evento"
-                        accept={{ 'image/*': ['.png', '.jpg', '.jpeg', '.gif'] }}
+                        accept={{ 'image/*': ['.png', '.jpg', '.jpeg', '.webp'] }}
                         maxSize={10_500_000}
                         validate={required('Pelo menos uma imagem é obrigatória')}
                         multiple
                         placeholder={
                             <FilePlaceholder
                                 maxSize={10_500_000}
-                                accept={['.png', '.jpg', '.jpeg', '.gif']}
+                                accept={['.png', '.jpg', '.jpeg', '.webp']}
                                 multiple
                             />
                         }

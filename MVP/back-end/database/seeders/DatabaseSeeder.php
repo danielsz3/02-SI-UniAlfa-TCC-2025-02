@@ -67,6 +67,8 @@ class DatabaseSeeder extends Seeder
             TransacaoSeeder::class,
             EventoSeeder::class,
             MatchSeeder::class,
+            ParceiroSeeder::class,
+            DocumentoSeeder::class,
         ]);
     }
 }

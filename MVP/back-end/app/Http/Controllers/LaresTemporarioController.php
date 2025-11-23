@@ -28,9 +28,17 @@ class LaresTemporarioController extends Controller
 
     public function index(Request $request): JsonResponse
     {
+        $query = LarTemporario::with(['endereco', 'imagens', 'animais']);
+
+        $user = $request->user();
+
+        if (!$user || $user->role !== 'admin') {
+            $query->where('situacao', 'ativo');
+        }
+
         return $this->SearchIndex(
             $request,
-            LarTemporario::with(['endereco', 'imagens', 'animais']),
+            $query,
             'lares_temporarios',
             ['nome', 'data_nascimento', 'telefone']
         );

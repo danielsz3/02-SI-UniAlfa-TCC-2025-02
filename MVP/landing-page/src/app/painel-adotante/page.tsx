@@ -34,7 +34,7 @@ type MatchItem = {
   animal_id: number
 }
 
-type User = { id: number; [key: string]: any }
+type User = { id: number;[key: string]: any }
 
 type StatusFilter = MatchStatus
 
@@ -84,29 +84,17 @@ const apiService = {
 
     return res.json().catch(() => null)
   },
-
-  fetchMatches: async (userId: number): Promise<MatchItem[]> => {
-    const filter = encodeURIComponent(JSON.stringify({ usuario_id: userId }))
-    const sort = encodeURIComponent(JSON.stringify(['created_at', 'DESC']))
-    const json = await apiService.fetch(
-      `/match-afinidades?filter=${filter}&sort=${sort}`
-    )
-    return Array.isArray(json) ? json : json.data ?? json.items ?? json ?? []
-  },
-
-  fetchMyAnimals: async (userId: number): Promise<Animal[]> => {
-    const filter = encodeURIComponent(JSON.stringify({ usuario_id: userId }))
-    const sort = encodeURIComponent(JSON.stringify(['updated_at', 'DESC']))
-    const json = await apiService.fetch(
-      `/animais?filter=${filter}&sort=${sort}`
-    )
-    return Array.isArray(json) ? json : json.data ?? json.items ?? json ?? []
-  },
 }
 
-function useAdotanteData() {
+function useAdotanteDataBase() {
   const [userId, setUserId] = useState<number | null>(null)
-  const [allItems, setAllItems] = useState<MatchItem[]>([])
+  const [counts, setCounts] = useState<Record<StatusFilter, number>>({
+    em_adocao: 0,
+    escolhido: 0,
+    rejeitado: 0,
+    finalizado: 0,
+    anunciados: 0,
+  })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -128,44 +116,31 @@ function useAdotanteData() {
     setError(null)
 
     Promise.all([
-      apiService.fetchMatches(userId),
-      apiService.fetchMyAnimals(userId)
+      apiService.fetch(`/match-afinidades?filter=${encodeURIComponent(JSON.stringify({ usuario_id: userId }))}`),
+      apiService.fetch(`/animais?filter=${encodeURIComponent(JSON.stringify({ usuario_id: userId }))}`),
     ])
       .then(([matchesData, animalsData]) => {
-        const formattedAnimals: MatchItem[] = animalsData.map((animal) => ({
-          id: animal.id,
-          status: 'anunciados',
-          animal: animal,
-          observacao: '',
-          created_at: animal.created_at,
-          usuario_id: userId,
-          animal_id: animal.id,
-        }))
+        const matches = Array.isArray(matchesData) ? matchesData : matchesData?.data ?? matchesData?.items ?? []
+        const animals = Array.isArray(animalsData) ? animalsData : animalsData?.data ?? animalsData?.items ?? []
 
-        setAllItems([...matchesData, ...formattedAnimals])
+        const newCounts = {
+          em_adocao: matches.filter((m: any) => m.status === 'em_adocao').length,
+          escolhido: matches.filter((m: any) => m.status === 'escolhido').length,
+          rejeitado: matches.filter((m: any) => m.status === 'rejeitado').length,
+          finalizado: matches.filter((m: any) => m.status === 'finalizado').length,
+          anunciados: animals.length,
+        }
+
+        setCounts(newCounts)
       })
       .catch((e) => {
-        console.error('Erro ao buscar dados', e)
+        console.error('Erro ao buscar contadores', e)
         setError(e.message || 'Falha ao carregar dados.')
-        setAllItems([])
       })
-      .finally(() => {
-        setLoading(false)
-      })
+      .finally(() => setLoading(false))
   }, [userId])
 
-  const counts = useMemo(
-    () => ({
-      em_adocao: allItems.filter((m) => m.status === 'em_adocao').length,
-      escolhido: allItems.filter((m) => m.status === 'escolhido').length,
-      rejeitado: allItems.filter((m) => m.status === 'rejeitado').length,
-      finalizado: allItems.filter((m) => m.status === 'finalizado').length,
-      anunciados: allItems.filter((m) => m.status === 'anunciados').length,
-    }),
-    [allItems]
-  )
-
-  return { allItems, counts, isLoading: loading, error }
+  return { userId, counts, isLoading: loading, error }
 }
 
 const PageHeader = () => (
@@ -320,7 +295,7 @@ const MatchItemCard = React.memo(({ item, onSee }: MatchItemCardProps) => {
 MatchItemCard.displayName = 'MatchItemCard'
 
 export default function PainelAdotantePage() {
-  const { allItems, counts, isLoading, error } = useAdotanteData()
+  const { userId, counts, isLoading, error } = useAdotanteDataBase()
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
@@ -334,12 +309,82 @@ export default function PainelAdotantePage() {
     router.replace(`${pathname}?${params.toString()}`)
   }
 
-  const filteredMatches = useMemo(
-    () => allItems.filter((m) => m.status === statusFilter),
-    [allItems, statusFilter]
-  )
-
   const [selectedAnimal, setSelectedAnimal] = useState<Animal | null>(null)
+
+  const fetchMatchesPage = async (start: number, end: number) => {
+    if (!userId) {
+      return { data: [], total: 0 }
+    }
+
+    try {
+      let data: MatchItem[] = []
+      let total = 0
+
+      if (statusFilter === 'anunciados') {
+        const filter = encodeURIComponent(JSON.stringify({ usuario_id: userId }))
+        const sort = encodeURIComponent(JSON.stringify(['updated_at', 'DESC']))
+
+        const res = await fetch(
+          `${API_BASE}/animais?filter=${filter}&sort=${sort}&range=[${start},${end}]`,
+          {
+            headers: apiService.getAuthHeaders(),
+          }
+        )
+
+        if (!res.ok) {
+          throw new Error('Erro ao buscar animais')
+        }
+
+        const animalsData = await res.json()
+        const animals = Array.isArray(animalsData) ? animalsData : animalsData?.data ?? animalsData?.items ?? []
+
+        data = animals.map((animal: Animal) => ({
+          id: animal.id,
+          status: 'anunciados' as MatchStatus,
+          animal: animal,
+          observacao: '',
+          created_at: animal.created_at,
+          usuario_id: userId,
+          animal_id: animal.id,
+        }))
+
+        const contentRange = res.headers.get('Content-Range')
+        total = contentRange ? Number(contentRange.split('/')[1]) : counts.anunciados
+      } else {
+        const filter = encodeURIComponent(JSON.stringify({
+          usuario_id: userId,
+          status: statusFilter
+        }))
+        const sort = encodeURIComponent(JSON.stringify(['created_at', 'DESC']))
+
+        const res = await fetch(
+          `${API_BASE}/match-afinidades?filter=${filter}&sort=${sort}&range=[${start},${end}]`,
+          {
+            headers: apiService.getAuthHeaders(),
+          }
+        )
+
+        if (!res.ok) {
+          throw new Error('Erro ao buscar matches')
+        }
+
+        const matchesData = await res.json()
+        data = Array.isArray(matchesData) ? matchesData : matchesData?.data ?? matchesData?.items ?? []
+
+        const contentRange = res.headers.get('Content-Range')
+        total = contentRange ? Number(contentRange.split('/')[1]) : counts[statusFilter]
+      }
+
+      if (!total || total === 0) {
+        total = start + data.length
+      }
+
+      return { data, total }
+    } catch (e) {
+      console.error('Erro ao buscar página:', e)
+      return { data: [], total: 0 }
+    }
+  }
 
   if (isLoading) {
     return (
@@ -352,12 +397,12 @@ export default function PainelAdotantePage() {
     )
   }
 
-  if (error) {
+  if (error || !userId) {
     return (
       <div className="p-6 max-w-6xl mx-auto">
         <PageHeader />
         <div className="flex justify-center items-center py-12">
-          <div className="text-red-500">Erro: {error}</div>
+          <div className="text-red-500">Erro: {error ?? 'Usuário não autenticado.'}</div>
         </div>
       </div>
     )
@@ -374,9 +419,10 @@ export default function PainelAdotantePage() {
       />
 
       <LoadMoreList
-        localData={filteredMatches}
+        key={statusFilter}
         step={8}
         className="grid grid-cols-1 lg:grid-cols-2 gap-4"
+        fetchData={fetchMatchesPage}
         renderItem={(item: MatchItem) => (
           <MatchItemCard
             key={`${item.status}-${item.id}`}

@@ -7,11 +7,28 @@ import ImageCarousel from "@/components/ImageCarousel"
 import { calcularIdade } from "@/lib/animal-utils"
 import { LarTemporario } from "@/types"
 import LoadMoreList from "@/components/LoadMoreList"
-import type { Ong } from "@/types" // certifique-se de ter esse tipo definido
 
-// ==============================
-// TYPES LOCAIS
-// ==============================
+interface Ong {
+  id: number
+  nome: string
+  descricao?: string | null
+  imagem?: string | null
+  cnpj?: string | null
+  logradouro?: string | null
+  numero?: string | null
+  bairro?: string | null
+  cidade?: string | null
+  uf?: string | null
+  cep?: string | null
+  contatos?: Array<{
+    id: number
+    tipo: string
+    contato: string
+    link?: string | null
+    descricao?: string | null
+  }>
+}
+
 interface Parceiro {
   id: number
   nome: string
@@ -20,9 +37,6 @@ interface Parceiro {
   imagem?: string | null
 }
 
-// ==============================
-// COMPONENTE ParceiroCard
-// ==============================
 function ParceiroCard({ parceiro }: { parceiro: Parceiro }) {
   const storageUrl =
     process.env.NEXT_PUBLIC_STORAGE_URL ?? "http://127.0.0.1:8000/api/imagens"
@@ -32,7 +46,6 @@ function ParceiroCard({ parceiro }: { parceiro: Parceiro }) {
   const content = (
     <Card className="group relative overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
       <div className="flex flex-col h-full">
-        {/* FOTO */}
         <div className="relative w-full overflow-hidden">
           <div className="relative aspect-4/3 w-full">
             {imagemUrl ? (
@@ -58,11 +71,9 @@ function ParceiroCard({ parceiro }: { parceiro: Parceiro }) {
             )}
           </div>
 
-          {/* Anel em volta da foto no hover */}
           <div className="pointer-events-none absolute inset-0 rounded-t-xl ring-0 ring-primary/0 transition-all duration-300 group-hover:ring-4 group-hover:ring-primary/60" />
         </div>
 
-        {/* CONTEÚDO */}
         <CardContent className="flex flex-1 flex-col gap-1 p-4">
           <h3 className="text-lg font-semibold tracking-tight line-clamp-1">
             {parceiro.nome}
@@ -106,9 +117,6 @@ function ParceiroCard({ parceiro }: { parceiro: Parceiro }) {
   return content
 }
 
-// ==============================
-// PÁGINA PRINCIPAL
-// ==============================
 export default function AboutPage() {
   const apiBase = process.env.NEXT_PUBLIC_API_URL
   const storageUrl =
@@ -118,7 +126,6 @@ export default function AboutPage() {
   const [loadingOng, setLoadingOng] = useState(true)
   const [errorOng, setErrorOng] = useState<string | null>(null)
 
-  // Busca da ONG (ajuste o ID conforme sua regra: 1, ou vindo de rota, etc.)
   useEffect(() => {
     if (!apiBase) return
 
@@ -144,39 +151,33 @@ export default function AboutPage() {
     fetchOng()
   }, [apiBase])
 
-  // Montagem da URL da imagem de capa da ONG
   const imagemOngUrl =
     ong?.imagem && !ong.imagem.startsWith("http")
       ? `${storageUrl}/${ong.imagem}`
       : ong?.imagem ?? null
 
-  // Endereço formatado da ONG
   const enderecoFormatado =
     ong &&
-    (ong.logradouro ||
-      ong.numero ||
-      ong.bairro ||
-      ong.cidade ||
-      ong.uf ||
-      ong.cep)
+      (ong.logradouro ||
+        ong.numero ||
+        ong.bairro ||
+        ong.cidade ||
+        ong.uf ||
+        ong.cep)
       ? [
-          [ong.logradouro, ong.numero].filter(Boolean).join(", "),
-          [ong.bairro, ong.cidade].filter(Boolean).join(" - "),
-          ong.uf,
-          ong.cep && `CEP: ${ong.cep}`,
-        ]
-          .filter(Boolean)
-          .join(" | ")
+        [ong.logradouro, ong.numero].filter(Boolean).join(", "),
+        [ong.bairro, ong.cidade].filter(Boolean).join(" - "),
+        ong.uf,
+        ong.cep && `CEP: ${ong.cep}`,
+      ]
+        .filter(Boolean)
+        .join(" | ")
       : null
 
   return (
     <main className="min-h-screen bg-background flex flex-col items-center px-4 py-10">
       <div className="max-w-3xl w-full">
-        {/* ====================== */}
-        {/* QUEM SOMOS (DINÂMICO) */}
-        {/* ====================== */}
         <section className="mb-12 flex flex-col md:flex-row items-center gap-8">
-          {/* IMAGEM DA ONG */}
           <div className="w-full md:w-1/3 rounded-lg overflow-hidden border border-gray-300 dark:border-gray-700">
             {loadingOng ? (
               <div className="w-full h-48 flex items-center justify-center text-sm text-muted-foreground">
@@ -195,7 +196,6 @@ export default function AboutPage() {
             )}
           </div>
 
-          {/* TEXTO DA ONG */}
           <div className="w-full md:w-2/3 text-lg leading-relaxed text-gray-700 dark:text-gray-300 flex flex-col justify-center space-y-2">
             {loadingOng && (
               <span className="text-sm text-muted-foreground">
@@ -204,16 +204,12 @@ export default function AboutPage() {
             )}
 
             {errorOng && (
-              <span className="text-sm text-destructive">
-                {errorOng}
-              </span>
+              <span className="text-sm text-destructive">{errorOng}</span>
             )}
 
             {ong && (
               <>
-                <span className="font-semibold text-xl">
-                  {ong.nome}
-                </span>
+                <span className="font-semibold text-xl">{ong.nome}</span>
 
                 {ong.descricao && <span>{ong.descricao}</span>}
 
@@ -229,14 +225,11 @@ export default function AboutPage() {
                   </span>
                 )}
 
-                {/* Contatos da ONG */}
                 {ong.contatos && ong.contatos.length > 0 && (
                   <div className="pt-2 space-y-1 text-sm">
-                    {ong.contatos.map((c) => (
-                      <div key={c.id}>
-                        <strong className="capitalize">
-                          {c.tipo}:
-                        </strong>{" "}
+                    {ong.contatos.map((c, index) => (
+                      <div key={c.id ?? index}>
+                        <strong className="capitalize">{c.tipo}:</strong>{" "}
                         {c.link ? (
                           <a
                             href={c.link}
@@ -260,21 +253,11 @@ export default function AboutPage() {
                 )}
               </>
             )}
-
-            {/* Fallback caso não retorne ONG e não haja erro explícito */}
-            {!loadingOng && !ong && !errorOng && (
-              <span className="text-sm text-muted-foreground">
-                Nenhuma informação de ONG cadastrada.
-              </span>
-            )}
           </div>
         </section>
 
         <Separator className="my-8" />
 
-        {/* ====================== */}
-        {/* LARES TEMPORÁRIOS */}
-        {/* ====================== */}
         <h2 className="text-2xl font-semibold mb-6 text-center">
           Lares Temporários
         </h2>
@@ -317,18 +300,14 @@ export default function AboutPage() {
                   <div className="text-md font-thin">
                     Lar de{" "}
                     {
-                      lar.animais.filter(
-                        (a) => a.situacao !== "adotado",
-                      ).length
+                      lar.animais.filter((a) => a.situacao !== "adotado").length
                     }{" "}
                     animais atualmente
                   </div>
                   <div className="text-md font-thin">
                     Já passaram mais de{" "}
                     {
-                      lar.animais.filter(
-                        (a) => a.situacao === "adotado",
-                      ).length
+                      lar.animais.filter((a) => a.situacao === "adotado").length
                     }{" "}
                     animais neste lar
                   </div>
@@ -338,9 +317,6 @@ export default function AboutPage() {
           />
         </section>
 
-        {/* ====================== */}
-        {/* SEÇÃO PARCEIROS */}
-        {/* ====================== */}
         <Separator className="my-12" />
 
         <h2 className="text-2xl font-semibold mb-6 text-center">
@@ -350,7 +326,7 @@ export default function AboutPage() {
         <LoadMoreList
           url={`${apiBase}/parceiros`}
           step={6}
-          renderItem={(p: Parceiro) => <ParceiroCard key={p.id} parceiro={p} />}
+          renderItem={(p: Parceiro) => <ParceiroCard parceiro={p} />}
         />
       </div>
     </main>

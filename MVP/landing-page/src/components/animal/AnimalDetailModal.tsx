@@ -43,9 +43,9 @@ async function fetchAnimal(id: number) {
 }
 
 const tamanho = [
-  { id: 'pequeno', name: 'Pequeno (até 10kg)' },
-  { id: 'medio', name: 'Médio (10kg a 25kg)' },
-  { id: 'grande', name: 'Grande (acima de 25kg)' },
+    { id: 'pequeno', name: 'Pequeno (até 10kg)' },
+    { id: 'medio', name: 'Médio (10kg a 25kg)' },
+    { id: 'grande', name: 'Grande (acima de 25kg)' },
 ]
 
 export function AnimalDetailModal({ initialData, onClose, buttonAdotar, carousel = true }: AnimalDetailModalProps) {
@@ -179,20 +179,23 @@ export function AnimalDetailModal({ initialData, onClose, buttonAdotar, carousel
                                         <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
                                             {animal.descricao}
                                         </p>
-                                        {animal.situacao == 'adotado' && (
-                                            <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap mt-4">
+                                        {animal.situacao == 'adotado' ? (
+                                            <p className="text-muted-foreground font-bold leading-relaxed whitespace-pre-wrap mt-4">
                                                 Este animal já foi adotado.
                                             </p>
-                                        )}
-                                        {animal.lar_temporario_id != null && (
-                                            <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap mt-4">
-                                                Este animal se encontra no lar temporário de {animal.lar_temporario?.nome}.
-                                            </p>
-                                        )}
-                                        {animal.fica_usuario != 0 && (
-                                            <p className="text-muted-foreground font-bold leading-relaxed whitespace-pre-wrap mt-4">
-                                                Este animal está com o dono atualmente.
-                                            </p>
+                                        ) : (
+                                            <>
+                                                {animal.lar_temporario_id != null && (
+                                                    <p className="text-muted-foreground font-bold leading-relaxed whitespace-pre-wrap mt-4">
+                                                        Este animal se encontra no lar temporário de {animal.lar_temporario?.nome}.
+                                                    </p>
+                                                )}
+                                                {animal.fica_usuario != 0 && (
+                                                    <p className="text-muted-foreground font-bold leading-relaxed whitespace-pre-wrap mt-4">
+                                                        Este animal está com o dono atualmente.
+                                                    </p>
+                                                )}
+                                            </>
                                         )}
                                     </>
                                 )}

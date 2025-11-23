@@ -102,6 +102,7 @@ const LarTempInput = () => {
         <ReferenceInput
             source="lar_temporario_id"
             reference="lares-temporarios"
+            filter={{ 'situacao': 'ativo' }}
         >
             <SelectInput
                 validate={required('O lar temporário é obrigatório')}

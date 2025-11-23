@@ -189,6 +189,7 @@ Entre em contato para saber mais e fazer parte dessa história de amor e adoçã
                         <ReferenceInput
                             source="lar_temporario_id"
                             reference="lares-temporarios"
+                            filter={{'situacao': 'ativo'}}
                         >
                             <SelectInput
                                 validate={required('O lar temporário é obrigatório')}

@@ -16,19 +16,19 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 
 type RoutineOption =
   | "home_office"
-  | "ninguem_fica_em_casa_dia"
   | "gente_em_casa_dia"
   | "muitas_visitas"
   | "eventos_frequentes"
   | "ruidos_vizinhanca"
+  | "ninguem_fica_em_casa_dia"
 
 const routineOptions: { key: RoutineOption; label: string }[] = [
   { key: "home_office", label: "Trabalho em home office" },
-  { key: "ninguem_fica_em_casa_dia", label: "Não fica ninguém em casa durante o dia" },
   { key: "gente_em_casa_dia", label: "Fica gente em casa durante o dia" },
   { key: "muitas_visitas", label: "Recebo muitas visitas" },
   { key: "eventos_frequentes", label: "Faço eventos com alta frequência" },
   { key: "ruidos_vizinhanca", label: "Há fogos/ruídos sensíveis na vizinhança" },
+  { key: "ninguem_fica_em_casa_dia", label: "Nenhuma das opções" },
 ]
 
 export default function AdocaoFormPage() {
@@ -231,7 +231,7 @@ export default function AdocaoFormPage() {
       if (res.status === 422) {
         const json = await res.json()
         setValidationErrors(json.errors || {})
-        if(json.error) return setErrorMessage(json.error)
+        if (json.error) return setErrorMessage(json.error)
         setErrorMessage("Há erros no formulário. Verifique os campos e tente novamente.")
         setSubmitting(false)
         if (json.errors) {

@@ -326,7 +326,7 @@ class AnimalController extends Controller
                 ->pluck('animal_id')
                 ->toArray();
 
-            $animais = Animal::with(['imagens', 'usuario', 'larTemporario'])->get();
+            $animais = Animal::with(['imagens', 'usuario', 'larTemporario'])->get()->whereIn('situacao', ['disponivel', 'em_adocao']);
 
             $animaisFiltrados = $animais->filter(function ($animal) use ($animaisComMatch) {
                 return !in_array($animal->id, $animaisComMatch);

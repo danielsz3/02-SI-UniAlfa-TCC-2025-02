@@ -20,7 +20,7 @@ class AdocaoController extends Controller
     public function index(Request $request): JsonResponse
     {
         try {
-            $query = Adocao::with(['usuario', 'animal.imagens']);
+            $query = Adocao::with(['usuario','animal', 'animal.imagens', 'usuario.endereco']);
 
             if ($request->filled('status')) {
                 $query->where('status', $request->input('status'));
@@ -217,7 +217,7 @@ class AdocaoController extends Controller
     public function show($id): JsonResponse
     {
         try {
-            $adocao = Adocao::with(['usuario', 'animal.imagens'])->find($id);
+            $adocao = Adocao::with(['usuario', 'animal.imagens', 'usuario.endereco'])->find($id);
 
             if (!$adocao) {
                 return response()->json(['error' => 'Adoção não encontrada'], 404);

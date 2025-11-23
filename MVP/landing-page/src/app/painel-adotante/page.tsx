@@ -87,7 +87,11 @@ const apiService = {
   },
 }
 
-function useAdotanteDataBase() {
+/**
+ * useAdotanteDataBase agora aceita um refreshKey (number).
+ * Quando refreshKey muda, a effect é reexecutada e os counts são recarregados.
+ */
+function useAdotanteDataBase(refreshKey: number = 0) {
   const [userId, setUserId] = useState<number | null>(null)
   const [counts, setCounts] = useState<Record<StatusFilter, number>>({
     em_adocao: 0,
@@ -110,39 +114,96 @@ function useAdotanteDataBase() {
     }
   }, [])
 
+  const fetchWithTotal = async (path: string) => {
+    const res = await fetch(`${API_BASE}${path}`, {
+      headers: apiService.getAuthHeaders(),
+    })
+
+    if (!res.ok) {
+      const text = await res.text().catch(() => 'Erro de rede')
+      throw new Error(text || `Erro ${res.status}`)
+    }
+
+    const contentRange = res.headers.get('Content-Range')
+    let total: number | null = null
+    if (contentRange && contentRange.includes('/')) {
+      const parts = contentRange.split('/')
+      const maybeTotal = Number(parts[1])
+      if (!Number.isNaN(maybeTotal)) total = maybeTotal
+    }
+
+    const body = await res.json().catch(() => null)
+
+    if (total == null) {
+      if (body) {
+        if (Array.isArray(body)) total = body.length
+        else if (body?.meta?.total != null) total = Number(body.meta.total)
+        else if (body?.total != null) total = Number(body.total)
+        else if (body?.data && Array.isArray(body.data)) total = body.data.length
+        else if (body?.items && Array.isArray(body.items)) total = body.items.length
+      }
+    }
+
+    if (total == null) total = 0
+
+    let items = []
+    if (Array.isArray(body)) items = body
+    else if (body?.data && Array.isArray(body.data)) items = body.data
+    else if (body?.items && Array.isArray(body.items)) items = body.items
+    else items = []
+
+    return { items, total, headers: res.headers }
+  }
+
+  const fetchTotal = async (pathWithoutQuery: string) => {
+    const connector = pathWithoutQuery.includes('?') ? '&' : '?'
+    const path = `${pathWithoutQuery}${connector}range=[0,0]`
+    const { total, items } = await fetchWithTotal(path)
+    return total ?? items.length
+  }
+
   useEffect(() => {
     if (!userId) return
 
     setLoading(true)
     setError(null)
 
-    Promise.all([
-      apiService.fetch(`/match-afinidades?filter=${encodeURIComponent(JSON.stringify({ usuario_id: userId }))}`),
-      apiService.fetch(`/animais?filter=${encodeURIComponent(JSON.stringify({ usuario_id: userId }))}`),
-    ])
-      .then(([matchesData, animalsData]) => {
-        const matches = Array.isArray(matchesData) ? matchesData : matchesData?.data ?? matchesData?.items ?? []
-        const animals = Array.isArray(animalsData) ? animalsData : animalsData?.data ?? animalsData?.items ?? []
+    ; (async () => {
+      try {
+        const baseMatchesFilter = encodeURIComponent(JSON.stringify({ usuario_id: userId }))
+        const baseAnimalsFilter = encodeURIComponent(JSON.stringify({ usuario_id: userId }))
 
-        const newCounts = {
-          em_adocao: matches.filter((m: any) => m.status === 'em_adocao').length,
-          escolhido: matches.filter((m: any) => m.status === 'escolhido').length,
-          rejeitado: matches.filter((m: any) => m.status === 'rejeitado').length,
-          finalizado: matches.filter((m: any) => m.status === 'finalizado').length,
-          anunciados: animals.length,
+        const anunciadosPromise = fetchTotal(`/animais?filter=${baseAnimalsFilter}`)
+
+        const statusKeys: StatusFilter[] = ['em_adocao', 'escolhido', 'rejeitado', 'finalizado']
+        const statusPromises = statusKeys.map((s) => {
+          const filter = encodeURIComponent(JSON.stringify({ usuario_id: userId, status: s }))
+          return fetchTotal(`/match-afinidades?filter=${filter}`)
+        })
+
+        const [anunciadosTotal, ...statusTotals] = await Promise.all([anunciadosPromise, ...statusPromises])
+
+        const newCounts: Record<StatusFilter, number> = {
+          em_adocao: statusTotals[0] ?? 0,
+          escolhido: statusTotals[1] ?? 0,
+          rejeitado: statusTotals[2] ?? 0,
+          finalizado: statusTotals[3] ?? 0,
+          anunciados: anunciadosTotal ?? 0,
         }
 
         setCounts(newCounts)
-      })
-      .catch((e) => {
+      } catch (e: any) {
         console.error('Erro ao buscar contadores', e)
-        setError(e.message || 'Falha ao carregar dados.')
-      })
-      .finally(() => setLoading(false))
-  }, [userId])
+        setError((e && e.message) || 'Falha ao carregar dados.')
+      } finally {
+        setLoading(false)
+      }
+    })()
+  }, [userId, refreshKey]) // <-- refreshKey faz re-fetch dos counts
 
   return { userId, counts, isLoading: loading, error }
 }
+
 
 const PageHeader = () => (
   <div className="flex items-center justify-between mb-6">
@@ -199,25 +260,26 @@ const FilterTabs = ({ counts, activeFilter, onFilterChange }: FilterTabsProps) =
 interface MatchItemCardProps {
   item: MatchItem
   onSee: () => void
+  onStatusChanged?: () => void // recebe callback opcional para disparar refresh apenas da lista
 }
 
-const MatchItemCard = React.memo(({ item, onSee }: MatchItemCardProps) => {
-  const router = useRouter();
+const MatchItemCard = React.memo(({ item, onSee, onStatusChanged }: MatchItemCardProps) => {
+  const router = useRouter()
 
   const [loadingAction, setLoadingAction] = useState<
     'escolhido' | 'rejeitado' | null
-  >(null);
+  >(null)
 
   const handleMudarStatus = async (status: 'escolhido' | 'rejeitado') => {
-    if (loadingAction) return;
+    if (loadingAction) return
 
-    setLoadingAction(status);
+    setLoadingAction(status)
 
     const toastId = toast.loading(
       status === 'escolhido'
         ? 'A escolher o animal...'
         : 'A rejeitar o animal...'
-    );
+    )
 
     try {
       const response = await fetch(
@@ -234,11 +296,18 @@ const MatchItemCard = React.memo(({ item, onSee }: MatchItemCardProps) => {
             usuario_id: JSON.parse(localStorage.getItem('user') || '{}').id,
           }),
         }
-      );
+      )
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Falha ao mudar status');
+        const errorData = await response.json().catch(() => null)
+        throw new Error(errorData?.message || 'Falha ao mudar status')
+      }
+
+      // chama callback para recarregar somente a lista e os counts (se fornecido)
+      try {
+        onStatusChanged && onStatusChanged()
+      } catch (err) {
+        console.warn('onStatusChanged callback falhou', err)
       }
 
       toast.success(`Animal ${status} com sucesso!`, {
@@ -246,7 +315,7 @@ const MatchItemCard = React.memo(({ item, onSee }: MatchItemCardProps) => {
         action: {
           label: 'Ver lista',
           onClick: () => {
-            router.push(`/painel-adotante?status=${status}`);
+            router.push(`/painel-adotante?status=${status}`)
           },
         },
         actionButtonStyle: {
@@ -255,17 +324,18 @@ const MatchItemCard = React.memo(({ item, onSee }: MatchItemCardProps) => {
           fontSize: '0.8rem',
         },
         duration: 3000,
-      });;
-
-
+      })
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : 'Erro desconhecido';
-      toast.error(`Erro: ${errorMessage}`, { id: toastId, richColors: true });
+        error instanceof Error ? error.message : 'Erro desconhecido'
+      toast.error(`Erro: ${errorMessage}`, { id: toastId, richColors: true })
 
-      setLoadingAction(null);
+      setLoadingAction(null)
+    } finally {
+      // garante limpar estado de loading
+      setLoadingAction(null)
     }
-  };
+  }
 
   const { animal, status, created_at, observacao } = item
   const img = animal.imagens?.[0]?.caminho
@@ -348,8 +418,8 @@ const MatchItemCard = React.memo(({ item, onSee }: MatchItemCardProps) => {
                   size="sm"
                   className="dark:text-white"
                   onClick={(e) => {
-                    e.stopPropagation();
-                    handleMudarStatus('escolhido');
+                    e.stopPropagation()
+                    handleMudarStatus('escolhido')
                   }}
                 >
                   <CheckCheckIcon className="w-4 h-4" />
@@ -363,8 +433,8 @@ const MatchItemCard = React.memo(({ item, onSee }: MatchItemCardProps) => {
                     variant="destructive"
                     className="dark:text-white"
                     onClick={(e) => {
-                      e.stopPropagation();
-                      handleMudarStatus('rejeitado');
+                      e.stopPropagation()
+                      handleMudarStatus('rejeitado')
                     }}
                   >
                     <X className="w-4 h-4" />
@@ -389,7 +459,10 @@ const MatchItemCard = React.memo(({ item, onSee }: MatchItemCardProps) => {
 MatchItemCard.displayName = 'MatchItemCard'
 
 export default function PainelAdotantePage() {
-  const { userId, counts, isLoading, error } = useAdotanteDataBase()
+  // refreshKey controla remount do LoadMoreList e re-fetch dos counts
+  const [refreshKey, setRefreshKey] = useState(0)
+
+  const { userId, counts, isLoading, error } = useAdotanteDataBase(refreshKey)
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
@@ -404,6 +477,12 @@ export default function PainelAdotantePage() {
   }
 
   const [selectedAnimal, setSelectedAnimal] = useState<Animal | null>(null)
+
+  // Função que vamos passar para os Cards para disparar um refresh local:
+  const handleReloadList = () => {
+    // incrementa a chave: remonta LoadMoreList e disparará o useAdotanteDataBase por refreshKey
+    setRefreshKey((k) => k + 1)
+  }
 
   const fetchMatchesPage = async (start: number, end: number) => {
     if (!userId) {
@@ -513,7 +592,8 @@ export default function PainelAdotantePage() {
       />
 
       <LoadMoreList
-        key={statusFilter}
+        // a key inclui refreshKey para forçar remount somente quando necessário
+        key={`${statusFilter}-${refreshKey}`}
         step={8}
         className="grid grid-cols-1 lg:grid-cols-2 gap-4"
         fetchData={fetchMatchesPage}
@@ -521,6 +601,7 @@ export default function PainelAdotantePage() {
           <MatchItemCard
             item={item}
             onSee={() => setSelectedAnimal(item.animal)}
+            onStatusChanged={handleReloadList} // <-- passado para chamada somente da lista
           />
         )}
       />

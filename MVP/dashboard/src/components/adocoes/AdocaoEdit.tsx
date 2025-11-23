@@ -92,6 +92,15 @@ const CHIP_COLORS: ChipProps['color'][] = [
     'error',
 ];
 
+const ROTINA_LABELS: Record<string, string> = {
+    home_office: "Trabalho em home office",
+    ninguem_fica_em_casa_dia: "Não fica ninguém em casa durante o dia",
+    gente_em_casa_dia: "Fica gente em casa durante o dia",
+    muitas_visitas: "Recebo muitas visitas",
+    eventos_frequentes: "Faço eventos com alta frequência",
+    ruidos_vizinhanca: "Há fogos/ruídos sensíveis na vizinhança",
+};
+
 interface InfoCardProps {
     icon: React.ReactElement;
     title: string;
@@ -152,17 +161,28 @@ const VisualizacaoDados = () => {
     };
 
     const renderRotinaChips = () => {
-        if (!record.sobre_rotina || Object.keys(record.sobre_rotina).length === 0) {
-            return <Typography variant="body2">Nenhuma rotina informada.</Typography>;
+        if (!record.sobre_rotina) {
+            return <Typography variant="body2" color="text.secondary">Nenhuma informação.</Typography>;
         }
 
-        return Object.entries(record.sobre_rotina).map(([key, value], index) => (
-            <Chip
-                key={key}
-                color={CHIP_COLORS[index % CHIP_COLORS.length]}
-                label={`${capitalize(key)}: ${value}`}
-            />
-        ));
+        const valores = Object.values(record.sobre_rotina);
+
+        if (valores.length === 0) return <Typography variant="body2">Nenhuma rotina informada.</Typography>;
+
+        return valores.map((valor, index) => {
+            const label = ROTINA_LABELS[valor] || valor.replace(/_/g, ' ');
+
+            return (
+                <Chip
+                    key={index}
+                    label={label}
+                    size="medium"
+                    color="primary"
+                    variant="filled"
+                    sx={{ fontWeight: 500 }}
+                />
+            );
+        });
     };
 
     return (
@@ -218,8 +238,8 @@ const VisualizacaoDados = () => {
 
             {/* Usuário Info */}
             <Box display="flex" alignItems="center">
-                <Typography variant="h6">
-                    {record.usuario?.nome} -
+                <Typography variant="h6" sx={{ marginRight: 1}}>
+                    {record.usuario?.nome}{" - "}
                 </Typography>
 
                 <CopyText text={formatPhone(record.usuario?.telefone || '')} />

@@ -60,13 +60,13 @@ const ParceiroEdit = () => (
             <ImageInput
                 source="imagem"
                 label="Imagem"
-                accept={{ 'image/*': ['.png', '.jpg', '.jpeg', '.gif'] }}
+                accept={{ 'image/*': ['.png', '.jpg', '.jpeg', '.webp'] }}
                 maxSize={10_500_000}
                 validate={required('Pelo menos uma imagem é obrigatória')}
                 placeholder={
                     <FilePlaceholder
                         maxSize={10_500_000}
-                        accept={['.png', '.jpg', '.jpeg', '.gif']}
+                        accept={['.png', '.jpg', '.jpeg', '.webp']}
                     />
                 }
                 sx={{

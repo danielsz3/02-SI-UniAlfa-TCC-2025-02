@@ -131,13 +131,13 @@ const OngEdit = (props: EditProps) => {
                     <ImageInput
                         source="imagem"
                         label="Imagem de Capa"
-                        accept={{ 'image/*': ['.png', '.jpg', '.jpeg', '.gif'] }}
+                        accept={{ 'image/*': ['.png', '.jpg', '.jpeg', '.webp'] }}
                         maxSize={10_500_000}
                         validate={required('Pelo menos uma imagem é obrigatória')}
                         placeholder={
                             <FilePlaceholder
                                 maxSize={10_500_000}
-                                accept={['.png', '.jpg', '.jpeg', '.gif']}
+                                accept={['.png', '.jpg', '.jpeg', '.webp']}
                             />
                         }
                         sx={{
@@ -220,13 +220,13 @@ const OngEdit = (props: EditProps) => {
                         source="imagens"
                         label="Imagens da ONG"
                         multiple
-                        accept={{ 'image/*': ['.png', '.jpg', '.jpeg', '.gif'] }}
+                        accept={{ 'image/*': ['.png', '.jpg', '.jpeg', '.webp'] }}
                         maxSize={10_500_000}
                         validate={required('Pelo menos uma imagem é obrigatória')}
                         placeholder={
                             <FilePlaceholder
                                 maxSize={10_500_000}
-                                accept={['.png', '.jpg', '.jpeg', '.gif']}
+                                accept={['.png', '.jpg', '.jpeg', '.webp']}
                                 multiple
                             />
                         }

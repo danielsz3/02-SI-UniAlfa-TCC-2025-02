@@ -129,7 +129,7 @@ class OngController extends Controller
         ];
 
         if ($request->hasFile($this->campoImagemCapa)) {
-            $rules[$this->campoImagemCapa] = 'file|image|mimes:jpeg,png,jpg,gif,webp|max:10240';
+            $rules[$this->campoImagemCapa] = 'file|image|mimes:jpeg,png,jpg,webp|max:10240';
         } else {
             $rules[$this->campoImagemCapa] = 'sometimes|nullable|url';
         }

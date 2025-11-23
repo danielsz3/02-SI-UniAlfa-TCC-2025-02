@@ -380,13 +380,13 @@ const AnimalEdit = () => {
                             source="imagens"
                             label="Imagens do Animal"
                             multiple
-                            accept={{ 'image/*': ['.png', '.jpg', '.jpeg', '.gif', 'webp'] }}
+                            accept={{ 'image/*': ['.png', '.jpg', '.jpeg', '.webp'] }}
                             maxSize={10_500_000}
                             validate={required('Pelo menos uma imagem é obrigatória')}
                             placeholder={
                                 <FilePlaceholder
                                     maxSize={10_500_000}
-                                    accept={['.png', '.jpg', '.jpeg', '.gif', 'webp']}
+                                    accept={['.png', '.jpg', '.jpeg', '.webp']}
                                     multiple
                                 />
                             }

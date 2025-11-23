@@ -16,7 +16,7 @@ export function ImageUpload({ onChange, preview, maxFiles = 10 }: ImageUploadPro
         <Input
           id="imagens"
           type="file"
-          accept="image/jpeg,image/png,image/jpg,image/gif,image/webp"
+          accept="image/jpeg,image/png,image/jpg,image/webp"
           multiple
           onChange={onChange}
           className="hidden"

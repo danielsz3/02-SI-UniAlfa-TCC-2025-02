@@ -10,13 +10,11 @@ return new class extends Migration
     {
         Schema::create('contatos_ongs', function (Blueprint $table) {
             $table->id();
-            // cria ong_id como unsignedBigInteger + FK para ongs.id
-            $table->foreignId('ong_id')->constrained('ongs')->cascadeOnDelete();
-
             $table->enum('tipo', ['telefone', 'email', 'whatsapp', 'instagram', 'facebook', 'site', 'outro'])->nullable();
             $table->string('contato')->nullable();
             $table->string('link')->nullable();
             $table->text('descricao')->nullable();
+            $table->foreignId('ong_id')->constrained('ongs')->cascadeOnDelete();
             $table->softDeletes();
             $table->timestamps();
         });

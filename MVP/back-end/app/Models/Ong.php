@@ -39,9 +39,6 @@ class Ong extends Model
         'deleted_at' => 'datetime',
     ];
 
-    /**
-     * Relação: uma ONG tem muitos contatos
-     */
     public function contatos()
     {
         return $this->hasMany(ContatoOng::class, 'ong_id', 'id');

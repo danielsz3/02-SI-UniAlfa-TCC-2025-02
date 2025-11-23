@@ -12,7 +12,6 @@ class Kernel extends HttpKernel
      * These middleware are run during every request to your application.
      */
     protected $middleware = [
-        // Garante que o CORS seja aplicado o mais cedo possível no ciclo de vida da requisição
         \Illuminate\Http\Middleware\HandleCors::class,
 
         \Illuminate\Http\Middleware\TrustProxies::class,
@@ -36,7 +35,6 @@ class Kernel extends HttpKernel
         ],
 
         'api' => [
-            // Se quiser também forçar CORS no grupo api, descomente a linha abaixo:
             // \Illuminate\Http\Middleware\HandleCors::class,
             'throttle:api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
@@ -50,7 +48,6 @@ class Kernel extends HttpKernel
      */
     protected $routeMiddleware = [
         'auth' => \Illuminate\Auth\Middleware\Authenticate::class,
-        // Mapeie o middleware JWT que seu projeto usa (ajuste se necessário)
         'jwt.auth' => \PHPOpenSourceSaver\JWTAuth\Http\Middleware\Authenticate::class,
         'bindings' => \Illuminate\Routing\Middleware\SubstituteBindings::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,

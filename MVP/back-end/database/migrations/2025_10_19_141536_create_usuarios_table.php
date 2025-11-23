@@ -6,13 +6,10 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('usuarios', function (Blueprint $table) {
-            $table->id(); // Já cria como 'id' (não 'id_usuario')
+            $table->id(); 
             $table->string('nome');
             $table->string('email')->unique();
             $table->string('password');
@@ -21,15 +18,12 @@ return new class extends Migration
             $table->string('telefone', 11)->nullable();
             $table->enum('role', ['user', 'admin'])->default('user');
             $table->string('imagem')->nullable();
-            $table->softDeletes(); // Cria deleted_at
-            $table->timestamps(); // Cria created_at e updated_at
-            $table->rememberToken(); // Adiciona remember_token (vi no print)
+            $table->softDeletes(); 
+            $table->timestamps(); 
+            $table->rememberToken(); 
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('usuarios');

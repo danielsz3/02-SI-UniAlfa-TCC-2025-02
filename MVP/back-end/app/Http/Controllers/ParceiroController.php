@@ -19,9 +19,6 @@ class ParceiroController extends Controller
     protected $storagePath = 'parceiros';
     protected $modeloRelacaoGaleria = Parceiro::class;
 
-    /**
-     * Listar parceiros (com paginação + filtros dinâmicos)
-     */
     public function index(Request $request): JsonResponse
     {
         return $this->SearchIndex(
@@ -32,9 +29,6 @@ class ParceiroController extends Controller
         );
     }
 
-    /**
-     * Criar parceiro
-     */
     public function store(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
@@ -62,10 +56,9 @@ class ParceiroController extends Controller
                 'descricao' => $request->descricao,
             ];
 
-            // Upload opcional da logo
             if ($request->hasFile('imagem')) {
                 $path = $request->file('imagem')->store('parceiros', 'public');
-                $data['imagem'] = $path; // coluna existente no banco
+                $data['imagem'] = $path;
             }
 
             $parceiro = Parceiro::create($data);
@@ -79,9 +72,6 @@ class ParceiroController extends Controller
         }
     }
 
-    /**
-     * Exibir parceiro
-     */
     public function show($id): JsonResponse
     {
         try {
@@ -100,60 +90,53 @@ class ParceiroController extends Controller
         }
     }
 
-    /**
-     * Atualizar parceiro
-     */
     public function update(Request $request, $id): JsonResponse
-{
-    try {
-        $parceiro = Parceiro::find($id);
+    {
+        try {
+            $parceiro = Parceiro::find($id);
 
-        if (!$parceiro) {
-            return response()->json(['error' => 'Parceiro não encontrado'], 404);
+            if (!$parceiro) {
+                return response()->json(['error' => 'Parceiro não encontrado'], 404);
+            }
+
+            $validator = Validator::make($request->all(), [
+                'nome'      => 'sometimes|required|string|max:255',
+                'url_site'  => 'nullable|url',
+                'descricao' => 'nullable|string|max:500',
+                'imagem'    => 'nullable|file|mimes:jpg,jpeg,png,webp|max:10240',
+            ], [
+                'nome.required' => 'O nome do parceiro é obrigatório.',
+                'nome.max'      => 'O nome do parceiro deve ter no máximo 255 caracteres.',
+                'url_site.url'  => 'A URL do site deve ser válida.',
+                'descricao.max' => 'A descrição deve ter no máximo 500 caracteres.',
+                'imagem.mimes'  => 'A logo deve ser uma imagem do tipo jpg, jpeg, png, webp.',
+                'imagem.max'    => 'A logo deve ter no máximo 10MB.',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json(['errors' => $validator->errors()], 422);
+            }
+
+            $parceiro->nome      = $request->nome      ?? $parceiro->nome;
+            $parceiro->url_site  = $request->url_site  ?? $parceiro->url_site;
+            $parceiro->descricao = $request->descricao ?? $parceiro->descricao;
+
+            $novoPathImagem = $this->processarCapaParaUpdate($request, $parceiro);
+            if ($novoPathImagem !== null) {
+                $parceiro->imagem = $novoPathImagem;
+            }
+
+            $parceiro->save();
+
+            return response()->json($parceiro->fresh(), 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error'   => 'Não foi possível atualizar o parceiro',
+                'message' => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
         }
-
-        $validator = Validator::make($request->all(), [
-            'nome'      => 'sometimes|required|string|max:255',
-            'url_site'  => 'nullable|url',
-            'descricao' => 'nullable|string|max:500',
-            'imagem'    => 'nullable|file|mimes:jpg,jpeg,png,webp|max:10240',
-        ], [
-            'nome.required' => 'O nome do parceiro é obrigatório.',
-            'nome.max'      => 'O nome do parceiro deve ter no máximo 255 caracteres.',
-            'url_site.url'  => 'A URL do site deve ser válida.',
-            'descricao.max' => 'A descrição deve ter no máximo 500 caracteres.',
-            'imagem.mimes'  => 'A logo deve ser uma imagem do tipo jpg, jpeg, png, webp.',
-            'imagem.max'    => 'A logo deve ter no máximo 10MB.',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
-
-        // Atualiza campos simples
-        $parceiro->nome      = $request->nome      ?? $parceiro->nome;
-        $parceiro->url_site  = $request->url_site  ?? $parceiro->url_site;
-        $parceiro->descricao = $request->descricao ?? $parceiro->descricao;
-
-        // Usa o método da trait para processar o campo 'imagem'
-        $novoPathImagem = $this->processarCapaParaUpdate($request, $parceiro);
-        if ($novoPathImagem !== null) {
-            $parceiro->imagem = $novoPathImagem;
-        }
-
-        $parceiro->save();
-
-        return response()->json($parceiro->fresh(), 200);
-    } catch (\Exception $e) {
-        return response()->json([
-            'error'   => 'Não foi possível atualizar o parceiro',
-            'message' => config('app.debug') ? $e->getMessage() : null,
-        ], 500);
     }
-}
-    /**
-     * Deletar parceiro (soft delete) — remove a imagem do disco antes
-     */
+
     public function destroy($id): JsonResponse
     {
         try {
@@ -177,5 +160,4 @@ class ParceiroController extends Controller
             ], 500);
         }
     }
-
 }

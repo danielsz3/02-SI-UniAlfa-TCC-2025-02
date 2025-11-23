@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('matches', function (Blueprint $table) {
@@ -20,18 +17,13 @@ return new class extends Migration
             $table->softDeletes();
             $table->timestamps();
 
-            // Foreign keys
             $table->foreign('usuario_id')->references('id')->on('usuarios')->onDelete('cascade');
             $table->foreign('animal_id')->references('id')->on('animais')->onDelete('cascade');
 
-            // Unique constraint
             $table->unique(['usuario_id', 'animal_id']);
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('matches');

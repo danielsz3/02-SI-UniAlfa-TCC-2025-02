@@ -22,16 +22,10 @@ class DashboardController extends Controller
             ? Carbon::parse($request->query('end_date'))->endOfDay()
             : now()->endOfDay();
 
-        // =====================
-        // MÉTRICAS DE USUÁRIOS
-        // =====================
         $usuarios = Usuario::where('role', 'user')->count();
 
         $novosUsuarios = Usuario::whereBetween('created_at', [$start, $end])->count();
 
-        // =====================
-        // MÉTRICAS DE ADOÇÕES
-        // =====================
         $adocoesTotal = Adocao::count();
 
         $adocoesConcluidas = Adocao::whereBetween('created_at', [$start, $end])->where('status', 'aprovado')->count();
@@ -43,9 +37,6 @@ class DashboardController extends Controller
             ? round(($adocoesConcluidas / Usuario::count()) * 100, 2)
             : 0;
 
-        // =====================
-        // MÉTRICAS DE ANIMAIS
-        // =====================
         $totalAnimais = Animal::count();
         $disponiveis = Animal::where('situacao', 'disponivel')->count();
         $adotados = Animal::where('situacao', 'adotado')->count();
@@ -54,9 +45,6 @@ class DashboardController extends Controller
         $castrados = Animal::where('castrado', true)->count();
         $naoCastrados = $totalAnimais - $castrados;
 
-        // =====================
-        // EVENTOS E IMPACTO
-        // =====================
         $eventosPeriodo = Evento::whereBetween('data_fim', [$start, $end])->count();
 
         $adocoesAntes = Adocao::whereBetween('created_at', [$start->copy()->subMonth(), $start])->count();
@@ -64,9 +52,6 @@ class DashboardController extends Controller
             ? round((($adocoesPeriodo - $adocoesAntes) / $adocoesAntes) * 100, 2)
             : 0;
 
-        // =====================
-        // RESULTADO FINAL
-        // =====================
         return response()->json([
             'periodo' => [
                 'inicio' => $start->toDateString(),

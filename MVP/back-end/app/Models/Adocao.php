@@ -16,14 +16,14 @@ class Adocao extends Model
     protected $fillable = [
         'usuario_id',
         'animal_id',
-        'status',                   // 'em_aprovacao' | 'aprovado'
-        'qtd_pessoas_casa',         // enum
-        'possui_filhos',            // bool
-        'sobre_rotina',             // array(JSON)
-        'acesso_rua_janelas',       // enum
-        'acesso_rua_portoes_muros', // enum
-        'renda_familiar',           // enum
-        'aceita_termos',            // bool
+        'status',
+        'qtd_pessoas_casa',
+        'possui_filhos',
+        'sobre_rotina',
+        'acesso_rua_janelas',
+        'acesso_rua_portoes_muros',
+        'renda_familiar',
+        'aceita_termos',
     ];
 
     protected $casts = [
@@ -32,7 +32,6 @@ class Adocao extends Model
         'sobre_rotina'  => 'array',
     ];
 
-    // Relacionamentos
     public function usuario()
     {
         return $this->belongsTo(Usuario::class, 'usuario_id');
@@ -43,7 +42,6 @@ class Adocao extends Model
         return $this->belongsTo(Animal::class, 'animal_id');
     }
 
-    // Scopes auxiliares
     public function scopeEmAprovacao($query)
     {
         return $query->where('status', 'em_aprovacao');

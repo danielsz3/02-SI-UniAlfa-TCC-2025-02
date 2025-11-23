@@ -24,9 +24,6 @@ class UsuarioController extends Controller
     protected $storagePath = 'usuarios';
     protected $modeloRelacaoGaleria = Usuario::class;
 
-    /**
-     * Lista de usuários (getList)
-     */
     public function index(Request $request): JsonResponse
     {
         return $this->SearchIndex(
@@ -37,12 +34,9 @@ class UsuarioController extends Controller
         );
     }
 
-    /**
-     * Criar um novo usuário com endereço, preferências e imagem opcionais
-     */
     public function store(Request $request): JsonResponse
     {
-        // Validação
+
         $validator = Validator::make($request->all(), [
             'nome' => 'required|string|min:2|max:150',
             'email' => 'required|email|max:150|unique:usuarios,email',
@@ -54,14 +48,12 @@ class UsuarioController extends Controller
                 'regex:/^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/'
             ],
             'cpf' => 'required|string|size:11|regex:/^[0-9]+$/|unique:usuarios,cpf',
-            
-            // 🔹 Maior de 18 anos
+
             'data_nascimento' => 'required|date|after:1900-01-01|before_or_equal:-18 years',
-            
+
             'telefone' => 'nullable|string|size:11|regex:/^[0-9]+$/',
             'role' => 'nullable|string|in:user,admin',
 
-            // Validação da imagem
             'imagem' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:10240',
 
             'endereco' => 'nullable|array',
@@ -73,7 +65,6 @@ class UsuarioController extends Controller
             'endereco.cidade' => 'nullable|string|max:100',
             'endereco.uf' => 'nullable|string|max:2',
 
-            // Validação das preferências conforme migration
             'preferencias' => 'nullable|array',
             'preferencias.tamanho_pet' => 'nullable|string|in:pequeno,medio,grande',
             'preferencias.tempo_disponivel' => 'nullable|string|in:pouco_tempo,tempo_moderado,muito_tempo',
@@ -116,7 +107,6 @@ class UsuarioController extends Controller
             'endereco.array' => 'O campo endereço deve ser um objeto.',
             'preferencias.array' => 'O campo preferências deve ser um objeto.',
 
-            // Mensagens de validação das preferências
             'preferencias.tamanho_pet.in' => 'O tamanho do pet deve ser: pequeno, medio ou grande.',
             'preferencias.tempo_disponivel.in' => 'O tempo disponível deve ser: pouco_tempo, tempo_moderado ou muito_tempo.',
             'preferencias.estilo_vida.in' => 'O estilo de vida deve ser: baixa, moderada ou alta.',
@@ -132,7 +122,6 @@ class UsuarioController extends Controller
 
         try {
             return DB::transaction(function () use ($request, $endereco, $preferencias) {
-                // Upload da imagem
                 $imagemPath = null;
                 if ($request->hasFile('imagem')) {
                     $imagem = $request->file('imagem');
@@ -151,14 +140,12 @@ class UsuarioController extends Controller
                     'imagem' => $imagemPath,
                 ]);
 
-                // Criar endereço se fornecido
                 if (!empty($endereco) && is_array($endereco) && count(array_filter($endereco, fn($v) => $v !== null && $v !== '')) > 0) {
                     $enderecoData = $endereco;
                     $enderecoData['id_usuario'] = $usuario->id;
                     Endereco::create($enderecoData);
                 }
 
-                // Criar preferências se fornecidas
                 if (!empty($preferencias) && is_array($preferencias) && count(array_filter($preferencias, fn($v) => $v !== null && $v !== '')) > 0) {
                     $prefsData = $preferencias;
                     $prefsData['usuario_id'] = $usuario->id;
@@ -177,9 +164,6 @@ class UsuarioController extends Controller
         }
     }
 
-    /**
-     * Exibir um usuário específico
-     */
     public function show($id): JsonResponse
     {
         try {
@@ -195,9 +179,6 @@ class UsuarioController extends Controller
         }
     }
 
-    /**
-     * Atualizar um usuário e seus relacionamentos
-     */
     public function update(Request $request, $id): JsonResponse
     {
         try {
@@ -232,14 +213,12 @@ class UsuarioController extends Controller
                     'regex:/^[0-9]+$/',
                     Rule::unique('usuarios')->ignore($usuario->id)
                 ],
-                
-                // 🔹 Maior de 18 anos no update
+
                 'data_nascimento' => 'sometimes|required|date|after:1900-01-01|before_or_equal:-18 years',
-                
+
                 'telefone' => 'nullable|string|size:11|regex:/^[0-9]+$/',
                 'role' => 'nullable|string|in:user,admin',
 
-                // Validação da imagem no update
                 'imagem' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:10240',
 
                 'endereco' => 'nullable|array',
@@ -251,7 +230,6 @@ class UsuarioController extends Controller
                 'endereco.cidade' => 'nullable|string|max:100',
                 'endereco.uf' => 'nullable|string|max:2',
 
-                // Validação das preferências conforme migration
                 'preferencias' => 'nullable|array',
                 'preferencias.tamanho_pet' => 'nullable|string|in:pequeno,medio,grande',
                 'preferencias.tempo_disponivel' => 'nullable|string|in:pouco_tempo,tempo_moderado,muito_tempo',
@@ -280,7 +258,7 @@ class UsuarioController extends Controller
             $preferencias = is_array($request->input('preferencias')) ? $request->input('preferencias') : [];
 
             return DB::transaction(function () use ($request, $usuario, $endereco, $preferencias) {
-                // Prepara dados do usuário
+
                 $userData = $request->only([
                     'nome',
                     'email',
@@ -290,28 +268,22 @@ class UsuarioController extends Controller
                     'role'
                 ]);
 
-                // Hash da senha se fornecida
                 if ($request->filled('password')) {
                     $userData['password'] = Hash::make($request->password);
                 }
 
-                // Processa upload de nova imagem
                 if ($request->hasFile('imagem')) {
-                    // Remove imagem antiga se existir
                     if ($usuario->imagem && Storage::disk('public')->exists($usuario->imagem)) {
                         Storage::disk('public')->delete($usuario->imagem);
                     }
 
-                    // Faz upload da nova imagem
                     $imagem = $request->file('imagem');
                     $imagemNome = time() . '_' . uniqid() . '.' . $imagem->getClientOriginalExtension();
                     $userData['imagem'] = $imagem->storeAs('usuarios', $imagemNome, 'public');
                 }
 
-                // Atualiza o usuário
                 $usuario->update($userData);
 
-                // Atualiza ou cria endereço
                 if (!empty($endereco) && is_array($endereco) && count(array_filter($endereco, fn($v) => $v !== null && $v !== '')) > 0) {
                     if ($usuario->endereco) {
                         $usuario->endereco->update($endereco);
@@ -321,7 +293,6 @@ class UsuarioController extends Controller
                     }
                 }
 
-                // Atualiza ou cria preferências
                 if (!empty($preferencias) && is_array($preferencias) && count(array_filter($preferencias, fn($v) => $v !== null && $v !== '')) > 0) {
                     if ($usuario->preferencias) {
                         $usuario->preferencias->update($preferencias);
@@ -341,9 +312,6 @@ class UsuarioController extends Controller
         }
     }
 
-    /**
-     * Deletar um usuário (soft delete)
-     */
     public function destroy($id): JsonResponse
     {
         try {
@@ -353,7 +321,6 @@ class UsuarioController extends Controller
                 return response()->json(['error' => 'Usuário não encontrado'], 404);
             }
 
-            // Deleta a imagem ao excluir o usuário
             if ($usuario->imagem && Storage::disk('public')->exists($usuario->imagem)) {
                 Storage::disk('public')->delete($usuario->imagem);
             }

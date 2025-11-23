@@ -16,7 +16,6 @@ class PostController extends Controller
 {
     public function store(Request $request): JsonResponse
     {
-        // Validação básica
         $validator = Validator::make($request->all(), [
             'legenda' => 'nullable|string|max:1000',
             'imagens' => 'nullable|array|max:10',
@@ -30,41 +29,38 @@ class PostController extends Controller
         }
 
         try {
-                $multipart = [
-                    [
-                        'name' => 'legenda',
-                        'contents' => $request->input('legenda', ''),
-                    ],
-                ];
+            $multipart = [
+                [
+                    'name' => 'legenda',
+                    'contents' => $request->input('legenda', ''),
+                ],
+            ];
 
-                // Processa arquivos enviados via multipart/form-data
-                if ($request->hasFile('imagens')) {
-                    foreach ($request->file('imagens') as $idx => $imagem) {
-                        $caminho = $imagem->store('posts', 'public');
-                        $multipart[] = [
-                            'name' => "imagens[$idx]",
-                            'contents' => fopen($imagem->getRealPath(), 'r'),
-                            'filename' => $imagem->getClientOriginalName(),
-                        ];
-                    }
+            if ($request->hasFile('imagens')) {
+                foreach ($request->file('imagens') as $idx => $imagem) {
+                    $caminho = $imagem->store('posts', 'public');
+                    $multipart[] = [
+                        'name' => "imagens[$idx]",
+                        'contents' => fopen($imagem->getRealPath(), 'r'),
+                        'filename' => $imagem->getClientOriginalName(),
+                    ];
                 }
+            }
 
+            $response = Http::withOptions(['verify' => false])
+                ->asMultipart()
+                ->timeout(120)
+                ->post('https://webhook.chatfacil.cloud/webhook/postar-instagram', $multipart);
 
-                // Envia para o webhook n8n
-                $response = Http::withOptions(['verify' => false])
-                    ->asMultipart()
-                    ->timeout(120)
-                    ->post('https://webhook.chatfacil.cloud/webhook/postar-instagram', $multipart);
+            if (!$response->successful()) {
+                Log::error('Erro no retorno do n8n:', [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+                throw new \Exception("Erro no retorno do n8n: " . $response->body());
+            }
 
-                if (!$response->successful()) {
-                    Log::error('Erro no retorno do n8n:', [
-                        'status' => $response->status(),
-                        'body' => $response->body(),
-                    ]);
-                    throw new \Exception("Erro no retorno do n8n: " . $response->body());
-                }
-
-                return response()->json(['id' => $response->id ?? 1], 201);
+            return response()->json(['id' => $response->id ?? 1], 201);
         } catch (\Throwable $e) {
             Log::error('Erro ao criar post e enviar para n8n: ' . $e->getMessage(), [
                 'payload' => $request->all(),

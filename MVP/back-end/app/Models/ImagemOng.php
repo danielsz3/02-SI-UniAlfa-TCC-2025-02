@@ -14,16 +14,13 @@ class ImagemOng extends Model
     protected $primaryKey = 'id';
 
     protected $fillable = [
-        'ong_id',        
+        'ong_id',
         'caminho',
         'width',
         'height',
         'nome_original'
     ];
 
-    /**
-     * Relação inversa com ONG
-     */
     public function ong()
     {
         return $this->belongsTo(Ong::class, 'ong_id', 'id');

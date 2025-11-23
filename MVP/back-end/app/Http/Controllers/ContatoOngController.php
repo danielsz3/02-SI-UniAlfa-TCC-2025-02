@@ -10,9 +10,7 @@ use Illuminate\Support\Facades\Log;
 
 class ContatoOngController extends Controller
 {
-    /**
-     * Listar contatos com paginação, ordenação e filtros dinâmicos
-     */
+
     public function index(Request $request): JsonResponse
     {
         try {
@@ -22,7 +20,6 @@ class ContatoOngController extends Controller
             $order   = $request->input('_order', 'asc');
             $filter  = json_decode($request->input('filter', '{}'), true);
 
-            // Validação de parâmetros
             if (!in_array($sort, ['id', 'ong_id', 'tipo_contato', 'valor_contato', 'created_at'])) {
                 $sort = 'id';
             }
@@ -52,7 +49,7 @@ class ContatoOngController extends Controller
                 'request_data' => $request->all(),
                 'exception' => $e
             ]);
-            
+
             return response()->json([
                 'error' => 'Não foi possível carregar os contatos',
                 'message' => config('app.debug') ? $e->getMessage() : 'Erro interno do servidor'
@@ -60,9 +57,6 @@ class ContatoOngController extends Controller
         }
     }
 
-    /**
-     * Criar novo contato
-     */
     public function store(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
@@ -72,10 +66,10 @@ class ContatoOngController extends Controller
         ], [
             'ong_id.required' => 'O ID da ONG é obrigatório.',
             'ong_id.exists' => 'A ONG informada não existe.',
-            
+
             'tipo_contato.required' => 'O tipo de contato é obrigatório.',
             'tipo_contato.in' => 'O tipo de contato deve ser telefone, email, redesocial ou outro.',
-            
+
             'valor_contato.required' => 'O valor do contato é obrigatório.',
             'valor_contato.max' => 'O valor do contato deve ter no máximo 255 caracteres.',
         ]);
@@ -93,7 +87,7 @@ class ContatoOngController extends Controller
                 'payload' => $request->all(),
                 'exception' => $e
             ]);
-            
+
             return response()->json([
                 'error' => 'Não foi possível criar o contato',
                 'message' => config('app.debug') ? $e->getMessage() : 'Erro interno do servidor'
@@ -101,9 +95,6 @@ class ContatoOngController extends Controller
         }
     }
 
-    /**
-     * Exibir um contato específico
-     */
     public function show($id): JsonResponse
     {
         try {
@@ -119,7 +110,7 @@ class ContatoOngController extends Controller
                 'id' => $id,
                 'exception' => $e
             ]);
-            
+
             return response()->json([
                 'error' => 'Não foi possível carregar o contato',
                 'message' => config('app.debug') ? $e->getMessage() : 'Erro interno do servidor'
@@ -127,9 +118,6 @@ class ContatoOngController extends Controller
         }
     }
 
-    /**
-     * Atualizar um contato
-     */
     public function update(Request $request, $id): JsonResponse
     {
         try {
@@ -145,9 +133,9 @@ class ContatoOngController extends Controller
                 'valor_contato' => 'sometimes|required|string|max:255',
             ], [
                 'ong_id.exists' => 'A ONG informada não existe.',
-                
+
                 'tipo_contato.in' => 'O tipo de contato deve ser telefone, email, redesocial ou outro.',
-                
+
                 'valor_contato.max' => 'O valor do contato deve ter no máximo 255 caracteres.',
             ]);
 
@@ -164,7 +152,7 @@ class ContatoOngController extends Controller
                 'payload' => $request->all(),
                 'exception' => $e
             ]);
-            
+
             return response()->json([
                 'error' => 'Não foi possível atualizar o contato',
                 'message' => config('app.debug') ? $e->getMessage() : 'Erro interno do servidor'
@@ -172,9 +160,6 @@ class ContatoOngController extends Controller
         }
     }
 
-    /**
-     * Deletar um contato (soft delete)
-     */
     public function destroy($id): JsonResponse
     {
         try {
@@ -192,12 +177,11 @@ class ContatoOngController extends Controller
                 'id' => $id,
                 'exception' => $e
             ]);
-            
+
             return response()->json([
                 'error' => 'Não foi possível excluir o contato',
                 'message' => config('app.debug') ? $e->getMessage() : 'Erro interno do servidor'
             ], 500);
         }
     }
-
 }

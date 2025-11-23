@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('imagens_posts', function (Blueprint $table) {
@@ -20,8 +17,7 @@ return new class extends Migration
             $table->integer('height')->nullable();
             $table->softDeletes();
             $table->timestamps();
-
-            // Foreign key
+            
             $table->foreign('post_id')
                   ->references('id')
                   ->on('posts')
@@ -29,9 +25,6 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('imagens_posts');

@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('enderecos', function (Blueprint $table) {
@@ -25,18 +22,13 @@ return new class extends Migration
             $table->softDeletes();
             $table->timestamps();
 
-            // Foreign keys
             $table->foreign('id_usuario')->references('id')->on('usuarios')->onDelete('cascade');
             $table->foreign('lar_temporario_id')->references('id')->on('lares_temporarios')->onDelete('cascade');
-            
-            // Índice para queries rápidas
+
             $table->index(['id_usuario', 'lar_temporario_id']);
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('enderecos');

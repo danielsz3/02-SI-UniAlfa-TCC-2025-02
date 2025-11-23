@@ -31,15 +31,13 @@ class ResetPasswordNotification extends Notification
 
     public function toMail($notifiable)
     {
-        // FRONTEND_URL em .env (ex: http://localhost:3000)
+
         $frontend = config('app.frontend_url', env('FRONTEND_URL', env('APP_URL')));
-        // Usando /new-password conforme solicitado
+
         $path = '/new-password';
 
-        // Monta a URL com token e email (email urlencode)
         $url = rtrim($frontend, '/') . $path . '?token=' . $this->token . '&email=' . urlencode($notifiable->email);
 
-        // Tempo de expiração configurado (minutos)
         $expire = config('auth.passwords.usuarios.expire', 60);
 
         return (new MailMessage)

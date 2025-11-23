@@ -76,7 +76,6 @@ class OngController extends Controller
             return response()->json(['error' => 'ONG não encontrada'], 404);
         }
 
-        // --- Bloco de Pré-validação ---
         if ($request->has('contatos') && is_array($request->input('contatos'))) {
             $decodedContatos = [];
             foreach ($request->input('contatos') as $contato) {
@@ -92,7 +91,6 @@ class OngController extends Controller
             $request->merge(['contatos' => $decodedContatos]);
         }
 
-        // --- Bloco de Validação ---
         $rules = [
             'nome' => 'sometimes|required|string|min:3|max:255',
             'cnpj' => ['sometimes', 'nullable', 'string', 'size:14', 'regex:/^[0-9]+$/', Rule::unique('ongs', 'cnpj')->ignore($ong->id)],
@@ -122,7 +120,6 @@ class OngController extends Controller
 
         ];
 
-        // Regra do ID (separada)
         $rules['contatos.*.id'] = [
             'sometimes',
             'integer',
@@ -131,7 +128,6 @@ class OngController extends Controller
             }),
         ];
 
-        // Validação da Capa (campo $campoImagemCapa)
         if ($request->hasFile($this->campoImagemCapa)) {
             $rules[$this->campoImagemCapa] = 'file|image|mimes:jpeg,png,jpg,gif,webp|max:10240';
         } else {
@@ -151,14 +147,11 @@ class OngController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        // Validação extra
-
         $validator = Validator::make($request->all(), $rules, $messages);
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        // Validação extra das imagens (galeria)
         $imgRules = $this->getImagesValidationRules();
         $imgValidator = Validator::make($request->all(), $imgRules, [
             'imagens.array' => 'As imagens devem ser enviadas em um array.',
@@ -171,7 +164,6 @@ class OngController extends Controller
             return response()->json(['errors' => $imgValidator->errors()], 422);
         }
 
-        // Limite TOTAL de imagens (existentes + novas)
         $imagensExistentes = $ong->imagens()->count();
         $novasImagens = is_array($request->file($this->campoGaleria))
             ? count($request->file($this->campoGaleria))
@@ -185,11 +177,10 @@ class OngController extends Controller
                 ],
             ], 422);
         }
-        // --- Fim da Validação -
+
         try {
             return DB::transaction(function () use ($request, $ong) {
 
-                // 1. Constrói $data (sem os campos de imagem)
                 $fillable = $ong->getFillable();
                 $data = [];
                 foreach ($fillable as $field) {
@@ -198,22 +189,18 @@ class OngController extends Controller
                     }
                 }
 
-                // 2. 👈 CHAMA O TRAIT para processar a CAPA
                 if ($request->has($this->campoImagemCapa) || $request->hasFile($this->campoImagemCapa)) {
                     $data[$this->campoImagemCapa] = $this->processarCapaParaUpdate($request, $ong);
                 }
 
-                // 3. Atualiza os dados principais
                 if (!empty($data)) {
                     $ong->update($data);
                 }
 
-                // 4. Sincroniza contatos (seu método)
                 if ($request->has('contatos')) {
                     $this->syncContacts($ong, $request->input('contatos', []));
                 }
 
-                // 5. 👈 CHAMA O TRAIT para sincronizar a GALERIA
                 if ($request->has($this->campoGaleria) || $request->hasFile($this->campoGaleria)) {
                     $this->sincronizarGaleria($request, $ong);
                 }
@@ -235,7 +222,7 @@ class OngController extends Controller
         } catch (\Exception $e) {
             Log::error('Erro ao atualizar ONG: ' . $e->getMessage(), [
                 'id' => $id,
-                'payload' => $request->except(['imagem', 'imagens']), // Remove dados de ficheiro do log
+                'payload' => $request->except(['imagem', 'imagens']),
                 'exception' => $e,
             ]);
             return response()->json(['error' => 'Não foi possível atualizar a ONG'], 500);
@@ -280,34 +267,29 @@ class OngController extends Controller
 
     private function getImagesValidationRules(): array
     {
-        // Coloque aqui a sua lógica original para $imgRules
-        // Exemplo:
+
         return [
-            'imagens' => 'nullable|array|max:10', // Limite de 10 imagens no total
+            'imagens' => 'nullable|array|max:10',
         ];
     }
 
-    /**
-     * Lógica para criar/atualizar/deletar contatos (seu método original)
-     */
+
     private function syncContacts(Ong $ong, array $contatosData): void
     {
         $idsRecebidos = [];
         foreach ($contatosData as $contato) {
             if (isset($contato['id'])) {
                 $idsRecebidos[] = $contato['id'];
-                // Atualiza ou cria
                 ContatoOng::updateOrCreate(
                     ['id' => $contato['id'], 'ong_id' => $ong->id],
                     $contato
                 );
             } else {
-                // Cria
                 $novo = $ong->contatos()->create($contato);
                 $idsRecebidos[] = $novo->id;
             }
         }
-        // Deleta os que não vieram
+
         $ong->contatos()->whereNotIn('id', $idsRecebidos)->delete();
     }
 }

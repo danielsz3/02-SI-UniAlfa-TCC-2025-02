@@ -13,10 +13,9 @@ class UsuarioSeeder extends Seeder
 {
     public function run()
     {
-        // Usar 'pt_BR' para dados mais localizados
+
         $faker = Faker::create('pt_BR');
 
-        // Opções para as preferências
         $tamanhosPet = ['pequeno', 'medio', 'grande'];
         $temposDisponiveis = ['pouco_tempo', 'tempo_moderado', 'muito_tempo'];
         $estilosVida = ['baixa', 'moderada', 'alta'];
@@ -26,11 +25,11 @@ class UsuarioSeeder extends Seeder
             $usuario = Usuario::create([
                 'nome' => $faker->name(),
                 'email' => $faker->unique()->safeEmail(),
-                'password' => Hash::make('password'), // senha padrão para os usuários
+                'password' => Hash::make('password'), 
                 'role' => 'user',
-                'cpf' => $faker->numerify('###########'), // 11 dígitos
-                'data_nascimento' => $faker->date('Y-m-d', '2005-01-01'), // usuários com no máximo 18 anos
-                'telefone' => $faker->numerify('11#########'), // formato telefone com DDD
+                'cpf' => $faker->numerify('###########'), 
+                'data_nascimento' => $faker->date('Y-m-d', '2005-01-01'), 
+                'telefone' => $faker->numerify('11#########'), 
             ]);
 
             Endereco::create([
@@ -44,9 +43,8 @@ class UsuarioSeeder extends Seeder
                 'numero' => $faker->buildingNumber(),
             ]);
 
-            // 2. Cria as preferências para o usuário recém-criado
             PreferenciaUsuario::create([
-                'usuario_id' => $usuario->id, // Associa a preferência ao ID do usuário
+                'usuario_id' => $usuario->id, 
                 'tamanho_pet' => $faker->randomElement($tamanhosPet),
                 'tempo_disponivel' => $faker->randomElement($temposDisponiveis),
                 'estilo_vida' => $faker->randomElement($estilosVida),

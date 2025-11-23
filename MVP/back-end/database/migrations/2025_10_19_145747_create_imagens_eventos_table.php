@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('imagens_eventos', function (Blueprint $table) {
@@ -21,11 +18,10 @@ return new class extends Migration
             $table->softDeletes();
             $table->timestamps();
 
-            // Foreign key
             $table->foreign('evento_id')
-                  ->references('id')
-                  ->on('eventos')
-                  ->onDelete('cascade');
+                ->references('id')
+                ->on('eventos')
+                ->onDelete('cascade');
         });
     }
 

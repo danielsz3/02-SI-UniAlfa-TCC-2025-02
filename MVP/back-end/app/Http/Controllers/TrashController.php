@@ -49,12 +49,8 @@ class TrashController extends Controller
         return $map[$modelName] ?? [];
     }
 
-    /**
-     * Listar itens deletados (soft deleted) com filtros, paginação e ordenação
-     */
     public function index(Request $request, ?string $modelName = null): JsonResponse
     {
-        // Se não passou modelName -> todos
         if ($modelName === null) {
             try {
                 $allModels = [
@@ -87,7 +83,6 @@ class TrashController extends Controller
             }
         }
 
-        // Se veio modelName -> só de um model
         $modelClass = $this->getModelClass($modelName);
         if (!$modelClass) {
             return response()->json(['error' => 'Modelo não encontrado'], 404);
@@ -106,9 +101,6 @@ class TrashController extends Controller
         }
     }
 
-    /**
-     * Restaurar item deletado
-     */
     public function restore(string $modelName, int $id): JsonResponse
     {
         $modelClass = $this->getModelClass($modelName);
@@ -133,9 +125,6 @@ class TrashController extends Controller
         }
     }
 
-    /**
-     * Deletar item permanentemente
-     */
     public function forceDelete(string $modelName, int $id): JsonResponse
     {
         $modelClass = $this->getModelClass($modelName);

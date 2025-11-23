@@ -309,7 +309,7 @@ export default function DoarPage() {
                   </div>
 
                   <div>
-                    <Label className="mb-2">Imagens (opcional)</Label>
+                    <Label className="mb-2">Imagens</Label>
                     <div className="rounded-lg border border-dashed border-border bg-background/50 p-4">
                       <input
                         type="file"

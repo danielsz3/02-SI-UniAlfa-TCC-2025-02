@@ -1,6 +1,9 @@
 "use client"
 
 import { useEffect, useState, ChangeEvent, FormEvent } from 'react'
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
+
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { apiMultipart } from '@/lib/api'
@@ -51,6 +54,9 @@ export default function LarTemporarioForm({
     apiBase = 'lares-temporarios',
     onSuccess,
 }: Props) {
+
+    const router = useRouter()
+
     const [nome, setNome] = useState(initialData?.nome ?? '')
     const [dataNascimento, setDataNascimento] = useState(initialData?.data_nascimento ?? '')
     const [telefone, setTelefone] = useState(initialData?.telefone ?? '')
@@ -62,6 +68,7 @@ export default function LarTemporarioForm({
     const [removedExistingFileNames, setRemovedExistingFileNames] = useState<string[]>([])
     const [newFiles, setNewFiles] = useState<File[]>([])
     const [previews, setPreviews] = useState<{ name: string; url: string }[]>([])
+
     const [submitting, setSubmitting] = useState(false)
     const [errors, setErrors] = useState<Record<string, string[]>>({})
 
@@ -69,18 +76,9 @@ export default function LarTemporarioForm({
     const MAX_FILES = 10
     const MAX_SIZE_BYTES = 10 * 1024 * 1024
 
-    useEffect(() => {
-        if (initialData) {
-            setNome(initialData.nome ?? '')
-            setDataNascimento(initialData.data_nascimento ?? '')
-            setTelefone(initialData.telefone ?? '')
-            setSituacao((initialData.situacao as any) ?? 'inativo')
-            setExperiencia(initialData.experiencia ?? '')
-            setEndereco(initialData.endereco ?? {})
-            setExistingImages(initialData.imagens ?? [])
-        }
-    }, [initialData])
-
+    // =========================
+    // PREVIEW DE IMAGENS
+    // =========================
     useEffect(() => {
         const urls = newFiles.map(f => ({ name: f.name, url: URL.createObjectURL(f) }))
         setPreviews(urls)
@@ -100,28 +98,41 @@ export default function LarTemporarioForm({
     const toggleKeepExistingImage = (img: Imagem) => {
         const base = filenameFromPath(img.caminho)
         if (!base) return
-        setRemovedExistingFileNames(prev => (prev.includes(base) ? prev.filter(x => x !== base) : [...prev, base]))
+        setRemovedExistingFileNames(prev =>
+            prev.includes(base)
+                ? prev.filter(x => x !== base)
+                : [...prev, base]
+        )
     }
 
     const handleFilesAdd = (filesList: FileList | null) => {
         if (!filesList) return
+
         const files = Array.from(filesList)
 
-        const totalCount = newFiles.length + files.length
-        if (totalCount > MAX_FILES) {
-            setErrors(prev => ({ ...prev, imagens: [`Máximo de ${MAX_FILES} imagens permitido.`] }))
+        if (newFiles.length + files.length > MAX_FILES) {
+            setErrors(prev => ({
+                ...prev,
+                imagens: [`Máximo de ${MAX_FILES} imagens permitido.`]
+            }))
             return
         }
 
         const invalid = files.find(f => !ACCEPTED_TYPES.includes(f.type))
         if (invalid) {
-            setErrors(prev => ({ ...prev, imagens: ['Formato inválido. Aceitamos: jpeg, jpg, png, webp.'] }))
+            setErrors(prev => ({
+                ...prev,
+                imagens: ['Formato inválido. Aceitamos: jpeg, jpg, png, webp.']
+            }))
             return
         }
 
         const oversized = files.find(f => f.size > MAX_SIZE_BYTES)
         if (oversized) {
-            setErrors(prev => ({ ...prev, imagens: ['Cada imagem deve ter no máximo 10 MB.'] }))
+            setErrors(prev => ({
+                ...prev,
+                imagens: ['Cada imagem deve ter no máximo 10 MB.']
+            }))
             return
         }
 
@@ -130,6 +141,7 @@ export default function LarTemporarioForm({
             delete copy.imagens
             return copy
         })
+
         setNewFiles(prev => [...prev, ...files])
     }
 
@@ -143,7 +155,6 @@ export default function LarTemporarioForm({
             case 'nome': setNome(value); break
             case 'data_nascimento': setDataNascimento(value); break
             case 'telefone': setTelefone(value.replace(/\D/g, '')); break
-            case 'cep': setEndereco(prev => ({ ...prev, cep: value })); break
             case 'logradouro': setEndereco(prev => ({ ...prev, logradouro: value })); break
             case 'complemento': setEndereco(prev => ({ ...prev, complemento: value })); break
             case 'numero': setEndereco(prev => ({ ...prev, numero: value })); break
@@ -151,69 +162,108 @@ export default function LarTemporarioForm({
             case 'cidade': setEndereco(prev => ({ ...prev, cidade: value })); break
             case 'estado': setEndereco(prev => ({ ...prev, uf: value })); break
             case 'experiencia': setExperiencia(value); break
-            default: break
         }
     }
 
-    const handleSelect = (key: string) => (value: string) => {
-        if (key === 'situacao') setSituacao(value as 'ativo' | 'inativo')
+    const validate = () => {
+        const e: Record<string, string[]> = {}
+
+        if (!nome.trim() || nome.trim().length < 3)
+            e.nome = ["O nome deve ter ao menos 3 caracteres."]
+
+        if (!dataNascimento)
+            e.data_nascimento = ["Data de nascimento é obrigatória."]
+
+        if (!telefone || !/^\d{11}$/.test(telefone))
+            e.telefone = ["Telefone deve ter 11 dígitos numéricos."]
+
+        if (!endereco?.cidade)
+            e.endereco_cidade = ["Cidade é obrigatória."]
+
+        if (!endereco?.uf)
+            e.endereco_estado = ["Estado é obrigatório."]
+
+        if (!endereco?.logradouro)
+            e.endereco_logradouro = ["Logradouro é obrigatório."]
+
+        if (!experiencia.trim())
+            e.experiencia = ["Descreva sua experiência com animais."]
+
+        if (!initialData && newFiles.length === 0)
+            e.imagens = ["Envie ao menos 1 imagem."]
+
+        return e
     }
 
-    const handleSubmit = async (e?: FormEvent) => {
-        e?.preventDefault()
-        setSubmitting(true)
-        setErrors({})
+    // =========================
+    // HANDLE SUBMIT
+    // =========================
+    const handleSubmit = async (e: FormEvent) => {
+        e.preventDefault()
 
-        const clientErrors: Record<string, string[]> = {}
-        if (!nome || nome.trim().length < 2) clientErrors.nome = ['O nome é obrigatório e deve ter no mínimo 2 caracteres.']
-        if (!dataNascimento) clientErrors.data_nascimento = ['A data de nascimento é obrigatória.']
-        if (!telefone || !/^\d{11}$/.test(telefone)) clientErrors.telefone = ['Telefone deve ter 11 dígitos numéricos.']
-        if (Object.keys(clientErrors).length) {
-            setErrors(clientErrors)
-            setSubmitting(false)
+        if (submitting) return
+
+        const validationErrors = validate()
+        if (Object.keys(validationErrors).length > 0) {
+            setErrors(validationErrors)
+            toast.error("Verifique os campos obrigatórios.")
             return
         }
+
+        setSubmitting(true)
+        setErrors({})
 
         try {
             const fd = new FormData()
             const isEdit = !!initialData?.id
             const url = isEdit ? `${apiBase}/${initialData!.id}` : apiBase
 
-            fd.append('nome', nome)
-            fd.append('data_nascimento', dataNascimento)
-            fd.append('telefone', telefone)
-            fd.append('situacao', situacao)
-            if (experiencia) fd.append('experiencia', experiencia)
-            fd.append('endereco', JSON.stringify({ ...(endereco || {}) }))
+            fd.append("nome", nome)
+            fd.append("data_nascimento", dataNascimento)
+            fd.append("telefone", telefone)
+            fd.append("situacao", situacao)
+            fd.append("experiencia", experiencia)
+            fd.append("endereco", JSON.stringify(endereco))
 
             existingImages.forEach(img => {
                 const filename = filenameFromPath(img.caminho)
                 if (!removedExistingFileNames.includes(filename)) {
-                    fd.append('imagens[]', JSON.stringify({ src: img.caminho }))
+                    fd.append("imagens[]", JSON.stringify({ src: img.caminho }))
                 }
             })
 
-            newFiles.forEach(file => fd.append('imagens[]', file, file.name))
+            newFiles.forEach(file => fd.append("imagens[]", file, file.name))
 
-            const resp = await apiMultipart(url, fd, { method: isEdit ? 'PUT' : 'POST', useMethodOverride: true })
+            const resp = await apiMultipart(url, fd, {
+                method: isEdit ? "PUT" : "POST",
+                useMethodOverride: true,
+            })
 
             if (onSuccess) onSuccess(resp)
-            setSubmitting(false)
+
+            toast.success("Cadastro salvo com sucesso! Redirecionando...")
+
+            setTimeout(() => router.push("/"), 900)
+
         } catch (err: any) {
-            setSubmitting(false)
             try {
-                const parsed = JSON.parse(err.message.replace('API error: ', ''))
+                const parsed = JSON.parse(err.message.replace("API error: ", ""))
                 if (parsed?.errors) {
                     setErrors(parsed.errors)
                     return
                 }
-            } catch {
+            } catch { }
 
-            }
-            setErrors({ global: [err.message || 'Erro ao salvar.'] })
+            toast.error("Erro ao enviar formulário.")
+            setErrors({ global: [err.message || "Erro ao salvar."] })
         }
+
+        setSubmitting(false)
     }
 
+    // =========================
+    // RENDER
+    // =========================
     return (
         <NotToken>
             <main className="min-h-screen md:py-24 py-8 px-4 bg-muted/30 dark:bg-muted flex items-center justify-center">
@@ -227,15 +277,9 @@ export default function LarTemporarioForm({
 
                         <CardContent>
                             <form onSubmit={handleSubmit} className="space-y-6">
+
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <FormInput
-                                        label="Nome"
-                                        name="nome"
-                                        value={nome}
-                                        onChange={handleChange}
-                                        required
-                                        maxLength={100}
-                                    />
+                                    <FormInput label="Nome" name="nome" value={nome} onChange={handleChange} required />
 
                                     <FormInput
                                         label="Data de Nascimento"
@@ -250,9 +294,8 @@ export default function LarTemporarioForm({
                                         name="telefone"
                                         value={telefone}
                                         onChange={handleChange}
-                                        placeholder="(DDD) 9 xxxx-xxxx"
+                                        placeholder="(xDD) 9 xxxx-xxxx"
                                     />
-
                                 </div>
 
                                 <div className="space-y-4">
@@ -261,21 +304,22 @@ export default function LarTemporarioForm({
                                     <CepField
                                         value={endereco.cep ?? ''}
                                         onChange={(v: string) => setEndereco(prev => ({ ...prev, cep: v }))}
-                                        onAddress={(addr: any) => setEndereco(prev => ({
-                                            ...prev,
-                                            cep: addr.cep ?? prev.cep,
-                                            logradouro: addr.logradouro ?? prev.logradouro,
-                                            complemento: addr.complemento ?? prev.complemento,
-                                            numero: addr.numero ?? prev.numero,
-                                            bairro: addr.bairro ?? prev.bairro,
-                                            cidade: addr.cidade ?? prev.cidade,
-                                            uf: addr.estado ?? prev.uf,
-                                        }))}
-                                        error={errors['endereco.cep']?.[0] ?? undefined}
+                                        onAddress={(addr: any) =>
+                                            setEndereco(prev => ({
+                                                ...prev,
+                                                cep: addr.cep ?? prev.cep,
+                                                logradouro: addr.logradouro ?? prev.logradouro,
+                                                complemento: addr.complemento ?? prev.complemento,
+                                                numero: addr.numero ?? prev.numero,
+                                                bairro: addr.bairro ?? prev.bairro,
+                                                cidade: addr.cidade ?? prev.cidade,
+                                                uf: addr.estado ?? prev.uf,
+                                            }))
+                                        }
+                                        error={errors['endereco.cep']?.[0]}
                                     />
 
                                     <TextField id="logradouro" name="logradouro" label="Logradouro" value={endereco.logradouro ?? ''} onChange={handleChange} required />
-                                    <TextField id="complemento" name="complemento" label="Complemento" value={endereco.complemento ?? ''} onChange={handleChange} />
                                     <TextField id="numero" name="numero" label="Número" value={endereco.numero ?? ''} onChange={handleChange} required />
                                     <TextField id="bairro" name="bairro" label="Bairro" value={endereco.bairro ?? ''} onChange={handleChange} />
                                     <TextField id="cidade" name="cidade" label="Cidade" value={endereco.cidade ?? ''} onChange={handleChange} required />
@@ -284,8 +328,13 @@ export default function LarTemporarioForm({
 
                                 <div>
                                     <Label>Experiência com Animais</Label>
-                                    <Textarea name="experiencia" value={experiencia} onChange={handleChange} rows={4} />
-                                    {errors.experiencia && <p className="text-sm text-destructive mt-1">{errors.experiencia.join(', ')}</p>}
+                                    <Textarea
+                                        name="experiencia"
+                                        value={experiencia}
+                                        onChange={handleChange}
+                                        rows={4}
+                                        required
+                                    />
                                 </div>
 
                                 <div>
@@ -294,14 +343,27 @@ export default function LarTemporarioForm({
                                     {existingImages.length > 0 && (
                                         <div className="flex flex-wrap gap-3 my-3">
                                             {existingImages.map((img, idx) => {
-                                                const kept = !removedExistingFileNames.includes(filenameFromPath(img.caminho))
+                                                const kept =
+                                                    !removedExistingFileNames.includes(filenameFromPath(img.caminho))
+
                                                 return (
                                                     <div key={idx} className="w-40 border rounded-md overflow-hidden">
-                                                        <img src={img.caminho} alt={img.nome_original ?? `img-${idx}`} className="w-full h-28 object-cover" />
+                                                        <img
+                                                            src={img.caminho}
+                                                            alt={img.nome_original || `img-${idx}`}
+                                                            className="w-full h-28 object-cover"
+                                                        />
                                                         <div className="p-2 flex items-center justify-between">
-                                                            <span className="text-xs truncate">{img.nome_original ?? filenameFromPath(img.caminho)}</span>
-                                                            <Button type="button" onClick={() => toggleKeepExistingImage(img)} className={`text-xs ${kept ? 'bg-emerald-600' : 'bg-red-600'} px-2 py-1`}>
-                                                                {kept ? 'Manter' : 'Remover'}
+                                                            <span className="text-xs truncate">
+                                                                {img.nome_original ||
+                                                                    filenameFromPath(img.caminho)}
+                                                            </span>
+                                                            <Button
+                                                                type="button"
+                                                                onClick={() => toggleKeepExistingImage(img)}
+                                                                className={`text-xs ${kept ? "bg-emerald-600" : "bg-red-600"} px-2 py-1`}
+                                                            >
+                                                                {kept ? "Manter" : "Remover"}
                                                             </Button>
                                                         </div>
                                                     </div>
@@ -318,20 +380,20 @@ export default function LarTemporarioForm({
                                             onChange={e => handleFilesAdd(e.target.files)}
                                             className="w-full text-sm text-muted-foreground file:border-0 file:bg-transparent file:text-primary cursor-pointer"
                                         />
-                                        <p className="mt-2 text-sm text-muted-foreground">
-                                            Arraste ou selecione imagens (jpeg, png, webp) — até 10MB cada
-                                        </p>
 
                                         {previews.length > 0 && (
                                             <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
                                                 {previews.map((p, i) => (
                                                     <div key={i} className="relative rounded-md overflow-hidden border bg-muted">
-                                                        <img src={p.url} alt={p.name} className="w-32 h-32 object-cover" />
+                                                        <img
+                                                            src={p.url}
+                                                            alt={p.name}
+                                                            className="w-32 h-32 object-cover"
+                                                        />
                                                         <button
                                                             type="button"
                                                             onClick={() => removeNewFile(i)}
                                                             className="absolute -top-2 -right-2 inline-flex items-center justify-center rounded-full bg-destructive text-white w-6 h-6 text-xs shadow-md"
-                                                            title="Remover imagem"
                                                         >
                                                             ×
                                                         </button>
@@ -341,31 +403,57 @@ export default function LarTemporarioForm({
                                         )}
                                     </div>
 
-                                    {errors['imagens'] && <p className="text-sm text-destructive mt-2">{(errors['imagens'] as any).join?.(', ')}</p>}
+                                    {errors["imagens"] && (
+                                        <p className="text-sm text-destructive mt-2">
+                                            {errors["imagens"].join(", ")}
+                                        </p>
+                                    )}
                                 </div>
 
-                                {errors.global && <div className="text-sm text-destructive">{errors.global.join(', ')}</div>}
+                                {errors.global && (
+                                    <div className="text-sm text-destructive">
+                                        {errors.global.join(", ")}
+                                    </div>
+                                )}
 
                                 <div className="flex gap-3">
-                                    <Button type="submit" className="flex-1" disabled={submitting}>{submitting ? 'Salvando...' : initialData ? 'Atualizar' : 'Criar'}</Button>
-                                    <Button variant="secondary" type="button" onClick={() => {
-                                        if (initialData) {
-                                            setNome(initialData.nome ?? '')
-                                            setDataNascimento(initialData.data_nascimento ?? '')
-                                            setTelefone(initialData.telefone ?? '')
-                                            setSituacao((initialData.situacao as any) ?? 'ativo')
-                                            setExperiencia(initialData.experiencia ?? '')
-                                            setEndereco(initialData.endereco ?? {})
-                                            setExistingImages(initialData.imagens ?? [])
-                                            setNewFiles([])
-                                            setRemovedExistingFileNames([])
-                                        } else {
-                                            setNome(''), setDataNascimento(''), setTelefone(''), setSituacao('inativo'), setExperiencia(''),
-                                                setEndereco({}), setExistingImages([]), setNewFiles([]), setRemovedExistingFileNames([])
-                                        }
-                                        setErrors({})
-                                    }}>Cancelar</Button>
+                                    <Button type="submit" className="flex-1" disabled={submitting}>
+                                        {submitting ? "Enviando..." : initialData ? "Atualizar" : "Criar"}
+                                    </Button>
+
+                                    <Button
+                                        type="button"
+                                        variant="secondary"
+                                        onClick={() => {
+                                            if (initialData) {
+                                                setNome(initialData.nome ?? "")
+                                                setDataNascimento(initialData.data_nascimento ?? "")
+                                                setTelefone(initialData.telefone ?? "")
+                                                setSituacao((initialData.situacao as any) ?? "ativo")
+                                                setExperiencia(initialData.experiencia ?? "")
+                                                setEndereco(initialData.endereco ?? {})
+                                                setExistingImages(initialData.imagens ?? [])
+                                                setRemovedExistingFileNames([])
+                                                setNewFiles([])
+                                            } else {
+                                                setNome("")
+                                                setDataNascimento("")
+                                                setTelefone("")
+                                                setSituacao("inativo")
+                                                setExperiencia("")
+                                                setEndereco({})
+                                                setExistingImages([])
+                                                setRemovedExistingFileNames([])
+                                                setNewFiles([])
+                                            }
+
+                                            setErrors({})
+                                        }}
+                                    >
+                                        Cancelar
+                                    </Button>
                                 </div>
+
                             </form>
                         </CardContent>
                     </Card>

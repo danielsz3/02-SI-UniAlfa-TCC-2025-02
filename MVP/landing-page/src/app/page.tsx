@@ -5,7 +5,6 @@ import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import ImageCarousel from "@/components/ImageCarousel"
 import Ballpit from "@/components/Ballpit"
 import LoadMoreList from "@/components/LoadMoreList"
 
@@ -80,7 +79,7 @@ function HeroSection() {
 }
 
 // =============================
-// CARD DO EVENTO (AGORA ABRE MODAL)
+// CARD DO EVENTO (SOMENTE FOTO DE CAPA)
 // =============================
 
 function EventoCard({
@@ -90,26 +89,24 @@ function EventoCard({
   evento: Evento
   onClick: () => void
 }) {
+  
+  const baseUrl = process.env.NEXT_PUBLIC_STORAGE_URL
+  const capa = evento.imagem ? `${baseUrl}/${evento.imagem}` : null
+
   return (
     <Card
       onClick={onClick}
       className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
     >
       <div className="h-50 bg-muted">
-        {evento.imagem ? (
-          <ImageCarousel
-            className="h-full"
-            images={
-              evento.imagens
-                ? [{ id: evento.imagens.length + 1, caminho: evento.imagem }, ...evento.imagens]
-                : [{ id: 0, caminho: evento.imagem }]
-            }
+        {capa ? (
+          <img
+            src={capa}
             alt={evento.titulo}
-            variant="minimal"
-            autoPlay
+            className="w-full h-48 object-cover"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+          <div className="w-full h-48 flex items-center justify-center text-muted-foreground">
             Sem imagem
           </div>
         )}

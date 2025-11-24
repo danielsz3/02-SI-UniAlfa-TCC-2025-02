@@ -1,64 +1,39 @@
-# --- Estágio 1: Builder ---
-# Usamos a mesma versão base para garantir compatibilidade
-FROM php:8.2-apache AS builder
+# Imagem base PHP 8.2
+FROM php:8.2-cli
 
-# Instala dependências do sistema necessárias para o Composer e extensões
+# Instalar dependências do sistema e extensões PHP
 RUN apt-get update && apt-get install -y \
-    git unzip curl libpng-dev libonig-dev libxml2-dev \
-    && apt-get clean && rm -rf /var/lib/apt/lists/* \
-    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+    git \
+    curl \
+    unzip \
+    libpq-dev \
+    && docker-php-ext-install pdo pdo_pgsql \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Instala o Composer
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+# Instalar Composer
+RUN curl -sS https://getcomposer.org/installer | php -- \
+    --install-dir=/usr/local/bin --filename=composer
 
-# Define o diretório de trabalho
-WORKDIR /var/www
+# Definir diretório de trabalho
+WORKDIR /var/www/html
 
-# Copia apenas os arquivos de dependência primeiro (para aproveitar o cache do Docker)
-COPY composer.json composer.lock ./
-RUN composer install --no-dev --no-scripts --optimize-autoloader
-
-# Copia o restante do código
+# Copiar arquivos do projeto
 COPY . .
 
-# --- Estágio 2: Imagem Final ---
-FROM php:8.2-apache
+# Instalar dependências do Composer
+RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-# Define a variável para a pasta public do Laravel
-ENV APACHE_DOCUMENT_ROOT=/var/www/public
+# Criar diretórios de storage e cache com permissões
+RUN mkdir -p storage/framework/{sessions,views,cache} \
+    && mkdir -p storage/logs \
+    && mkdir -p bootstrap/cache \
+    && chmod -R 775 storage bootstrap/cache
 
-# Instala dependências de execução e o netcat (para o entrypoint)
-RUN apt-get update && apt-get install -y \
-      libpng-dev libonig-dev libxml2-dev netcat-openbsd \
-    && apt-get clean && rm -rf /var/lib/apt/lists/* \
-    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+# Expor porta
+EXPOSE 8000
 
-# Habilita o mod_rewrite do Apache (Necessário para rotas do Laravel)
-RUN a2enmod rewrite
-
-# Ajusta a configuração do Apache para apontar para /var/www/public
-RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
-RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
-
-# --- AJUSTE PARA CLOUD RUN: Muda Apache da porta 80 para 8080 ---
-RUN sed -i 's/Listen 80/Listen 8080/' /etc/apache2/ports.conf \
-    && sed -i 's/:80>/:8080>/' /etc/apache2/sites-available/000-default.conf
-
-# Define o diretório de trabalho
-WORKDIR /var/www
-
-# Copia os arquivos do estágio de build
-COPY --from=builder /var/www /var/www
-
-# ----------------- ENTRYPOINT -----------------
-COPY entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
-
-ENTRYPOINT ["entrypoint.sh"]
-# ----------------------------------------------
-
-# Cloud Run espera que o container escute na porta 8080
-EXPOSE 8080
-
-# Inicia o Apache em primeiro plano
-CMD ["apache2-foreground"]
+# Comando para iniciar o servidor
+CMD php artisan config:cache && \
+    php artisan route:cache && \
+    php artisan serve --host=0.0.0.0 --port=${PORT:-8000}
+    

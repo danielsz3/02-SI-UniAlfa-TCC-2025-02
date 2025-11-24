@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, ChangeEvent, FormEvent } from 'react'
+import { useEffect, useState, ChangeEvent, FormEvent, Suspense } from 'react'
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
@@ -49,7 +49,7 @@ type Props = {
     onSuccess?: (resp?: any) => void
 }
 
-export default function LarTemporarioForm({
+function LarTemporarioFormContent({
     initialData = null,
     apiBase = 'lares-temporarios',
     onSuccess,
@@ -76,9 +76,6 @@ export default function LarTemporarioForm({
     const MAX_FILES = 10
     const MAX_SIZE_BYTES = 10 * 1024 * 1024
 
-    // =========================
-    // PREVIEW DE IMAGENS
-    // =========================
     useEffect(() => {
         const urls = newFiles.map(f => ({ name: f.name, url: URL.createObjectURL(f) }))
         setPreviews(urls)
@@ -195,9 +192,6 @@ export default function LarTemporarioForm({
         return e
     }
 
-    // =========================
-    // HANDLE SUBMIT
-    // =========================
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault()
 
@@ -261,9 +255,6 @@ export default function LarTemporarioForm({
         setSubmitting(false)
     }
 
-    // =========================
-    // RENDER
-    // =========================
     return (
         <NotToken>
             <main className="min-h-screen md:py-24 py-8 px-4 bg-muted/30 dark:bg-muted flex items-center justify-center">
@@ -461,4 +452,12 @@ export default function LarTemporarioForm({
             </main>
         </NotToken>
     )
+}
+
+export default function LarTemporarioForm() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Carregando formulário de Lar Temporário...</div>}>
+      <LarTemporarioFormContent />
+    </Suspense>
+  )
 }

@@ -6,45 +6,46 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-use App\Models\User;
-use App\Models\Endereco;
-use App\Models\ImagemOng;
-use App\Models\ContatoOng;
-
-
 class Ong extends Model
 {
     use HasFactory, SoftDeletes;
 
     protected $table = 'ongs';
-    protected $primaryKey = 'id_ong';
+    protected $primaryKey = 'id';
 
     protected $fillable = [
-        'nome_ong',
+        'nome',
         'cnpj',
+        'razao_social',
         'descricao',
         'imagem',
-        'url_banner',
-        'telefone',
-        'pix',
+        'cep',
+        'logradouro',
+        'numero',
+        'complemento',
+        'bairro',
+        'cidade',
+        'uf',
         'banco',
         'agencia',
         'numero_conta',
-        'conta',
+        'tipo_conta',
+        'chave_pix',
     ];
 
-    public function enderecos()
+    protected $casts = [
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'deleted_at' => 'datetime',
+    ];
+
+    public function contatos()
     {
-        return $this->belongsToMany(Endereco::class, 'ongs_enderecos', 'id_ong', 'endereco_id');
+        return $this->hasMany(ContatoOng::class, 'ong_id', 'id');
     }
 
     public function imagens()
     {
-        return $this->hasMany(ImagemOng::class, 'id_ong', 'id_ong');
-    }
-
-    public function contatos()
-    {
-        return $this->hasMany(ContatoOng::class, 'id_ong', 'id_ong');
+        return $this->hasMany(ImagemOng::class, 'ong_id', 'id');
     }
 }

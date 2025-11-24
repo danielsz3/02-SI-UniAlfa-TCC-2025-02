@@ -10,14 +10,12 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class DocumentoController extends Controller
 {
     use SearchIndex;
 
-    /**
-     * Listar documentos
-     */
     public function index(Request $request): JsonResponse
     {
         try {
@@ -33,30 +31,20 @@ class DocumentoController extends Controller
         }
     }
 
-    /**
-     * Criar novo documento
-     */
     public function store(Request $request): JsonResponse
     {
-        // Lista de mimetypes abrangente para evitar falsos negativos em CSV/XLS/XLSX e imagens
         $mimetypeRules = implode(',', [
-            // PDF
             'application/pdf',
-            // Word
             'application/msword',
             'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            // Imagens
-            'image/jpeg', // cobre .jpg e .jpeg
+            'image/jpeg',
             'image/png',
-            // Excel
-            'application/vnd.ms-excel', // xls e às vezes csv
-            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // xlsx
-            'application/vnd.ms-excel.sheet.macroEnabled.12', // xlsm
-            // CSV (variações comuns)
+            'application/vnd.ms-excel',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'application/vnd.ms-excel.sheet.macroEnabled.12',
             'text/csv',
             'application/csv',
-            'text/plain', // alguns CSV vêm assim
-            // Fallback (opcional; remova se quiser ser mais rígido)
+            'text/plain',
             'application/octet-stream',
         ]);
 
@@ -64,10 +52,7 @@ class DocumentoController extends Controller
             'titulo'    => 'required|string|max:255',
             'categoria' => 'nullable|string|max:255',
             'descricao' => 'nullable|string|max:1000',
-            // Opção A (recomendada): mimetypes abrangente
             'arquivo'   => 'required|file|mimetypes:' . $mimetypeRules . '|max:10240',
-            // Opção B (por extensão; alternativa mais simples):
-            // 'arquivo'   => 'required|file|mimes:pdf,doc,docx,jpg,jpeg,png,xls,xlsx,csv|max:10240',
         ], [
             'titulo.required' => 'O título é obrigatório.',
             'titulo.max' => 'O título deve ter no máximo 255 caracteres.',
@@ -77,7 +62,6 @@ class DocumentoController extends Controller
 
             'arquivo.required' => 'O arquivo é obrigatório.',
             'arquivo.file' => 'O arquivo deve ser um arquivo válido.',
-            'arquivo.mimes' => 'O arquivo deve ser do tipo: pdf, doc, docx, jpg, jpeg, png, xls, xlsx ou csv.',
             'arquivo.mimetypes' => 'O arquivo deve ser do tipo: pdf, doc, docx, jpg, jpeg, png, xls, xlsx ou csv.',
             'arquivo.max' => 'O arquivo deve ter no máximo 10MB.',
         ]);
@@ -88,7 +72,13 @@ class DocumentoController extends Controller
 
         try {
             $file = $request->file('arquivo');
-            $path = $file->store('documentos', 'public');
+            $originalName = $file->getClientOriginalName();
+
+            $fileName = pathinfo($originalName, PATHINFO_FILENAME);
+            $extension = $file->getClientOriginalExtension();
+            $uniqueName = $fileName . '_' . Str::random(10) . '.' . $extension;
+
+            $path = $file->storeAs('documentos', $uniqueName, 'public');
 
             $documento = Documento::create([
                 'titulo'         => $request->titulo,
@@ -97,7 +87,7 @@ class DocumentoController extends Controller
                 'arquivo'        => $path,
                 'tipo'           => $file->getClientMimeType(),
                 'tamanho'        => $file->getSize(),
-                'nome_original'  => $file->getClientOriginalName(),
+                'nome_original'  => $originalName,
             ]);
 
             return response()->json($documento, 201);
@@ -107,7 +97,6 @@ class DocumentoController extends Controller
                 'exception' => $e
             ]);
 
-            // Em caso de erro após upload, tenta remover o arquivo órfão
             if (isset($path) && Storage::disk('public')->exists($path)) {
                 Storage::disk('public')->delete($path);
             }
@@ -119,9 +108,6 @@ class DocumentoController extends Controller
         }
     }
 
-    /**
-     * Mostrar documento
-     */
     public function show($id): JsonResponse
     {
         try {
@@ -138,9 +124,6 @@ class DocumentoController extends Controller
         }
     }
 
-    /**
-     * Atualizar documento
-     */
     public function update(Request $request, $id): JsonResponse
     {
         try {
@@ -169,10 +152,7 @@ class DocumentoController extends Controller
                 'titulo'    => 'sometimes|required|string|max:255',
                 'categoria' => 'nullable|string|max:255',
                 'descricao' => 'nullable|string|max:1000',
-                // Opção A (mimetypes)
                 'arquivo'   => 'nullable|file|mimetypes:' . $mimetypeRules . '|max:10240',
-                // Opção B (mimes por extensão)
-                // 'arquivo'   => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,xls,xlsx,csv|max:10240',
             ], [
                 'titulo.required' => 'O título é obrigatório.',
                 'titulo.max' => 'O título deve ter no máximo 255 caracteres.',
@@ -181,7 +161,6 @@ class DocumentoController extends Controller
                 'descricao.max' => 'A descrição deve ter no máximo 1000 caracteres.',
 
                 'arquivo.file' => 'O arquivo deve ser um arquivo válido.',
-                'arquivo.mimes' => 'O arquivo deve ser do tipo: pdf, doc, docx, jpg, jpeg, png, xls, xlsx ou csv.',
                 'arquivo.mimetypes' => 'O arquivo deve ser do tipo: pdf, doc, docx, jpg, jpeg, png, xls, xlsx ou csv.',
                 'arquivo.max' => 'O arquivo deve ter no máximo 10MB.',
             ]);
@@ -197,10 +176,16 @@ class DocumentoController extends Controller
                 }
 
                 $file = $request->file('arquivo');
-                $documento->arquivo = $file->store('documentos', 'public');
+                $originalName = $file->getClientOriginalName();
+
+                $fileName = pathinfo($originalName, PATHINFO_FILENAME);
+                $extension = $file->getClientOriginalExtension();
+                $uniqueName = $fileName . '_' . Str::random(10) . '.' . $extension;
+
+                $documento->arquivo = $file->storeAs('documentos', $uniqueName, 'public');
                 $documento->tipo    = $file->getClientMimeType();
                 $documento->tamanho = $file->getSize();
-                $documento->nome_original = $file->getClientOriginalName();
+                $documento->nome_original = $originalName;
             }
 
             $documento->titulo    = $request->titulo    ?? $documento->titulo;
@@ -208,7 +193,6 @@ class DocumentoController extends Controller
             $documento->descricao = $request->descricao ?? $documento->descricao;
             $documento->save();
 
-            // Remove arquivo antigo após salvar com sucesso
             if ($oldPath && Storage::disk('public')->exists($oldPath)) {
                 Storage::disk('public')->delete($oldPath);
             }
@@ -228,9 +212,6 @@ class DocumentoController extends Controller
         }
     }
 
-    /**
-     * Deletar documento
-     */
     public function destroy($id): JsonResponse
     {
         try {
@@ -257,40 +238,7 @@ class DocumentoController extends Controller
         }
     }
 
-    /**
-     * Restaurar documento deletado
-     */
-    public function restore($id): JsonResponse
-    {
-        try {
-            $documento = Documento::withTrashed()->find($id);
 
-            if (!$documento) {
-                return response()->json(['error' => 'Documento não encontrado'], 404);
-            }
-
-            if (!$documento->trashed()) {
-                return response()->json(['error' => 'Documento já está ativo'], 400);
-            }
-
-            $documento->restore();
-
-            return response()->json($documento->fresh(), 200);
-        } catch (\Exception $e) {
-            Log::error('Erro ao restaurar documento: ' . $e->getMessage(), ['id' => $id, 'exception' => $e]);
-
-            return response()->json([
-                'error' => 'Não foi possível restaurar o documento',
-                'message' => config('app.debug') ? $e->getMessage() : 'Erro interno do servidor'
-            ], 500);
-        }
-    }
-
-    /**
-     * Download do arquivo do documento
-     *
-     * @return \Symfony\Component\HttpFoundation\StreamedResponse|\Illuminate\Http\JsonResponse
-     */
     public function download($id): StreamedResponse|JsonResponse
     {
         try {
@@ -306,22 +254,73 @@ class DocumentoController extends Controller
                 return response()->json(['error' => 'Arquivo não encontrado no armazenamento'], 404);
             }
 
-            // Nome do arquivo para download
-            $fileName = $documento->nome_original ??
-                (pathinfo($path, PATHINFO_BASENAME) ?: 'documento');
+            $mime = $documento->tipo ?? Storage::disk('public')->mimeType($path) ?? 'application/octet-stream';
+            $extension = pathinfo($documento->nome_original ?? $path, PATHINFO_EXTENSION);
 
-            // Content-Type
-            $mime = $documento->tipo ??
-                (Storage::disk('public')->mimeType($path) ?: 'application/octet-stream');
+            $safeTitle = preg_replace('/[^A-Za-z0-9_\-]/', '_', Str::ascii($documento->titulo));
+            $fileName = $safeTitle . ($extension ? '.' . $extension : '');
 
-            return Storage::disk('public')->download($path, $fileName, [
+            $isPdf = stripos($mime, 'pdf') !== false || strcasecmp($extension, 'pdf') === 0;
+
+            try {
+                $localPath = Storage::disk('public')->path($path);
+                if (file_exists($localPath)) {
+                    if ($isPdf) {
+                        return response()->file($localPath, [
+                            'Content-Type' => 'application/pdf',
+                            'Content-Disposition' => 'inline; filename="' . $fileName . '"',
+                            'X-Content-Type-Options' => 'nosniff',
+                        ]);
+                    } else {
+                        return response()->download($localPath, $fileName, [
+                            'Content-Type' => $mime,
+                            'X-Content-Type-Options' => 'nosniff',
+                        ]);
+                    }
+                }
+            } catch (\Throwable $e) {
+            }
+
+            try {
+                if (method_exists(Storage::disk('public'), 'temporaryUrl')) {
+                    $expires = now()->addMinutes(5);
+                    $disposition = $isPdf ? 'inline; filename="' . $fileName . '"' : 'attachment; filename="' . $fileName . '"';
+                    $options = [
+                        'ResponseContentDisposition' => $disposition,
+                        'ResponseContentType' => $mime,
+                    ];
+
+                    $url = Storage::disk('public')->temporaryUrl($path, $expires, $options);
+                    return redirect()->away($url);
+                }
+            } catch (\Throwable $e) {
+            }
+
+            $stream = Storage::disk('public')->readStream($path);
+            if ($stream === false) {
+                return response()->json(['error' => 'Não foi possível abrir o arquivo para leitura'], 500);
+            }
+
+            $headers = [
                 'Content-Type' => $mime,
-            ]);
+                'Content-Disposition' => ($isPdf ? 'inline' : 'attachment') . '; filename="' . $fileName . '"',
+                'Cache-Control' => 'no-cache, no-store, must-revalidate',
+                'Pragma' => 'no-cache',
+                'Expires' => '0',
+                'X-Content-Type-Options' => 'nosniff',
+            ];
+
+            return response()->stream(function () use ($stream) {
+                fpassthru($stream);
+                if (is_resource($stream)) {
+                    fclose($stream);
+                }
+            }, 200, $headers);
         } catch (\Exception $e) {
-            Log::error('Erro ao fazer download do documento: ' . $e->getMessage(), ['id' => $id, 'exception' => $e]);
+            Log::error('Erro ao fazer download/visualizar documento: ' . $e->getMessage(), ['id' => $id, 'exception' => $e]);
 
             return response()->json([
-                'error' => 'Não foi possível realizar o download',
+                'error' => 'Não foi possível realizar a operação',
                 'message' => config('app.debug') ? $e->getMessage() : 'Erro interno do servidor'
             ], 500);
         }

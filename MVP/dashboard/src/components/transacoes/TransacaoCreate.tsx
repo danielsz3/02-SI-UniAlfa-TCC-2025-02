@@ -1,6 +1,49 @@
-import { ArrayInput, Create, DateTimeInput, NumberInput, RadioButtonGroupInput, SelectInput, SimpleForm, TextArrayInput, TextInput, minValue, required } from 'react-admin';
+import { Button, Create,NumberInput, SaveButton, SelectInput, SimpleForm, TextInput, minValue, required } from 'react-admin';
 import CustomDateTimePicker from '../datepicker/customDateTimePicker';
 import Grid from '@mui/material/Grid';
+import { CustomToolbar } from '../CustomToolbar';
+import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
+import { useFormContext } from 'react-hook-form';
+import { useNotify } from 'react-admin';
+import { useRedirect } from 'react-admin';
+
+const TransacaoToolbar = () => {
+    const redirect = useRedirect();
+    const notify = useNotify();
+    const form = useFormContext();
+
+    const handleBack = () => redirect('list', 'transacoes');
+
+    return (
+        <CustomToolbar
+            leftButtons={[
+                <SaveButton
+                    type='button'
+                />,
+                <SaveButton
+                    type='button'
+                    sx={{fontSize: "0.8rem"}}
+                    label='Salvar e Novo'
+                    variant='outlined'
+                    mutationOptions={{
+                        onSuccess: () => {
+                            notify('Transação salva com sucesso! Pronto para criar outra', { type: 'info' });
+                            redirect('create', 'transacoes');
+                            form.reset();
+                        },
+                    }}
+                />,
+            ]}
+            rightButtons={[
+                <Button
+                    label="Voltar"
+                    startIcon={<ArrowBackIosNewIcon />}
+                    onClick={handleBack}
+                />,
+            ]}
+        />
+    );
+};
 
 const TransacaoCreate = () => (
     <Create
@@ -8,10 +51,12 @@ const TransacaoCreate = () => (
         sx={{ width: '100%', maxWidth: 600, margin: '0 auto' }}
         redirect="list"
     >
-        <SimpleForm>
+        <SimpleForm
+            toolbar={<TransacaoToolbar />}
+        >
             <Grid container spacing={2} columns={2}>
                 <Grid size={{ xs: 1 }}>
-                    <RadioButtonGroupInput
+                    <SelectInput
                         label="Tipo"
                         source="tipo"
                         choices={[

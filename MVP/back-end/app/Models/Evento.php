@@ -21,7 +21,7 @@ class Evento extends Model
         'data_fim',
         'local',
         'descricao',
-        'imagem' // caminho da imagem de capa
+        'imagem'
     ];
 
     protected $casts = [

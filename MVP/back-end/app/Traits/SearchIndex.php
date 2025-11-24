@@ -31,6 +31,17 @@ trait SearchIndex
             foreach ($filters as $field => $value) {
                 if ($value === null || $value === '') continue;
 
+                if ($field === 'q') {
+                    if (!empty($likeFields)) {
+                        $query->where(function (Builder $subQuery) use ($value, $likeFields) {
+                            foreach ($likeFields as $searchField) {
+                                $subQuery->orWhere($searchField, 'like', '%' . $value . '%');
+                            }
+                        });
+                    }
+                    continue;
+                }
+
                 if (preg_match('/(.+)_from$/', $field, $matches)) {
                     $query->where($matches[1], '>=', $value);
                     continue;
@@ -43,7 +54,11 @@ trait SearchIndex
                 if (in_array($field, $likeFields)) {
                     $query->where($field, 'like', '%' . $value . '%');
                 } else {
-                    $query->where($field, $value);
+                    if (is_array($value)) {
+                        $query->whereIn($field, $value);
+                    } else {
+                        $query->where($field, $value);
+                    }
                 }
             }
 

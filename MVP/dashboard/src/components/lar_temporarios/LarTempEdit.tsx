@@ -9,11 +9,18 @@ import {
     useNotify,
     ImageInput,
     ImageField,
+    Button,
+    SaveButton,
+    useRedirect,
+    DeleteWithConfirmButton,
+    regex,
 } from 'react-admin';
 import CustomDatePicker from '../datepicker/customDatePicker';
 import { useFormContext } from 'react-hook-form';
 import { useEffect, useState } from 'react';
 import { FilePlaceholder } from '../FilePlaceHolder';
+import { CustomToolbar } from '../CustomToolbar';
+import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 
 const CepInput = () => {
     const { setValue, watch } = useFormContext();
@@ -52,8 +59,35 @@ const CepInput = () => {
         <TextInput
             source="endereco.cep"
             label="CEP"
-            validate={required()}
+            validate={[required('O CEP é obrigatório'),regex(/^\d{8}$/, 'O CEP deve ter 8 dígitos')]}
             helperText={helpText}
+        />
+    );
+};
+
+const LarTempToolbar = () => {
+    const redirect = useRedirect();
+
+    const handleBack = () => redirect('list', 'lares-temporarios');
+
+    return (
+        <CustomToolbar
+            leftButtons={[
+                <SaveButton
+                    type='button'
+                />,
+            ]}
+            rightButtons={[
+                <Button
+                    label="Voltar"
+                    startIcon={<ArrowBackIosNewIcon />}
+                    onClick={handleBack}
+                />,
+                <DeleteWithConfirmButton
+                    confirmTitle="Tem certeza?"
+                    confirmContent="Deseja realmente excluir o lar temporário?"
+                />,
+            ]}
         />
     );
 };
@@ -67,7 +101,9 @@ const LarTempEdit = (props: EditProps) => {
             sx={{ width: '100%', maxWidth: 600, margin: '0 auto' }}
             redirect="list"
         >
-            <TabbedForm>
+            <TabbedForm
+                toolbar={<LarTempToolbar />}
+            >
                 <FormTab label="Responsável">
                     <RadioButtonGroupInput
                         label="Situação"
@@ -94,6 +130,15 @@ const LarTempEdit = (props: EditProps) => {
                         label="Data de Nascimento"
                         validate={required('A data de nascimento é obrigatória')}
                     />
+
+                    <TextInput
+                        source="Experiência"
+                        label="Experiência com animais (opcional)"
+                        multiline
+                        minRows={3}
+                        maxRows={5}
+                        placeholder="Descreva a experiência com animais"
+                    />
                 </FormTab>
 
                 <FormTab label="Endereço">
@@ -101,24 +146,25 @@ const LarTempEdit = (props: EditProps) => {
                     <TextInput
                         source="endereco.logradouro"
                         label="Logradouro"
-                        validate={required()}
+                        validate={required('O logradouro é obrigatório')}
                     />
                     <TextInput
                         source="endereco.numero"
                         label="Número"
-                        validate={required()}
+                        validate={required('O número é obrigatório')}
                     />
                     <TextInput source="endereco.complemento" label="Complemento" />
                     <TextInput
                         source="endereco.bairro"
                         label="Bairro"
+                        validate={required('O bairro é obrigatório')}
                     />
                     <TextInput
                         source="endereco.cidade"
                         label="Cidade"
-                        validate={required()}
+                        validate={required('A cidade é obrigatória')}
                     />
-                    <TextInput source="endereco.uf" label="UF" validate={required()} />
+                    <TextInput source="endereco.uf" label="UF" validate={required('A UF é obrigatória')} />
                 </FormTab>
 
                 <FormTab label="Galeria">
@@ -126,13 +172,13 @@ const LarTempEdit = (props: EditProps) => {
                         source="imagens"
                         label="Imagens do Lar Temporário"
                         multiple
-                        accept={{ 'image/*': ['.png', '.jpg', '.jpeg', '.gif'] }}
+                        accept={{ 'image/*': ['.png', '.jpg', '.jpeg', '.webp'] }}
                         maxSize={10_500_000}
                         validate={required('Pelo menos uma imagem é obrigatória')}
                         placeholder={
                             <FilePlaceholder
                                 maxSize={10_500_000}
-                                accept={['.png', '.jpg', '.jpeg', '.gif']}
+                                accept={['.png', '.jpg', '.jpeg', '.webp']}
                                 multiple
                             />
                         }

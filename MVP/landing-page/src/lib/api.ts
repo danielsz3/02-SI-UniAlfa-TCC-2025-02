@@ -1,33 +1,150 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+import { toast } from "sonner"
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL
+
+function decodeToken(token: string): any {
+    try {
+        const base64Url = token.split('.')[1]
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
+        const jsonPayload = decodeURIComponent(
+            atob(base64)
+                .split('')
+                .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+                .join('')
+        )
+        return JSON.parse(jsonPayload)
+    } catch {
+        return null
+    }
+}
+
+function isTokenExpired(token: string): boolean {
+    const decoded = decodeToken(token)
+    if (!decoded || !decoded.exp) return true
+    const now = Math.floor(Date.now() / 1000)
+    return decoded.exp < now
+}
+
+export function getToken(): string | null {
+    if (typeof window === 'undefined') return null
+    const token = localStorage.getItem('token')
+
+    if (!token) {
+        return null // Não mostra toast aqui, deixa o componente decidir
+    }
+
+    if (isTokenExpired(token)) {
+        clearAuthData(true)
+        toast.error('Token expirado, faça o login novamente.', { richColors: true })
+        return null
+    }
+
+    return token
+}
+
+export function clearAuthData(shouldRedirect = true, loginPath = '/login') {
+    if (typeof window === 'undefined') return
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+    window.dispatchEvent(new CustomEvent('auth:logout'))
+
+    if (!shouldRedirect) return
+
+    if (window.location.pathname === loginPath) return
+
+    try {
+        window.location.replace(loginPath)
+    } catch {
+        window.location.href = loginPath
+    }
+}
+
+async function handlePossibleError(res: Response) {
+    if (!res.ok) {
+        if (res.status === 401) {
+            clearAuthData(true)
+        }
+        let body: any
+        try {
+            body = await res.json()
+        } catch {
+            body = await res.text().catch(() => '')
+        }
+
+        // Cria um erro com mais informações
+        const error: any = new Error(`API error: ${res.status}`)
+        error.status = res.status
+        error.response = { status: res.status, data: body }
+        throw error
+    }
+    return res
+}
+
+// Função auxiliar para normalizar o endpoint
+function normalizeEndpoint(endpoint: string): string {
+    // Remove barra inicial se existir
+    return endpoint.startsWith('/') ? endpoint.slice(1) : endpoint
+}
 
 export async function apiGet<T>(endpoint: string): Promise<T> {
-  const res = await fetch(`${API_URL}/${endpoint}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      // Adicione token de autenticação aqui se precisar
-    },
-  });
+    const token = getToken()
+    const normalizedEndpoint = normalizeEndpoint(endpoint)
 
-  if (!res.ok) {
-    throw new Error(`API error: ${res.status}`);
-  }
+    const res = await fetch(`${API_URL}/${normalizedEndpoint}`, {
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+    })
 
-  return res.json();
+    await handlePossibleError(res)
+    return res.json()
 }
 
 export async function apiPost<T>(endpoint: string, data: any): Promise<T> {
-  const res = await fetch(`${API_URL}/${endpoint}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      // Adicione token de autenticação aqui se precisar
-    },
-    body: JSON.stringify(data),
-  });
+    const token = getToken()
+    const normalizedEndpoint = normalizeEndpoint(endpoint)
 
-  if (!res.ok) {
-    throw new Error(`API error: ${res.status}`);
-  }
+    const res = await fetch(`${API_URL}/${normalizedEndpoint}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(data),
+    })
 
-  return res.json();
+    await handlePossibleError(res)
+    return res.json()
+}
+
+export async function apiMultipart<T>(
+    endpoint: string,
+    formData: FormData,
+    options?: { method?: 'POST' | 'PUT' | 'PATCH'; useMethodOverride?: boolean }
+): Promise<T> {
+    const token = getToken()
+    const normalizedEndpoint = normalizeEndpoint(endpoint)
+    const method = options?.method ?? 'POST'
+    const useMethodOverride = options?.useMethodOverride ?? true
+
+    if ((method === 'PUT' || method === 'PATCH') && useMethodOverride) {
+        formData.set('_method', method)
+    }
+
+    const fetchMethod = method === 'POST' || useMethodOverride ? 'POST' : (method as RequestInit['method'])
+
+    const res = await fetch(`${API_URL}/${normalizedEndpoint}`, {
+        method: fetchMethod,
+        headers: {
+            'Accept': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: formData,
+    })
+
+    await handlePossibleError(res)
+    return res.json()
 }

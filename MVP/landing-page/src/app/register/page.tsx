@@ -1,32 +1,97 @@
-"use client"
+'use client'
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import PersonalForm from "./PersonalForm"
 import AddressForm from "./AddressForm"
 import PreferencesForm from "./PreferencesForm"
 import ConfirmForm from "./ConfirmForm"
-import { Navbar } from "@/components/navbar"
+import { useRouter } from "next/navigation"
+
+interface FormData {
+    nome?: string
+    telefone?: string
+    email?: string
+    cpf?: string
+    dataNascimento?: string
+    senha?: string
+    confirmarSenha?: string
+    imagemPreviewUrl?: string | null
+    tamanhoPet?: string
+    tempoCuidar?: string
+    estiloVida?: string
+    espaco?: string
+}
+
+async function handleRedirectAfterAuth(router: ReturnType<typeof useRouter>) {
+    const redirectTo = sessionStorage.getItem('redirectAfterLogin') || '/'
+    sessionStorage.removeItem('redirectAfterLogin')
+    router.replace(redirectTo)
+}
 
 export default function RegisterPage() {
+    const router = useRouter()
     const [step, setStep] = useState(1)
-    const [formData, setFormData] = useState({})
+    const [formData, setFormData] = useState<FormData>({
+        imagemPreviewUrl: null,
+        tamanhoPet: "",
+        tempoCuidar: "",
+        estiloVida: "",
+        espaco: "",
+    })
 
-    function nextStep(data: any) {
+    const [imagemFile, setImagemFile] = useState<File | null>(null)
+
+    useEffect(() => {
+        if (imagemFile) {
+            const url = URL.createObjectURL(imagemFile)
+            setFormData(prev => ({ ...prev, imagemPreviewUrl: url }))
+
+            return () => {
+                URL.revokeObjectURL(url)
+            }
+        }
+    }, [imagemFile])
+
+    function nextStep(data: Partial<FormData> & { imagem?: File | null }) {
+        if (data.imagem) {
+            setImagemFile(data.imagem)
+        }
         setFormData(prev => ({ ...prev, ...data }))
-        setStep(step + 1)
+        setStep(s => s + 1)
     }
+
     function prevStep() {
-        setStep(step - 1)
+        setStep(s => s - 1)
+    }
+
+    async function onRegisterSuccess() {
+        await handleRedirectAfterAuth(router)
     }
 
     return (
         <>
-            <Navbar />
             <main className="flex min-h-screen flex-col items-center justify-center">
-                {step === 1 && <PersonalForm onNext={nextStep} defaultValues={formData} />}
-                {step === 2 && <AddressForm onNext={nextStep} onBack={prevStep} defaultValues={formData} />}
-                {step === 3 && <PreferencesForm onNext={nextStep} onBack={prevStep} defaultValues={formData} />}
-                {step === 4 && <ConfirmForm data={formData} onBack={prevStep} />}
+                {step === 1 && (
+                    <PersonalForm
+                        onNext={nextStep}
+                        defaultValues={formData}
+                        defaultImageFile={imagemFile}
+                        setImageFile={setImagemFile}
+                    />
+                )}
+                {step === 2 && (
+                    <AddressForm onNext={nextStep} onBack={prevStep} defaultValues={formData} />
+                )}
+                {step === 3 && (
+                    <PreferencesForm onNext={nextStep} onBack={prevStep} defaultValues={formData} />
+                )}
+                {step === 4 && (
+                    <ConfirmForm
+                        data={formData}
+                        onBack={prevStep}
+                        onRegisterSuccess={onRegisterSuccess}
+                    />
+                )}
             </main>
         </>
     )

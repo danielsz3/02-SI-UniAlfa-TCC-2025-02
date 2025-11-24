@@ -2,11 +2,14 @@ import {
     List,
     TextInput,
     useListContext,
+    DateInput,
+    IconButtonWithTooltip,
 } from 'react-admin';
 import { Link } from 'react-router-dom';
 import { Grid, Card, CardContent, Typography, Box, Button, Chip } from '@mui/material';
-import React from 'react';
-import { FaWhatsapp, FaInstagram } from "react-icons/fa";
+import React, { JSX } from 'react';
+import { FaWhatsapp, FaInstagram, FaPlus } from "react-icons/fa";
+import AddToPhotosIcon from '@mui/icons-material/AddToPhotos';
 
 // Filtros
 const filters = [
@@ -84,9 +87,9 @@ const IntegracoesGrid = () => {
                                 {isActive && (
                                     <Chip
                                         label={isConnected ? "Conectado" : "Desconectado"}
-                                        size="small"
+                                        size="medium"
                                         color={isConnected ? "success" : "default"}
-                                        variant="outlined"
+                                        variant={isConnected ? "filled" : "outlined"}
                                     />
                                 )}
                             </Box>
@@ -114,6 +117,19 @@ const IntegracoesGrid = () => {
                                     >
                                         {isConnected ? "Configurar" : "Conectar"}
                                     </Button>
+                                    {isConnected && (
+                                        <Link to="/posts/create">
+                                            <IconButtonWithTooltip
+                                                label="Criar postagem"
+                                                component="span"
+                                                sx={{
+                                                    color: 'primary'
+                                                }}
+                                            >
+                                                <AddToPhotosIcon color='primary' fontSize='medium'/>
+                                            </IconButtonWithTooltip>
+                                        </Link>
+                                    )}
                                 </Box>
                             ) : (
                                 <Typography
@@ -134,7 +150,7 @@ const IntegracoesGrid = () => {
 // Lista principal
 export const IntegracaoList = () => (
     <List filters={filters} title="Integrações"
-    
+        pagination={false}
         exporter={false}
         sx={{
             "& .RaList-content": {

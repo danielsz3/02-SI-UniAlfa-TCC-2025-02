@@ -18,7 +18,8 @@ class ImagemEvento extends Model
         'evento_id',
         'caminho',
         'width',
-        'height'
+        'height',
+        'nome_original'
     ];
 
     public function evento()

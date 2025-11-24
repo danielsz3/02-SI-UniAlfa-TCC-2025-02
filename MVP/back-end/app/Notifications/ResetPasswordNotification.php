@@ -2,17 +2,24 @@
 
 namespace App\Notifications;
 
-use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
 
 class ResetPasswordNotification extends Notification
 {
-    use Queueable;
-
+    /**
+     * Token de reset enviado pelo Password Broker
+     *
+     * @var string
+     */
     public $token;
 
-    public function __construct($token)
+    /**
+     * Construtor recebe o token (Laravel passa apenas o token ao chamar sendPasswordResetNotification)
+     *
+     * @param string $token
+     */
+    public function __construct(string $token)
     {
         $this->token = $token;
     }
@@ -24,12 +31,22 @@ class ResetPasswordNotification extends Notification
 
     public function toMail($notifiable)
     {
-        $url = url('/reset-password?token=' . $this->token . '&email=' . $notifiable->email);
+
+        $frontend = config('app.frontend_url', env('FRONTEND_URL', env('APP_URL')));
+
+        $path = '/new-password';
+
+        $url = rtrim($frontend, '/') . $path . '?token=' . $this->token . '&email=' . urlencode($notifiable->email);
+
+        $expire = config('auth.passwords.usuarios.expire', 60);
 
         return (new MailMessage)
-            ->subject('Redefinição de Senha')
-            ->line('Você está recebendo este e-mail porque foi solicitada uma redefinição de senha.')
+            ->subject('Redefinição de Senha - PetAffinity')
+            ->greeting('Olá, ' . ($notifiable->nome ?? $notifiable->email) . '!')
+            ->line('Você está recebendo este e‑mail porque solicitou redefinição de senha para sua conta.')
             ->action('Redefinir Senha', $url)
-            ->line('Se não foi você, ignore este e-mail.');
+            ->line("Este link de redefinição expira em {$expire} minutos.")
+            ->line('Se você não solicitou a redefinição de senha, nenhuma ação é necessária.')
+            ->salutation('Atenciosamente, Equipe PetAffinity');
     }
 }

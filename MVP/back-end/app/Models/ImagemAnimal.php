@@ -14,8 +14,7 @@ class ImagemAnimal extends Model
 
     protected $primaryKey = 'id';
 
-
-    protected $fillable = ['animal_id', 'caminho', 'width', 'height'];
+    protected $fillable = ['animal_id', 'caminho', 'width', 'height', 'nome_original'];
 
     public function animal()
     {

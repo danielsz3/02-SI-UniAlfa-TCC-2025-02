@@ -2,3 +2,7 @@
 [stacktrace]
 #0 {main}
 "} 
+[2025-11-24 00:55:08] local.ERROR: Maximum execution time of 30 seconds exceeded {"exception":"[object] (Symfony\\Component\\ErrorHandler\\Error\\FatalError(code: 0): Maximum execution time of 30 seconds exceeded at C:\\Users\\joaox\\OneDrive\\Área de Trabalho\\02-SI-UniAlfa-TCC-2025-02\\MVP\\back-end\\vendor\\symfony\\translation\\Loader\\ArrayLoader.php:21)
+[stacktrace]
+#0 {main}
+"} 

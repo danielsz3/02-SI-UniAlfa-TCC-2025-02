@@ -35,8 +35,8 @@ class EventoController extends Controller
                 ['titulo']
             );
         } catch (\Exception $e) {
-            Log::error('Erro ao listar documentos: ' . $e->getMessage(), ['exception' => $e]);
-            return response()->json(['error' => 'Não foi possível carregar os documentos'], 500);
+            Log::error('Erro ao listar eventos: ' . $e->getMessage(), ['exception' => $e]);
+            return response()->json(['error' => 'Não foi possível carregar os eventos'], 500);
         }
     }
 
@@ -44,12 +44,12 @@ class EventoController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'titulo' => 'required|string|max:255',
-            'data_inicio' => 'required|date|after:now',
+            'data_inicio' => 'required|date|after_or_equal:today',
             'data_fim' => 'required|date|after_or_equal:data_inicio',
             'local' => 'required|string|max:255',
             'descricao' => 'nullable|string|max:1000',
             'imagem' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240',
-            'imagens' => 'nullable|array',
+            'imagens' => 'nullable|array|max:10',
             'imagens.*' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240',
         ], [
             'titulo.required' => 'O título do evento é obrigatório.',
@@ -57,11 +57,11 @@ class EventoController extends Controller
 
             'data_inicio.required' => 'A data de início é obrigatória.',
             'data_inicio.date' => 'A data de início deve ser uma data válida.',
-            'data_inicio.after' => 'A data de início deve ser uma data futura.',
+            'data_inicio.after_or_equal' => 'A data de início deve ser hoje ou uma data futura.',
 
-            'data_fim.required' => 'A data de fim é obrigatória.',
-            'data_fim.date' => 'A data de fim deve ser uma data válida.',
-            'data_fim.after_or_equal' => 'A data de fim deve ser igual ou posterior à data de início.',
+            'data_fim.required' => 'A data de encerramento é obrigatória.',
+            'data_fim.date' => 'A data de encerramento deve ser uma data válida.',
+            'data_fim.after_or_equal' => 'A data de encerramento deve ser igual ou posterior à data de início.',
 
             'local.required' => 'O local do evento é obrigatório.',
             'local.max' => 'O local deve ter no máximo 255 caracteres.',
@@ -73,10 +73,10 @@ class EventoController extends Controller
             'imagem.max' => 'A imagem de capa deve ter no máximo 10MB.',
 
             'imagens.array' => 'As imagens devem ser enviadas como um array.',
+            'imagens.max' => 'Você pode enviar no máximo 10 imagens.',
             'imagens.*.image' => 'Cada imagem deve ser um arquivo de imagem válido.',
             'imagens.*.mimes' => 'As imagens devem ser do tipo jpeg, png, jpg ou webp.',
             'imagens.*.max' => 'Cada imagem deve ter no máximo 10MB.',
-            'imagens.max' => 'Você pode enviar no máximo 10 imagens.',
         ]);
 
         if ($validator->fails()) {
@@ -166,12 +166,12 @@ class EventoController extends Controller
 
         $rules = [
             'titulo' => 'sometimes|required|string|max:255',
-            'data_inicio' => 'sometimes|required|date|after:now',
+            'data_inicio' => 'sometimes|required|date|after_or_equal:today',
             'data_fim' => 'sometimes|required|date|after_or_equal:data_inicio',
             'local' => 'sometimes|required|string|max:255',
             'descricao' => 'nullable|string|max:1000',
             'imagem' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240',
-            'imagens' => 'nullable|array',
+            'imagens' => 'nullable|array|max:10',
             'imagens.*.src' => 'required|string',
         ];
 
@@ -181,11 +181,11 @@ class EventoController extends Controller
 
             'data_inicio.required' => 'A data de início é obrigatória.',
             'data_inicio.date' => 'A data de início deve ser uma data válida.',
-            'data_inicio.after' => 'A data de início deve ser uma data futura.',
+            'data_inicio.after_or_equal' => 'A data de início deve ser hoje ou uma data futura.',
 
-            'data_fim.required' => 'A data de fim é obrigatória.',
-            'data_fim.date' => 'A data de fim deve ser uma data válida.',
-            'data_fim.after_or_equal' => 'A data de fim deve ser igual ou posterior à data de início.',
+            'data_fim.required' => 'A data de encerramento é obrigatória.',
+            'data_fim.date' => 'A data de encerramento deve ser uma data válida.',
+            'data_fim.after_or_equal' => 'A data de encerramento deve ser igual ou posterior à data de início.',
 
             'local.required' => 'O local do evento é obrigatório.',
             'local.max' => 'O local deve ter no máximo 255 caracteres.',
@@ -197,6 +197,7 @@ class EventoController extends Controller
             'imagem.max' => 'A imagem de capa deve ter no máximo 10MB.',
 
             'imagens.array' => 'As imagens devem ser enviadas como um array.',
+            'imagens.max' => 'Você pode enviar no máximo 10 imagens.',
             'imagens.*.image' => 'Cada imagem deve ser um arquivo de imagem válido.',
             'imagens.*.mimes' => 'As imagens devem ser do tipo jpeg, png, jpg ou webp.',
             'imagens.*.max' => 'Cada imagem deve ter no máximo 10MB.',

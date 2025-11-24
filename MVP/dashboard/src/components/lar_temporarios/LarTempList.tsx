@@ -81,7 +81,7 @@ export const LarTempList = () => (
             nomeArquivo="export_lares"
         />}
     >
-        <DataTable>
+        <DataTable bulkActionButtons={false}>
             <DataTable.Col source="created_at" label="Criação">
                 <FunctionField
                     render={(record) => new Date(record.created_at).toLocaleString('pt-BR')}

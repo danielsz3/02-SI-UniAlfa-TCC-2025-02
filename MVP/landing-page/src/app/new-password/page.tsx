@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import NotToken from "@/components/NotToken";
 
-export default function NewPasswordPage() {
+function NewPasswordPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -195,4 +195,12 @@ export default function NewPasswordPage() {
         </div>
       </main>
   );
+}
+
+export default function NewPasswordPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Carregando formulário de nova senha...</div>}>
+      <NewPasswordPageContent />
+    </Suspense>
+  )
 }

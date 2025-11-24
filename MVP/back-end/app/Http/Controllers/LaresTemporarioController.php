@@ -185,7 +185,7 @@ class LaresTemporarioController extends Controller
 
     public function show($id): JsonResponse
     {
-        $lar = LarTemporario::with(['endereco', 'imagens'])->find($id);
+        $lar = LarTemporario::with(['endereco', 'imagens', 'animais'])->find($id);
 
         if (!$lar) {
             return response()->json(['error' => 'Lar temporário não encontrado'], 404);

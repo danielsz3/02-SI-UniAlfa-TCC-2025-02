@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, ChangeEvent, FormEvent } from "react"
+import { useState, ChangeEvent, FormEvent, Suspense } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
@@ -10,7 +10,7 @@ import { FormInput } from "@/components/forms/inputs/FormInput"
 import { FormSelect } from "@/components/forms/inputs/FormSelect"
 import NotToken from "@/components/NotToken"
 
-export default function DoarPage() {
+function DoarPageContent() {
   const router = useRouter()
   const [formData, setFormData] = useState({
     nome: "",
@@ -362,5 +362,13 @@ export default function DoarPage() {
         </main>
       </NotToken>
     </>
+  )
+}
+
+export default function DoarPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Carregando formulário de doação...</div>}>
+      <DoarPageContent />
+    </Suspense>
   )
 }

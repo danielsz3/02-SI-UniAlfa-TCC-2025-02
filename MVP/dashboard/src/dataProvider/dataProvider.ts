@@ -249,6 +249,26 @@ export const dataProvider: DataProvider = {
     };
   },
 
+  delete: async (resource: string, params: any) => {
+    console.log(resource, params);
+    if (
+      (resource === 'lares-temporarios') &&
+      params.previousData &&
+      params.previousData.animais &&
+      params.previousData.animais.length > 0
+    ) {
+      return Promise.reject({
+        message: "Não é possível excluir este Lar Temporário pois existem animais vinculados a ele."
+      });
+    }
+
+    const response = await httpClient(`${apiUrl}/${resource}/${params.id}`, {
+      method: 'DELETE',
+    });
+
+    return { data: response.json };
+  },
+
   deleteMany: (resource, params) => {
     const idsToDelete = params.ids.filter((id) => id);
     if (idsToDelete.length === 0) {

@@ -52,31 +52,46 @@ class AuthController extends Controller
     {
         try {
             $googleUser = Socialite::driver('google')->stateless()->user();
+            $usuario = Usuario::where('email', $googleUser->getEmail())->first();
 
-            $usuario = Usuario::firstOrCreate(
-                ['email' => $googleUser->getEmail()],
-                [
-                    'nome' => $googleUser->getName(),
-                    'password' => Hash::make(Str::random(16)),
-                    'role' => 'user',
-                    'cpf' => '',
-                    'data_nascimento' => now()->subYears(18),
-                ]
-            );
+            if ($usuario) {
+                $token = auth()->login($usuario);
+
+                return response()->json([
+                    'message' => 'Login com Google efetuado com sucesso!',
+                    'access_token' => $token,
+                    'token_type' => 'bearer',
+                    'expires_in' => auth()->factory()->getTTL() * 60,
+                    'user' => $usuario,
+                ]);
+            }
+
+            $usuario = Usuario::create([
+                'nome' => $googleUser->getName(),
+                'email' => $googleUser->getEmail(),
+                'password' => Hash::make(Str::random(16)),
+                'role' => 'user',
+                'cpf' => '',
+                'data_nascimento' => now()->subYears(18),
+            ]);
 
             $token = auth()->login($usuario);
 
             return response()->json([
-                'message' => 'Login com Google efetuado com sucesso!',
+                'message' => 'Login com Google efetuado com sucesso! (Conta criada)',
                 'access_token' => $token,
                 'token_type' => 'bearer',
                 'expires_in' => auth()->factory()->getTTL() * 60,
                 'user' => $usuario,
             ]);
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Erro no login com Google', 'message' => $e->getMessage()], 500);
+            return response()->json([
+                'error' => 'Erro no login com Google',
+                'message' => $e->getMessage()
+            ], 500);
         }
     }
+
 
     public function googleLoginToken(Request $request): JsonResponse
     {

@@ -1,11 +1,11 @@
 "use client"
 
+import { Suspense } from "react"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { Checkbox } from "@/components/ui/checkbox"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
@@ -31,7 +31,7 @@ const routineOptions: { key: RoutineOption; label: string }[] = [
   { key: "ninguem_fica_em_casa_dia", label: "Nenhuma das opções" },
 ]
 
-export default function AdocaoFormPage() {
+function AdocaoFormPageContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const animalIdParam = searchParams.get("animal_id") ?? ""
@@ -55,10 +55,9 @@ export default function AdocaoFormPage() {
   const [validationErrors, setValidationErrors] = useState<Record<string, string[]>>({})
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
-  const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api"
+  const apiBase = process.env.NEXT_PUBLIC_API_URL
 
   useEffect(() => {
-    console.log("animalId", animalId)
     if (!animalId) {
       setAnimal(null)
       return
@@ -119,7 +118,6 @@ export default function AdocaoFormPage() {
     goPrev()
   }
 
-  // Recupera token armazenado no localStorage (trata JSON ou string)
   const getTokenFromStorage = () => {
     if (typeof window === "undefined") return null
     const keysToTry = ["token", "access_token", "authToken", "jwt"]
@@ -137,7 +135,6 @@ export default function AdocaoFormPage() {
     }
   }
 
-  // Decodifica JWT (payload) e retorna objeto (unsafe client-side: só para extrair o ID)
   const parseJwtPayload = (token: string | null) => {
     if (!token) return null
     try {
@@ -156,7 +153,6 @@ export default function AdocaoFormPage() {
     }
   }
 
-  // montagem do payload conforme controller espera (agora inclui usuario_id extraído do token)
   const buildPayload = (usuarioId?: number | null) => {
     const payload: any = {
       animal_id: Number(animalId),
@@ -200,7 +196,6 @@ export default function AdocaoFormPage() {
         return
       }
 
-      // Decodifica token para extrair id do usuário (tenta várias chaves comuns)
       const payload = parseJwtPayload(token)
       const possibleUserId = payload?.sub ?? payload?.id ?? payload?.user_id ?? payload?.usuario_id ?? payload?.id_usuario ?? null
       if (!possibleUserId) {
@@ -488,6 +483,14 @@ export default function AdocaoFormPage() {
           </Card>
         </div>
       </main>
-    </NotToken >
+    </NotToken>
+  )
+}
+
+export default function AdocaoFormPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Carregando formulário de adoção...</div>}>
+      <AdocaoFormPageContent />
+    </Suspense>
   )
 }

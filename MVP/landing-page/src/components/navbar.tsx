@@ -158,8 +158,9 @@ function RightActions({ loading, onLogout, user }: { loading: boolean, onLogout:
                 <div className="h-9 w-9 rounded-full bg-muted animate-pulse" />
             ) : user ? (
                 <DropdownMenu>
+                    
                     <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
+                        <div className="cursor-pointer">
                             <Avatar className="h-8 w-8">
                                 {user.imagem && (
                                     <AvatarImage
@@ -171,7 +172,7 @@ function RightActions({ loading, onLogout, user }: { loading: boolean, onLogout:
                                     <UserIcon className="h-4 w-4 text-muted-foreground" />
                                 </AvatarFallback>
                             </Avatar>
-                        </Button>
+                        </div>
                     </DropdownMenuTrigger>
 
                     <DropdownMenuContent align="end" className="w-56">
@@ -204,12 +205,12 @@ function RightActions({ loading, onLogout, user }: { loading: boolean, onLogout:
                             onClick={onLogout}
                             className="text-red-600 focus:text-red-600 cursor-pointer"
                         >
-                                <Link href="/login">
-                            <div className="flex items-center gap-2 hover:text-white size-full">
+                            <Link href="/login">
+                                <div className="flex items-center gap-2 hover:text-white size-full">
                                     <LogOut className="h-4 w-4 hover:text-red-500" />
                                     <span>Sair</span>
-                            </div>
-                                </Link>
+                                </div>
+                            </Link>
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>

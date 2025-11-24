@@ -135,7 +135,7 @@ const AnimalToolbar = () => {
                 />,
                 <DeleteWithConfirmButton
                     confirmTitle="Tem certeza?"
-                    confirmContent="Deseja realmente excluir o animal?"
+                    confirmContent="Deseja realmente excluir o animal? Isso irá finalizar todas as adoções e afinidades relacionadas."
                 />,
             ]}
         />

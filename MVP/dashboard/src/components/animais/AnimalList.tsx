@@ -7,6 +7,9 @@ import {
     Pagination,
     PaginationProps,
     RaRecord,
+    ReferenceInput,
+    AutocompleteInput,
+    useRecordContext,
 } from 'react-admin'
 import {
     Grid,
@@ -17,6 +20,7 @@ import {
     useMediaQuery,
     Box,
     Chip,
+    Avatar,
 } from '@mui/material'
 import { Link } from 'react-router-dom'
 import { useCreatePath } from 'react-admin'
@@ -26,6 +30,27 @@ import CustomDatePicker from '../datepicker/customDatePicker'
 import { CustomListActions } from '../ExportActions'
 
 const CARD_HEIGHT = 250;
+
+const UserSuggestionOption = () => {
+    const record = useRecordContext();
+    if (!record) return null;
+    return (
+        <Box component="span" sx={{ display: 'flex', alignItems: 'center', fontSize: 14 }}>
+            <Avatar src={`${import.meta.env.VITE_API_URL}/imagens/${record.imagem}`} alt={record.nome} sx={{ mr: 1, width: 24, height: 24 }} />
+            {record.nome}
+        </Box>
+    );
+};
+
+const LarSuggestionOption = () => {
+    const record = useRecordContext();
+    if (!record) return null;
+    return (
+        <Box component="span" sx={{ display: 'flex', alignItems: 'center', fontSize: 14 }}>
+            {record.nome}
+        </Box>
+    );
+};
 
 const filters = [
     <TextInput label="Nome" source="nome" size="small" alwaysOn />,
@@ -40,6 +65,22 @@ const filters = [
         ]}
         alwaysOn
     />,
+    <ReferenceInput source="usuario_id" reference="usuarios">
+        <AutocompleteInput
+            sx={{ minWidth: 250 }}
+            label="Criado por"
+            optionText={<UserSuggestionOption />}
+            inputText={(record) => record.nome}
+        />
+    </ReferenceInput>,
+    <ReferenceInput source="lar_temporario_id" reference="lares-temporarios">
+        <AutocompleteInput
+            sx={{ minWidth: 250 }}
+            label="Lar Relacionado"
+            optionText={<LarSuggestionOption />}
+            inputText={(record) => record.nome}
+        />
+    </ReferenceInput>,
     <CustomDatePicker past future label="Criação de" source="created_at_from" />,
     <CustomDatePicker past future label="Criação até" source="created_at_to" />,
 ]

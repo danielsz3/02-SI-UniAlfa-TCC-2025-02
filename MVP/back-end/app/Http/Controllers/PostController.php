@@ -16,6 +16,7 @@ class PostController extends Controller
 {
     public function store(Request $request): JsonResponse
     {
+        set_time_limit(150);
         $validator = Validator::make($request->all(), [
             'legenda' => 'nullable|string|max:1000',
             'imagens' => 'nullable|array|max:10',
@@ -29,38 +30,37 @@ class PostController extends Controller
         }
 
         try {
-            $multipart = [
-                [
-                    'name' => 'legenda',
-                    'contents' => $request->input('legenda', ''),
-                ],
-            ];
-
-            if ($request->hasFile('imagens')) {
-                foreach ($request->file('imagens') as $idx => $imagem) {
-                    $caminho = $imagem->store('posts', 'public');
-                    $multipart[] = [
-                        'name' => "imagens[$idx]",
-                        'contents' => fopen($imagem->getRealPath(), 'r'),
-                        'filename' => $imagem->getClientOriginalName(),
-                    ];
+                $multipart = [
+                    [
+                        'name' => 'legenda',
+                        'contents' => $request->input('legenda', ''),
+                    ],
+                ];
+                if ($request->hasFile('imagens')) {
+                    foreach ($request->file('imagens') as $idx => $imagem) {
+                        $caminho = $imagem->store('posts', 'public');
+                        $multipart[] = [
+                            'name' => "imagens[$idx]",
+                            'contents' => fopen($imagem->getRealPath(), 'r'),
+                            'filename' => $imagem->getClientOriginalName(),
+                        ];
+                    }
                 }
-            }
+                
+                $response = Http::withOptions(['verify' => false])
+                    ->asMultipart()
+                    ->timeout(120)
+                    ->post('https://webhook.chatfacil.cloud/webhook/postar-instagram', $multipart);
 
-            $response = Http::withOptions(['verify' => false])
-                ->asMultipart()
-                ->timeout(120)
-                ->post('https://webhook.chatfacil.cloud/webhook/postar-instagram', $multipart);
+                if (!$response->successful()) {
+                    Log::error('Erro no retorno do n8n:', [
+                        'status' => $response->status(),
+                        'body' => $response->body(),
+                    ]);
+                    throw new \Exception("Erro no retorno do n8n: " . $response->body());
+                }
 
-            if (!$response->successful()) {
-                Log::error('Erro no retorno do n8n:', [
-                    'status' => $response->status(),
-                    'body' => $response->body(),
-                ]);
-                throw new \Exception("Erro no retorno do n8n: " . $response->body());
-            }
-
-            return response()->json(['id' => $response->id ?? 1], 201);
+                return response()->json(['id' => $response->id ?? 1], 201);
         } catch (\Throwable $e) {
             Log::error('Erro ao criar post e enviar para n8n: ' . $e->getMessage(), [
                 'payload' => $request->all(),

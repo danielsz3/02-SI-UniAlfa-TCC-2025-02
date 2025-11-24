@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { Suspense, useEffect, useMemo, useState } from 'react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -87,10 +87,6 @@ const apiService = {
   },
 }
 
-/**
- * useAdotanteDataBase agora aceita um refreshKey (number).
- * Quando refreshKey muda, a effect é reexecutada e os counts são recarregados.
- */
 function useAdotanteDataBase(refreshKey: number = 0) {
   const [userId, setUserId] = useState<number | null>(null)
   const [counts, setCounts] = useState<Record<StatusFilter, number>>({
@@ -168,38 +164,38 @@ function useAdotanteDataBase(refreshKey: number = 0) {
     setLoading(true)
     setError(null)
 
-    ; (async () => {
-      try {
-        const baseMatchesFilter = encodeURIComponent(JSON.stringify({ usuario_id: userId }))
-        const baseAnimalsFilter = encodeURIComponent(JSON.stringify({ usuario_id: userId }))
+      ; (async () => {
+        try {
+          const baseMatchesFilter = encodeURIComponent(JSON.stringify({ usuario_id: userId }))
+          const baseAnimalsFilter = encodeURIComponent(JSON.stringify({ usuario_id: userId }))
 
-        const anunciadosPromise = fetchTotal(`/animais?filter=${baseAnimalsFilter}`)
+          const anunciadosPromise = fetchTotal(`/animais?filter=${baseAnimalsFilter}`)
 
-        const statusKeys: StatusFilter[] = ['em_adocao', 'escolhido', 'rejeitado', 'finalizado']
-        const statusPromises = statusKeys.map((s) => {
-          const filter = encodeURIComponent(JSON.stringify({ usuario_id: userId, status: s }))
-          return fetchTotal(`/match-afinidades?filter=${filter}`)
-        })
+          const statusKeys: StatusFilter[] = ['em_adocao', 'escolhido', 'rejeitado', 'finalizado']
+          const statusPromises = statusKeys.map((s) => {
+            const filter = encodeURIComponent(JSON.stringify({ usuario_id: userId, status: s }))
+            return fetchTotal(`/match-afinidades?filter=${filter}`)
+          })
 
-        const [anunciadosTotal, ...statusTotals] = await Promise.all([anunciadosPromise, ...statusPromises])
+          const [anunciadosTotal, ...statusTotals] = await Promise.all([anunciadosPromise, ...statusPromises])
 
-        const newCounts: Record<StatusFilter, number> = {
-          em_adocao: statusTotals[0] ?? 0,
-          escolhido: statusTotals[1] ?? 0,
-          rejeitado: statusTotals[2] ?? 0,
-          finalizado: statusTotals[3] ?? 0,
-          anunciados: anunciadosTotal ?? 0,
+          const newCounts: Record<StatusFilter, number> = {
+            em_adocao: statusTotals[0] ?? 0,
+            escolhido: statusTotals[1] ?? 0,
+            rejeitado: statusTotals[2] ?? 0,
+            finalizado: statusTotals[3] ?? 0,
+            anunciados: anunciadosTotal ?? 0,
+          }
+
+          setCounts(newCounts)
+        } catch (e: any) {
+          console.error('Erro ao buscar contadores', e)
+          setError((e && e.message) || 'Falha ao carregar dados.')
+        } finally {
+          setLoading(false)
         }
-
-        setCounts(newCounts)
-      } catch (e: any) {
-        console.error('Erro ao buscar contadores', e)
-        setError((e && e.message) || 'Falha ao carregar dados.')
-      } finally {
-        setLoading(false)
-      }
-    })()
-  }, [userId, refreshKey]) // <-- refreshKey faz re-fetch dos counts
+      })()
+  }, [userId, refreshKey])
 
   return { userId, counts, isLoading: loading, error }
 }
@@ -260,7 +256,7 @@ const FilterTabs = ({ counts, activeFilter, onFilterChange }: FilterTabsProps) =
 interface MatchItemCardProps {
   item: MatchItem
   onSee: () => void
-  onStatusChanged?: () => void // recebe callback opcional para disparar refresh apenas da lista
+  onStatusChanged?: () => void
 }
 
 const MatchItemCard = React.memo(({ item, onSee, onStatusChanged }: MatchItemCardProps) => {
@@ -303,7 +299,6 @@ const MatchItemCard = React.memo(({ item, onSee, onStatusChanged }: MatchItemCar
         throw new Error(errorData?.message || 'Falha ao mudar status')
       }
 
-      // chama callback para recarregar somente a lista e os counts (se fornecido)
       try {
         onStatusChanged && onStatusChanged()
       } catch (err) {
@@ -332,7 +327,7 @@ const MatchItemCard = React.memo(({ item, onSee, onStatusChanged }: MatchItemCar
 
       setLoadingAction(null)
     } finally {
-      // garante limpar estado de loading
+
       setLoadingAction(null)
     }
   }
@@ -458,8 +453,7 @@ const MatchItemCard = React.memo(({ item, onSee, onStatusChanged }: MatchItemCar
 
 MatchItemCard.displayName = 'MatchItemCard'
 
-export default function PainelAdotantePage() {
-  // refreshKey controla remount do LoadMoreList e re-fetch dos counts
+function PainelAdotantePageContent() {
   const [refreshKey, setRefreshKey] = useState(0)
 
   const { userId, counts, isLoading, error } = useAdotanteDataBase(refreshKey)
@@ -478,9 +472,7 @@ export default function PainelAdotantePage() {
 
   const [selectedAnimal, setSelectedAnimal] = useState<Animal | null>(null)
 
-  // Função que vamos passar para os Cards para disparar um refresh local:
   const handleReloadList = () => {
-    // incrementa a chave: remonta LoadMoreList e disparará o useAdotanteDataBase por refreshKey
     setRefreshKey((k) => k + 1)
   }
 
@@ -592,7 +584,6 @@ export default function PainelAdotantePage() {
       />
 
       <LoadMoreList
-        // a key inclui refreshKey para forçar remount somente quando necessário
         key={`${statusFilter}-${refreshKey}`}
         step={8}
         className="grid grid-cols-1 lg:grid-cols-2 gap-4"
@@ -601,7 +592,7 @@ export default function PainelAdotantePage() {
           <MatchItemCard
             item={item}
             onSee={() => setSelectedAnimal(item.animal)}
-            onStatusChanged={handleReloadList} // <-- passado para chamada somente da lista
+            onStatusChanged={handleReloadList}
           />
         )}
       />
@@ -612,5 +603,13 @@ export default function PainelAdotantePage() {
         onClose={() => setSelectedAnimal(null)}
       />
     </div>
+  )
+}
+
+export default function PainelAdotantePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Carregando painel do adotante...</div>}>
+      <PainelAdotantePageContent />
+    </Suspense>
   )
 }

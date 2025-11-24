@@ -6,7 +6,8 @@ import {
     TopToolbar,
     FilterButton,
     CreateButton,
-    RaRecord
+    RaRecord,
+    Identifier
 } from 'react-admin';
 import { Button, Menu, MenuItem } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/Download';
@@ -15,7 +16,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 // --- TIPO PARA A FUNÇÃO DE FORMATAÇÃO ---
-type DataFormatter = (data: RaRecord[]) => Record<string, any>[];
+type DataFormatter = (data: RaRecord<Identifier>[]) => Record<string, any>[];
 
 // --- LÓGICA GENÉRICA DE XLSX ---
 const exportarParaXLSX = (dataFormatada: Record<string, any>[], nomeArquivo: string) => {
@@ -69,13 +70,13 @@ const MenuExportacao = ({ formatter, nomeArquivo }: MenuExportacaoProps) => {
 
     // O handle agora USA o formatador que veio via props
     const handleExportXLSX = () => {
-        const dataFormatada = formatter(data); // Formata os dados
+        const dataFormatada = formatter(data ?? []); // Formata os dados (protege contra undefined)
         exportarParaXLSX(dataFormatada, nomeArquivo); // Exporta
         handleClose();
     };
 
     const handleExportPDF = () => {
-        const dataFormatada = formatter(data); // Formata os dados
+        const dataFormatada = formatter(data ?? []); // Formata os dados (protege contra undefined)
         exportarParaPDF(dataFormatada, nomeArquivo); // Exporta
         handleClose();
     };

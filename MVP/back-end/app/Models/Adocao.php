@@ -39,7 +39,7 @@ class Adocao extends Model
 
     public function animal()
     {
-        return $this->belongsTo(Animal::class, 'animal_id');
+        return $this->belongsTo(Animal::class, 'animal_id')->withTrashed();
     }
 
     public function scopeEmAprovacao($query)

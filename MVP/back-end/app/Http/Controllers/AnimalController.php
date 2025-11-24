@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Adocao;
 use App\Models\Animal;
 use App\Models\ImagemAnimal;
 use App\Models\MatchAfinidade;
@@ -281,24 +282,41 @@ class AnimalController extends Controller
     {
         try {
             $animal = Animal::with('imagens')->find($id);
+
             if (!$animal) {
                 return response()->json(['error' => 'Animal não encontrado'], 404);
             }
 
-            $toDelete = [];
-            foreach ($animal->imagens as $img) {
-                if ($img->caminho && Storage::disk('public')->exists($img->caminho)) {
-                    Storage::disk('public')->delete($img->caminho);
+            return DB::transaction(function () use ($animal) {
+
+                MatchAfinidade::where('animal_id', $animal->id)
+                    ->update([
+                        'status' => 'finalizado',
+                        'observacao' => 'Animal indisponível - removido do sistema.'
+                    ]);
+
+                Adocao::where('animal_id', $animal->id)
+                    ->whereIn('status', ['em_aprovacao', 'aprovado'])
+                    ->update([
+                        'status' => 'negado'
+                    ]);
+
+                $toDelete = [];
+                foreach ($animal->imagens as $img) {
+                    if ($img->caminho && Storage::disk('public')->exists($img->caminho)) {
+                        Storage::disk('public')->delete($img->caminho);
+                    }
+                    $toDelete[] = $img->id;
                 }
-                $toDelete[] = $img->id;
-            }
-            if (!empty($toDelete)) {
-                ImagemAnimal::whereIn('id', $toDelete)->delete();
-            }
 
-            $animal->delete();
+                if (!empty($toDelete)) {
+                    ImagemAnimal::whereIn('id', $toDelete)->delete();
+                }
 
-            return response()->json(null, 204);
+                $animal->delete();
+
+                return response()->json(null, 204);
+            });
         } catch (\Exception $e) {
             Log::error('Erro ao deletar animal: ' . $e->getMessage(), ['id' => $id, 'exception' => $e]);
             return response()->json([
@@ -307,7 +325,6 @@ class AnimalController extends Controller
             ], 500);
         }
     }
-
     public function recomendar(Request $request, $usuarioId): JsonResponse
     {
         try {

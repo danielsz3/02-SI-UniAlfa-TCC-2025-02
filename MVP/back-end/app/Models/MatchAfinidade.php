@@ -10,12 +10,12 @@ class MatchAfinidade extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $table = 'matches'; 
+    protected $table = 'matches';
 
     protected $fillable = [
         'usuario_id',
         'animal_id',
-        'status', 
+        'status',
         'observacao',
     ];
 
@@ -26,7 +26,7 @@ class MatchAfinidade extends Model
 
     public function animal()
     {
-        return $this->belongsTo(Animal::class, 'animal_id');
+        return $this->belongsTo(Animal::class, 'animal_id')->withTrashed();
     }
 
     public function scopeEmAdocao($query)

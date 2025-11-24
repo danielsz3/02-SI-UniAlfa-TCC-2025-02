@@ -5,7 +5,7 @@ import { Card, CardContent, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import ImageCarousel from "@/components/ImageCarousel"
 import { calcularIdade } from "@/lib/animal-utils"
-import { LarTemporario } from "@/types"
+import { Imagens, LarTemporario } from "@/types"
 import LoadMoreList from "@/components/LoadMoreList"
 
 interface Ong {
@@ -20,6 +20,7 @@ interface Ong {
   cidade?: string | null
   uf?: string | null
   cep?: string | null
+
   contatos?: Array<{
     id: number
     tipo: string
@@ -27,6 +28,8 @@ interface Ong {
     link?: string | null
     descricao?: string | null
   }>
+
+  imagens?: Imagens[]
 }
 
 interface Parceiro {
@@ -259,6 +262,31 @@ export default function AboutPage() {
         <Separator className="my-12" />
 
         <h2 className="text-2xl font-semibold mb-6 text-center">
+          Galeria de Imagens da Ong
+        </h2>
+
+        {ong?.imagens && ong.imagens.length > 0 ? (
+          <div className="w-full rounded-lg overflow-hidden">
+            <ImageCarousel
+              images={ong.imagens}
+              alt={ong.nome}
+              className="w-full h-64 md:h-80 lg:h-96"
+              showArrows
+              showIndicators
+              autoPlay
+              autoPlayInterval={4500}
+              variant="default"
+            />
+          </div>
+        ) : (
+          <div className="w-full h-56 rounded-lg bg-muted/40 flex items-center justify-center">
+            <p className="text-muted-foreground">Nenhuma imagem cadastrada</p>
+          </div>
+        )}
+
+        <Separator className="my-12" />
+
+        <h2 className="text-2xl font-semibold mb-6 text-center">
           Parceiros
         </h2>
 
@@ -274,7 +302,7 @@ export default function AboutPage() {
           Lares Temporários
         </h2>
         <section className="flex flex-col gap-4">
-          
+
           <LoadMoreList
             url={`${apiBase}/lares-temporarios`}
             step={4}

@@ -1,43 +1,73 @@
-import { Button, DeleteWithConfirmButton, Edit, ImageField, ImageInput, SaveButton, SimpleForm, TextInput, required, useRedirect } from 'react-admin';
+import {
+    Button,
+    DeleteWithConfirmButton,
+    Edit,
+    ImageField,
+    ImageInput,
+    SaveButton,
+    SimpleForm,
+    TextInput,
+    required,
+    useRedirect,
+} from 'react-admin';
 import { FilePlaceholder } from '../FilePlaceHolder';
 import CustomDatePicker from '../datepicker/customDatePicker';
 import { CustomToolbar } from '../CustomToolbar';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 
 /**
- * Validador para a DATA DE INÍCIO.
- * Verifica se a data de início é anterior à data de fim.
+ * Normaliza data para comparar só AAAA-MM-DD (zerando horas).
  */
-const validateDataInicio = (value: string | number | Date, allValues: { data_fim: string | number | Date; }) => {
-    const dataInicio = new Date(value);
-
-    if (dataInicio < new Date()) {
-        return 'A data de início deve ser futura';
-    }
-
-    if (value && allValues.data_fim) {
-        const dataFim = new Date(allValues.data_fim);
-
-        if (dataInicio >= dataFim) {
-            return 'A data de início deve ser anterior à data de encerramento';
-        }
-    }
-    return undefined;
+const normalizeDate = (value: string | number | Date) => {
+    const d = new Date(value);
+    d.setHours(0, 0, 0, 0);
+    return d;
 };
 
 /**
- * Validador para a DATA DE FIM.
- * Verifica se a data de fim é posterior à data de início.
+ * Validador para a DATA DE INÍCIO.
+ * - Permite hoje
+ * - Permite ser igual à data de fim
  */
-const validateDataFim = (value: string | number | Date, allValues: { data_inicio: string | number | Date; }) => {
-    if (value && allValues.data_inicio) {
-        const dataInicio = new Date(allValues.data_inicio);
-        const dataFim = new Date(value);
+const validateDataInicio = (
+    value: string | number | Date,
+    allValues: { data_fim: string | number | Date }
+) => {
+    if (!value) return undefined;
 
-        if (dataFim <= dataInicio) {
-            return 'A data de encerramento deve ser posterior à data de início';
+    const dataInicio = normalizeDate(value);
+
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+
+    if (dataInicio < hoje) {
+        return 'A data de início deve ser hoje ou uma data futura';
+    }
+
+    if (allValues?.data_fim) {
+        const dataFim = normalizeDate(allValues.data_fim);
+
+        if (dataInicio > dataFim) {
+            return 'A data de início não pode ser posterior à data de encerramento';
         }
     }
+
+    return undefined;
+};
+
+const validateDataFim = (
+    value: string | number | Date,
+    allValues: { data_inicio: string | number | Date }
+) => {
+    if (!value || !allValues?.data_inicio) return undefined;
+
+    const dataInicio = normalizeDate(allValues.data_inicio);
+    const dataFim = normalizeDate(value);
+
+    if (dataFim < dataInicio) {
+        return 'A data de encerramento não pode ser anterior à data de início';
+    }
+
     return undefined;
 };
 
@@ -50,7 +80,7 @@ const EventoToolbar = () => {
         <CustomToolbar
             leftButtons={[
                 <SaveButton
-                    type='button'
+                    type="button"
                 />,
             ]}
             rightButtons={[
@@ -74,9 +104,7 @@ const EventoEdit = () => (
         sx={{ width: '100%', maxWidth: 600, margin: '0 auto', mb: 10 }}
         redirect="list"
     >
-        <SimpleForm
-            toolbar={<EventoToolbar />}
-        >
+        <SimpleForm toolbar={<EventoToolbar />}>
             <TextInput
                 source="titulo"
                 label="Título"
@@ -87,14 +115,20 @@ const EventoEdit = () => (
                 source="data_inicio"
                 label="Data de Início *"
                 future
-                validate={[required('A data inicial é obrigatória'), validateDataInicio]}
+                validate={[
+                    required('A data inicial é obrigatória'),
+                    validateDataInicio,
+                ]}
             />
 
             <CustomDatePicker
                 source="data_fim"
                 label="Data de Encerramento *"
                 future
-                validate={[required('A data final é obrigatória'), validateDataFim]}
+                validate={[
+                    required('A data final é obrigatória'),
+                    validateDataFim,
+                ]}
             />
 
             <TextInput

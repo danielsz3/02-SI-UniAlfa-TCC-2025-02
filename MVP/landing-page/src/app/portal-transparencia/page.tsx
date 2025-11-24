@@ -32,6 +32,7 @@ type Transacao = {
   valor: number
   data: string
   categoria: string
+  situacao: string
 }
 
 type Documento = {
@@ -142,10 +143,16 @@ function ReceitaChart({ chartData, chartLoading, isDark, gridColor, textColor, r
         <div className="h-40 bg-muted/30 rounded animate-pulse" />
       ) : (
         <ResponsiveContainer width="100%" height={200}>
-          <LineChart data={chartData}>
+          <LineChart data={chartData}
+            margin={{
+              top: 10,
+              right: 30,
+              left: 50,
+              bottom: 0,
+            }}
+          >
             <CartesianGrid stroke={gridColor} strokeDasharray="3 3" />
             <XAxis dataKey="mes" stroke={textColor} />
-            {/* MODIFICADO: Adicionado tickFormatter para formatar R$ no eixo Y */}
             <YAxis stroke={textColor} tickFormatter={formatCurrency} />
             <Tooltip
               contentStyle={{
@@ -154,7 +161,6 @@ function ReceitaChart({ chartData, chartLoading, isDark, gridColor, textColor, r
                 border: "1px solid #444",
                 color: textColor
               }}
-              // MODIFICADO: Adicionado formatter para formatar R$ no Tooltip
               formatter={(value: number) => [formatCurrency(value), "Receita"]}
             />
             <Line
@@ -188,10 +194,16 @@ function DespesaChart({ chartData, chartLoading, isDark, gridColor, textColor, d
         <div className="h-40 bg-muted/30 rounded animate-pulse" />
       ) : (
         <ResponsiveContainer width="100%" height={200}>
-          <LineChart data={chartData}>
+          <LineChart data={chartData}
+            margin={{
+              top: 10,
+              right: 30,
+              left: 50,
+              bottom: 0,
+            }}
+          >
             <CartesianGrid stroke={gridColor} strokeDasharray="3 3" />
             <XAxis dataKey="mes" stroke={textColor} />
-            {/* MODIFICADO: Adicionado tickFormatter para formatar R$ no eixo Y */}
             <YAxis stroke={textColor} tickFormatter={formatCurrency} />
             <Tooltip
               contentStyle={{
@@ -200,7 +212,6 @@ function DespesaChart({ chartData, chartLoading, isDark, gridColor, textColor, d
                 border: "1px solid #444",
                 color: textColor
               }}
-              // MODIFICADO: Adicionado formatter para formatar R$ no Tooltip
               formatter={(value: number) => [formatCurrency(value), "Despesa"]}
             />
             <Line
@@ -259,28 +270,46 @@ export default function TransparenciaPage() {
 
   // 3. Agrupar Dados de Transações por mês/ano
   const chartData = useMemo(() => {
-    const map = new Map<string, { receita: number; despesa: number }>()
+    // Validação básica
+    if (!transacoes || !Array.isArray(transacoes)) return [];
+
+    const map = new Map<string, { receita: number; despesa: number }>();
 
     transacoes.forEach((t) => {
-      const dt = new Date(t.data)
-      if (isNaN(dt.getTime())) return
+      if (t.situacao !== 'concluido') return;
 
-      // Formato MM/AAAA
-      const key = `${dt.getMonth() + 1}/${dt.getFullYear()}`
+      const dt = new Date(t.data);
+      if (isNaN(dt.getTime())) return;
+
+      const key = `${dt.getMonth() + 1}/${dt.getFullYear()}`;
 
       if (!map.has(key)) {
-        map.set(key, { receita: 0, despesa: 0 })
+        map.set(key, { receita: 0, despesa: 0 });
       }
 
-      if (t.tipo === "receita") map.get(key)!.receita += t.valor
-      if (t.tipo === "despesa") map.get(key)!.despesa += t.valor
-    })
+      const valorSeguro = Number(t.valor) || 0;
 
-    return Array.from(map.entries()).map(([mes, valores]) => ({
+      const entry = map.get(key)!;
+
+      if (t.tipo === "receita") entry.receita += valorSeguro;
+      if (t.tipo === "despesa") entry.despesa += valorSeguro;
+    });
+
+    const result = Array.from(map.entries()).map(([mes, valores]) => ({
       mes,
       ...valores,
-    }))
-  }, [transacoes])
+    }));
+
+    return result.sort((a, b) => {
+      const [mesA, anoA] = a.mes.split('/').map(Number);
+      const [mesB, anoB] = b.mes.split('/').map(Number);
+
+      if (anoA !== anoB) return anoA - anoB;
+
+      return mesA - mesB;
+    });
+
+  }, [transacoes]);
 
   // 4. Buscar Dados de Documentos
   useEffect(() => {

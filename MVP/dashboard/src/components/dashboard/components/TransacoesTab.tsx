@@ -64,8 +64,8 @@ export const TransacoesTab = ({ startDate, endDate }: TransacoesTabProps) => {
         }
 
         return {
-            created_at_from: from_date,
-            created_at_to: to_date,
+            data_from: from_date,
+            data_to: to_date,
         };
     }, [startDate, endDate]);
 
@@ -151,9 +151,19 @@ export const TransacoesTab = ({ startDate, endDate }: TransacoesTabProps) => {
 
                 <Grid size={{ xs: 12 }}>
                     <MetricCard
-                        title="Animais envolvidos"
-                        value={0 || 0}
-                        description='Animais únicos que estão em processo de adoção'
+                        title="Saldo Financeiro"
+                        value={new Intl.NumberFormat('pt-BR', {
+                            notation: 'compact',      // Ativa o modo resumido (mil, mi, bi)
+                            maximumFractionDigits: 1, // Limita casas decimais (ex: 11,5 mil)
+                            style: 'currency',        // Opcional: Adiciona o R$
+                            currency: 'BRL'           // Opcional: Define como Real
+                        }).format(
+                            allTransacoes?.reduce((acc, transacao) => {
+                                const valor = Number(transacao.valor || 0);
+                                return acc + (transacao.tipo === 'despesa' ? -valor : valor);
+                            }, 0) || 0
+                        )}
+                        description='Balanço total de receitas e despesas'
                     />
                 </Grid>
             </Grid>

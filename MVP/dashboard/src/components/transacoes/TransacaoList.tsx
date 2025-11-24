@@ -82,8 +82,8 @@ export const TransacaoList = () => (
             <DataTable.Col source="tipo" label="Tipo">
                 <FunctionField
                     render={(record) => {
-                        const color = record.tipo === 'RECEITA' ? 'green' : 'red';
                         record.tipo = record.tipo.toUpperCase();
+                        const color = record.tipo === 'RECEITA' ? 'green' : 'red';
                         return <ChipField source="tipo" style={{ backgroundColor: color, color: 'white' }} />
                     }}
                 />
@@ -91,8 +91,8 @@ export const TransacaoList = () => (
             <DataTable.Col source="valor">
                 <FunctionField
                     render={(record) => {
-                        const color = record.tipo === 'RECEITA' ? 'green' : 'red';
                         record.tipo = record.tipo.toUpperCase();
+                        const color = record.tipo === 'RECEITA' ? 'green' : 'red';
                         return <NumberField
                             source="valor"
                             options={{ style: 'currency', currency: 'BRL' }}

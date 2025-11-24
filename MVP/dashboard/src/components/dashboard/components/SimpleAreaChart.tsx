@@ -1,6 +1,6 @@
 import * as React from 'react';
 // 1. Importar useMemo
-import { FC, useMemo } from 'react'; 
+import { FC, useMemo } from 'react';
 import { Box, Card, CardContent, Typography } from '@mui/material';
 import {
     AreaChart,
@@ -38,21 +38,15 @@ interface SimpleAreaChartProps {
 
 
 // --- Componente de Gráfico de Área ATUALIZADO ---
-const SimpleAreaChart: FC<SimpleAreaChartProps> = ({ 
-    title, 
-    transactions 
+const SimpleAreaChart: FC<SimpleAreaChartProps> = ({
+    title,
+    transactions
 }) => {
 
-    // --- LÓGICA DE AGRUPAMENTO (MOVIDA PARA CÁ) ---
-
-    /**
-     * 1. Filtra, agrupa por data e ordena as transações.
-     * Agora usa a prop 'transactions'.
-     */
+    // --- LÓGICA DE AGRUPAMENTO ---
     const areaChartData = useMemo<TransactionDataPoint[]>(() => {
-        if (!transactions) return [];
+        if (!Array.isArray(transactions)) return [];
 
-        // 1. Filtra apenas as transações concluídas.
         const completedTransactions = transactions.filter(
             t => t.situacao === 'concluido'
         );
@@ -64,21 +58,29 @@ const SimpleAreaChart: FC<SimpleAreaChartProps> = ({
                 acc[dateKey] = { data: dateKey, entradas: 0, saidas: 0 };
             }
 
+            const valorSeguro = Number(t.valor) || 0;
+
             if (t.tipo === 'receita') {
-                acc[dateKey].entradas += t.valor;
+                acc[dateKey].entradas += valorSeguro;
             } else if (t.tipo === 'despesa') {
-                acc[dateKey].saidas += t.valor;
+                acc[dateKey].saidas += valorSeguro;
             }
 
             return acc;
         }, {} as Record<string, TransactionDataPoint>);
 
-        // 3. Retorna os valores ordenados por data
-        return Object.values(groupedByDate).sort((a, b) =>
-            a.data.localeCompare(b.data)
-        );
-    }, [transactions]); // Depende da prop 'transactions'
-    
+        // --- AJUSTE DE ORDENAÇÃO AQUI ---
+        return Object.values(groupedByDate).sort((a, b) => {
+            const [diaA, mesA, anoA] = a.data.split('/');
+            const [diaB, mesB, anoB] = b.data.split('/');
+
+            const dataA = new Date(Number(anoA), Number(mesA) - 1, Number(diaA));
+            const dataB = new Date(Number(anoB), Number(mesB) - 1, Number(diaB));
+
+            return dataA.getTime() - dataB.getTime();
+        });
+    }, [transactions]);
+
     // --- FIM DA LÓGICA DE AGRUPAMENTO ---
 
 
@@ -92,12 +94,11 @@ const SimpleAreaChart: FC<SimpleAreaChartProps> = ({
                 <Box sx={{ height: 300 }}>
                     <ResponsiveContainer width="100%" height="100%">
                         <AreaChart
-                            // 3. Usa a variável 'areaChartData' interna
-                            data={areaChartData} 
+                            data={areaChartData}
                             margin={{
                                 top: 10,
                                 right: 30,
-                                left: 50, // Espaço para a formatação BRL
+                                left: 50,
                                 bottom: 0,
                             }}
                         >

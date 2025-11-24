@@ -195,7 +195,7 @@ export const AdocoesTab = ({ startDate, endDate }: AdocoesTabProps) => {
                                         </Stack>
                                     </TableCell>
                                     <TableCell>
-                                        <Chip sx={{fontWeight: 'bold'}} label={statusNameMap[adocao.status || 'indefinido']} color={statusNameMap[adocao.status] === 'Aprovado' ? 'success' : 'warning'} />
+                                        <Chip sx={{fontWeight: 'bold'}} label={statusNameMap[adocao.status || 'indefinido']} color={statusNameMap[adocao.status] === 'Aprovado' ? 'success' : statusNameMap[adocao.status] === 'Negado' ? 'error' : 'warning'} />
                                     </TableCell>
                                     <TableCell>
                                         {format(new Date(adocao.created_at), 'dd/MM/yyyy HH:mm')}

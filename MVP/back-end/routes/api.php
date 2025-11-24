@@ -29,7 +29,7 @@ Route::get('auth/google/redirect', [AuthController::class, 'redirectToGoogle'])-
 Route::get('auth/google/callback', [AuthController::class, 'handleGoogleCallback'])->name('google.callback');
 
 Route::post('auth/google/token', [AuthController::class, 'googleLoginToken'])->name('google.token');
-   
+
 Route::get('imagens/{folder}/{filename}', [ImageController::class, 'show'])->name('imagens.show');
 Route::get('documentos/{id}/download', [DocumentoController::class, 'download'])->name('documentos.download');
 
@@ -42,8 +42,15 @@ Route::apiResource('documentos', DocumentoController::class)->only(['index', 'sh
 Route::apiResource('transacoes', TransacaoController::class)->only(['index', 'show']);
 route::apiResource('lares-temporarios', LaresTemporarioController::class)->only(['index', 'show', 'store']);
 
-Route::apiResource('usuarios', UsuarioController::class)->only(['show', 'store', 'update']);
-
+/**
+ * CADASTRO DE USUÁRIO (PÚBLICO)
+ */
+Route::get('/imagens/{folder}/{filename}', [ImageController::class, 'show']);
+Route::post('/usuarios', [UsuarioController::class, 'store'])->name('usuarios.store.public');
+Route::get('documentos/{id}/download', [DocumentoController::class, 'download'])->name('documentos.download');
+/**
+ * ROTAS AUTENTICADAS (qualquer logado)
+ */
 Route::middleware(['jwt.auth'])->group(function () {
     Route::post('logout', [AuthController::class, 'logout'])->name('logout');
     Route::post('refresh', [AuthController::class, 'refresh'])->name('refresh');
@@ -70,11 +77,13 @@ Route::middleware(['jwt.auth'])->group(function () {
         Route::apiResource('parceiros', ParceiroController::class)->except(['index', 'show']);
 
         Route::apiResource('lares-temporarios', LaresTemporarioController::class)->except(['index', 'show', 'store']);
-        
+
         Route::apiResource('contato-ongs', ContatoOngController::class)->except(['index', 'show']);
 
         Route::apiResource('documentos', DocumentoController::class)->except(['index', 'show']);
-    
+        Route::post('documentos/{id}/restore', [DocumentoController::class, 'restore'])->name('documentos.restore');
+
+
         Route::apiResource('transacoes', TransacaoController::class)->except(['index', 'show']);
 
         Route::apiResource('animais', AnimalController::class)->except(['index', 'show', 'store']);

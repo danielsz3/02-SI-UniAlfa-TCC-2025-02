@@ -14,16 +14,16 @@ RUN apt-get update && apt-get install -y \
 RUN curl -sS https://getcomposer.org/installer | php -- \
     --install-dir=/usr/local/bin --filename=composer
 
-# Definir diretório de trabalho
+# Diretório de trabalho
 WORKDIR /var/www/html
 
-# Copiar arquivos do projeto
+# Copiar tudo do back-end
 COPY . .
 
-# Instalar dependências do Composer
+# Instalar dependências PHP
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-# Criar diretórios de storage e cache com permissões
+# Criar pastas de cache/logs e permissões
 RUN mkdir -p storage/framework/{sessions,views,cache} \
     && mkdir -p storage/logs \
     && mkdir -p bootstrap/cache \
@@ -32,8 +32,11 @@ RUN mkdir -p storage/framework/{sessions,views,cache} \
 # Expor porta
 EXPOSE 8000
 
-# Comando para iniciar o servidor
+# Comando de entrada:
+# 1) cache de config/rotas
+# 2) rodar migrações
+# 3) subir o servidor Laravel
 CMD php artisan config:cache && \
     php artisan route:cache && \
+    php artisan migrate --force || true && \
     php artisan serve --host=0.0.0.0 --port=${PORT:-8000}
-    

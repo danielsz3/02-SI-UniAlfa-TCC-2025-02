@@ -1,20 +1,7 @@
 import { jwtDecode } from "jwt-decode";
-
 interface JwtPayload {
     exp: number;
     [key: string]: any;
-}
-
-interface UserProfile {
-    id: string | number;
-    email: string;
-    role: string; // Essencial para a tua validação
-    [key: string]: any; // Permite outras propriedades opcionais
-}
-
-interface LoginResponse {
-    access_token: string;
-    user: UserProfile;
 }
 
 export const authProvider = {
@@ -27,19 +14,16 @@ export const authProvider = {
 
         const response = await fetch(request);
 
-        if (response.status < 200 || response.status >= 300) {
+        console.log(response);
+
+        if (!response.ok) {
             throw new Error('Credenciais inválidas');
         }
 
-        const { access_token, user } = (await response.json()) as LoginResponse;
-
-        if (user.role === 'user') {
-            throw new Error('Permissão insuficiente');
-        }
+        const { access_token, user } = await response.json();
 
         localStorage.setItem('authToken', access_token);
         localStorage.setItem('user', JSON.stringify(user));
-
         return Promise.resolve();
     },
 
@@ -78,5 +62,4 @@ export const authProvider = {
     },
 
     getPermissions: () => Promise.resolve(),
-
 };

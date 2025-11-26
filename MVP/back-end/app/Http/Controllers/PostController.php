@@ -7,70 +7,158 @@ use App\Models\ImagemPost;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 
 class PostController extends Controller
 {
+    public function index(): JsonResponse
+    {
+        $posts = Post::with('imagens')->paginate(10);
+        return response()->json($posts);
+    }
+
     public function store(Request $request): JsonResponse
     {
-        set_time_limit(150);
         $validator = Validator::make($request->all(), [
             'legenda' => 'nullable|string|max:1000',
-            'imagens' => 'nullable|array|max:10',
-            'imagens.*' => 'file|image|mimes:jpeg,png,jpg,webp|max:10240',
-            'imagens_base64' => 'nullable|array|max:10',
-            'imagens_base64.*' => 'string',
+            'imagens' => 'nullable|array',
+            'imagens.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+        ], [
+            'imagens.*.image' => 'Cada arquivo deve ser uma imagem válida.',
+            'imagens.*.mimes' => 'As imagens devem ser do tipo jpeg, png, jpg ou gif.',
+            'imagens.*.max' => 'Cada imagem deve ter no máximo 2MB.',
+            'legenda.max' => 'A legenda deve ter no máximo 1000 caracteres.',
         ]);
+
+        // Validação customizada: pelo menos legenda ou imagens deve ser enviado
+        $validator->after(function ($validator) use ($request) {
+            if (empty($request->legenda) && !$request->hasFile('imagens')) {
+                $validator->errors()->add('legenda', 'Você deve enviar uma legenda ou pelo menos uma imagem.');
+                $validator->errors()->add('imagens', 'Você deve enviar uma legenda ou pelo menos uma imagem.');
+            }
+        });
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        try {
-                $multipart = [
-                    [
-                        'name' => 'legenda',
-                        'contents' => $request->input('legenda', ''),
-                    ],
-                ];
-                if ($request->hasFile('imagens')) {
-                    foreach ($request->file('imagens') as $idx => $imagem) {
-                        $caminho = $imagem->store('posts', 'public');
-                        $multipart[] = [
-                            'name' => "imagens[$idx]",
-                            'contents' => fopen($imagem->getRealPath(), 'r'),
-                            'filename' => $imagem->getClientOriginalName(),
-                        ];
-                    }
-                }
-                
-                $response = Http::withOptions(['verify' => false])
-                    ->asMultipart()
-                    ->timeout(120)
-                    ->post('https://webhook.chatfacil.cloud/webhook/postar-instagram', $multipart);
+        return DB::transaction(function () use ($request) {
+            $post = Post::create($request->only('legenda'));
 
-                if (!$response->successful()) {
-                    Log::error('Erro no retorno do n8n:', [
-                        'status' => $response->status(),
-                        'body' => $response->body(),
+            if ($request->hasFile('imagens')) {
+                foreach ($request->file('imagens') as $file) {
+                    $path = $file->store('posts', 'public');
+                    [$width, $height] = getimagesize($file->getRealPath()) ?: [null, null];
+                    ImagemPost::create([
+                        'post_id' => $post->id,
+                        'caminho' => $path,
+                        'width' => $width,
+                        'height' => $height,
                     ]);
-                    throw new \Exception("Erro no retorno do n8n: " . $response->body());
                 }
+            }
 
-                return response()->json(['id' => $response->id ?? 1], 201);
-        } catch (\Throwable $e) {
-            Log::error('Erro ao criar post e enviar para n8n: ' . $e->getMessage(), [
-                'payload' => $request->all(),
-                'exception' => $e,
-            ]);
+            return response()->json($post->load('imagens'), 201);
+        });
+    }
 
-            return response()->json([
-                'error' => 'Não foi possível criar o post e enviar para o n8n',
-                'message' => $e->getMessage(),
-            ], 500);
+    public function show($id): JsonResponse
+    {
+        $post = Post::with('imagens')->find($id);
+
+        if (!$post) {
+            return response()->json(['error' => 'Post não encontrado'], 404);
         }
+
+        return response()->json($post);
+    }
+
+    public function update(Request $request, $id): JsonResponse
+    {
+        $post = Post::find($id);
+
+        if (!$post) {
+            return response()->json(['error' => 'Post não encontrado'], 404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'legenda' => 'nullable|string|max:1000',
+            'imagens' => 'nullable|array',
+            'imagens.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+        ], [
+            'imagens.*.image' => 'Cada arquivo deve ser uma imagem válida.',
+            'imagens.*.mimes' => 'As imagens devem ser do tipo jpeg, png, jpg ou gif.',
+            'imagens.*.max' => 'Cada imagem deve ter no máximo 2MB.',
+            'legenda.max' => 'A legenda deve ter no máximo 1000 caracteres.',
+        ]);
+
+        $validator->after(function ($validator) use ($request) {
+            if (empty($request->legenda) && !$request->hasFile('imagens')) {
+                $validator->errors()->add('legenda', 'Você deve enviar uma legenda ou pelo menos uma imagem.');
+                $validator->errors()->add('imagens', 'Você deve enviar uma legenda ou pelo menos uma imagem.');
+            }
+        });
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        return DB::transaction(function () use ($request, $post) {
+            $post->update($request->only('legenda'));
+
+            if ($request->hasFile('imagens')) {
+                // Deletar imagens antigas
+                foreach ($post->imagens as $imagem) {
+                    $oldPath = str_replace('/storage/', '', $imagem->caminho);
+                    Storage::disk('public')->delete($oldPath);
+                }
+                $post->imagens()->delete();
+
+                // Salvar novas imagens
+                foreach ($request->file('imagens') as $file) {
+                    $path = $file->store('posts', 'public');
+                    [$width, $height] = getimagesize($file->getRealPath()) ?: [null, null];
+                    ImagemPost::create([
+                        'post_id' => $post->id,
+                        'caminho' => $path,
+                        'width' => $width,
+                        'height' => $height,
+                    ]);
+                }
+            }
+
+            return response()->json($post->fresh('imagens'));
+        });
+    }
+
+    public function destroy($id): JsonResponse
+    {
+        $post = Post::find($id);
+
+        if (!$post) {
+            return response()->json(['error' => 'Post não encontrado'], 404);
+        }
+
+        $post->delete();
+
+        return response()->json(null, 204);
+    }
+
+    public function restore($id): JsonResponse
+    {
+        $post = Post::withTrashed()->find($id);
+
+        if (!$post) {
+            return response()->json(['error' => 'Post não encontrado'], 404);
+        }
+
+        if (!$post->trashed()) {
+            return response()->json(['error' => 'Post já está ativo'], 400);
+        }
+
+        $post->restore();
+
+        return response()->json($post->fresh('imagens'), 200);
     }
 }

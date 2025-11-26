@@ -11,7 +11,9 @@ use Illuminate\Support\Facades\Log;
 
 class EnderecoController extends Controller
 {
-
+    /**
+     * Lista todos os endereços (suporta paginação via _page e _limit)
+     */
     public function index(Request $request): JsonResponse
     {
         try {
@@ -31,6 +33,9 @@ class EnderecoController extends Controller
         }
     }
 
+    /**
+     * Cadastra um novo endereço
+     */
     public function store(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
@@ -83,6 +88,9 @@ class EnderecoController extends Controller
         }
     }
 
+    /**
+     * Exibe um endereço específico
+     */
     public function show($id): JsonResponse
     {
         try {
@@ -99,6 +107,9 @@ class EnderecoController extends Controller
         }
     }
 
+    /**
+     * Atualiza um endereço
+     */
     public function update(Request $request, $id): JsonResponse
     {
         $endereco = Endereco::find($id);
@@ -156,6 +167,9 @@ class EnderecoController extends Controller
         }
     }
 
+    /**
+     * Remove um endereço (soft delete)
+     */
     public function destroy($id): JsonResponse
     {
         $endereco = Endereco::find($id);
@@ -170,6 +184,31 @@ class EnderecoController extends Controller
         } catch (\Exception $e) {
             Log::error('Erro ao deletar endereço: ' . $e->getMessage(), ['id' => $id, 'exception' => $e]);
             return response()->json(['error' => 'Não foi possível deletar o endereço'], 500);
+        }
+    }
+
+    /**
+     * Restaura um endereço soft deleted
+     */
+    public function restore($id): JsonResponse
+    {
+        try {
+            $endereco = Endereco::withTrashed()->find($id);
+
+            if (!$endereco) {
+                return response()->json(['error' => 'Endereço não encontrado'], 404);
+            }
+
+            if (!$endereco->trashed()) {
+                return response()->json(['error' => 'Este endereço já está ativo'], 400);
+            }
+
+            $endereco->restore();
+
+            return response()->json($endereco->fresh(), 200);
+        } catch (\Exception $e) {
+            Log::error('Erro ao restaurar endereço: ' . $e->getMessage(), ['id' => $id, 'exception' => $e]);
+            return response()->json(['error' => 'Não foi possível restaurar o endereço'], 500);
         }
     }
 }

@@ -9,17 +9,11 @@ import {
     useNotify,
     ImageInput,
     ImageField,
-    useRedirect,
-    SaveButton,
-    Button,
-    regex,
 } from 'react-admin';
 import CustomDatePicker from '../datepicker/customDatePicker';
 import { useFormContext } from 'react-hook-form';
 import { useEffect, useState } from 'react';
 import { FilePlaceholder } from '../FilePlaceHolder';
-import { CustomToolbar } from '../CustomToolbar';
-import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 
 const CepInput = () => {
     const { setValue, watch } = useFormContext();
@@ -58,52 +52,8 @@ const CepInput = () => {
         <TextInput
             source="endereco.cep"
             label="CEP"
-            validate={[required('O CEP é obrigatório'),regex(/^\d{8}$/, 'O CEP deve ter 8 dígitos')]}
+            validate={required()}
             helperText={helpText}
-        />
-    );
-};
-
-const LarTempToolbar = () => {
-    const redirect = useRedirect();
-    const notify = useNotify();
-    const form = useFormContext();
-
-    const handleBack = () => redirect('list', 'lares-temporarios');
-
-    return (
-        <CustomToolbar
-            leftButtons={[
-                <SaveButton
-                    type='button'
-                    mutationOptions={{
-                        onSuccess: () => {
-                            notify('Lar Temporário salvo com sucesso!', { type: 'success' });
-                            redirect('list', 'lares-temporarios');
-                        },
-                    }}
-                />,
-                <SaveButton
-                    type='button'
-                    sx={{fontSize: "0.8rem"}}
-                    label='Salvar e Novo'
-                    variant='outlined'
-                    mutationOptions={{
-                        onSuccess: () => {
-                            notify('Lar Temporário salvo com sucesso! Pronto para criar outro', { type: 'info' });
-                            redirect('create', 'lares-temporarios');
-                            form.reset();
-                        },
-                    }}
-                />,
-            ]}
-            rightButtons={[
-                <Button
-                    label="Voltar"
-                    startIcon={<ArrowBackIosNewIcon />}
-                    onClick={handleBack}
-                />
-            ]}
         />
     );
 };
@@ -114,10 +64,9 @@ const LarTempCreate = (props: CreateProps) => {
             {...props}
             title="Criar Novo Lar Temporário"
             sx={{ width: '100%', maxWidth: 600, margin: '0 auto' }}
+            redirect="list"
         >
-            <TabbedForm
-                toolbar={<LarTempToolbar />}
-            >
+            <TabbedForm>
                 <FormTab label="Responsável">
                     <RadioButtonGroupInput
                         label="Situação"
@@ -133,26 +82,17 @@ const LarTempCreate = (props: CreateProps) => {
                     <TextInput
                         source="nome"
                         label="Nome Completo"
-                        validate={required('O nome é obrigatório')}
+                        validate={required()}
                     />
                     <TextInput
                         source="telefone"
                         label="Telefone"
-                        validate={required('O telefone é obrigatório')}
+                        validate={required()}
                     />
                     <CustomDatePicker
                         source="data_nascimento"
                         label="Data de Nascimento"
-                        validate={required('A data de nascimento é obrigatória')}
-                    />
-
-                    <TextInput
-                        source="Experiência"
-                        label="Experiência com animais (opcional)"
-                        multiline
-                        minRows={3}
-                        maxRows={5}
-                        placeholder="Descreva a experiência com animais"
+                        validate={required()}
                     />
                 </FormTab>
 
@@ -163,12 +103,12 @@ const LarTempCreate = (props: CreateProps) => {
                     <TextInput
                         source="endereco.logradouro"
                         label="Logradouro"
-                        validate={required('O logradouro é obrigatório')}
+                        validate={required()}
                     />
                     <TextInput
                         source="endereco.numero"
                         label="Número"
-                        validate={required('O número é obrigatório')}
+                        validate={required()}
                     />
                     <TextInput
                         source="endereco.complemento"
@@ -177,19 +117,19 @@ const LarTempCreate = (props: CreateProps) => {
                     <TextInput
                         source="endereco.bairro"
                         label="Bairro"
-                        validate={required('O bairro é obrigatório')}
+                        validate={required()}
                     />
 
                     <TextInput
                         source="endereco.cidade"
                         label="Cidade"
-                        validate={required('A cidade é obrigatória')}
+                        validate={required()}
                     />
 
                     <TextInput
                         source="endereco.uf"
                         label="UF"
-                        validate={required('A UF é obrigatória')}
+                        validate={required()}
                     />
                 </FormTab>
 
@@ -198,13 +138,13 @@ const LarTempCreate = (props: CreateProps) => {
                         source="imagens"
                         label="Imagens do Lar Temporário"
                         multiple
-                        accept={{ 'image/*': ['.png', '.jpg', '.jpeg', '.webp'] }}
+                        accept={{ 'image/*': ['.png', '.jpg', '.jpeg', '.gif'] }}
                         maxSize={10_500_000}
                         validate={required('Pelo menos uma imagem é obrigatória')}
                         placeholder={
                             <FilePlaceholder
                                 maxSize={10_500_000}
-                                accept={['.png', '.jpg', '.jpeg', '.webp']}
+                                accept={['.png', '.jpg', '.jpeg', '.gif']}
                                 multiple
                             />
                         }

@@ -1,4 +1,3 @@
-/** @type {import('next').NextConfig} */
 const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
@@ -6,22 +5,6 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  images: {
-    remotePatterns: [
-      {
-        protocol: 'http',
-        hostname: '127.0.0.1',
-        port: '8000',
-        pathname: '/api/imagens/**',
-      },
-
-      {
-        protocol: "https",
-        hostname: "github.com",
-      },
-    ],
-  },
-  devIndicators: false
 };
 
 export default nextConfig;

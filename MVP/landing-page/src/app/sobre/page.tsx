@@ -1,355 +1,97 @@
-"use client"
+import { Card, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
+import { Navbar } from "@/components/navbar";
 
-import { useEffect, useState } from "react"
-import { Card, CardContent, CardTitle } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
-import ImageCarousel from "@/components/ImageCarousel"
-import { calcularIdade } from "@/lib/animal-utils"
-import { Imagens, LarTemporario } from "@/types"
-import LoadMoreList from "@/components/LoadMoreList"
-
-interface Ong {
-  id: number
-  nome: string
-  descricao?: string | null
-  imagem?: string | null
-  cnpj?: string | null
-  logradouro?: string | null
-  numero?: string | null
-  bairro?: string | null
-  cidade?: string | null
-  uf?: string | null
-  cep?: string | null
-
-  contatos?: Array<{
-    id: number
-    tipo: string
-    contato: string
-    link?: string | null
-    descricao?: string | null
-  }>
-
-  imagens?: Imagens[]
+interface LarTemporario {
+  id: number;
+  nome: string;
+  endereco: string;
+  imagemUrl?: string;
 }
 
-interface Parceiro {
-  id: number
-  nome: string
-  descricao?: string | null
-  url_site?: string | null
-  imagem?: string | null
-}
-
-function ParceiroCard({ parceiro }: { parceiro: Parceiro }) {
-  const storageUrl =
-    process.env.NEXT_PUBLIC_STORAGE_URL
-
-  const imagemUrl = parceiro.imagem ? `${storageUrl}/${parceiro.imagem}` : null
-
-  const content = (
-    <Card className="group relative overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-      <div className="flex flex-col h-full">
-        <div className="relative w-full overflow-hidden">
-          <div className="relative aspect-4/3 w-full">
-            {imagemUrl ? (
-              <img
-                src={imagemUrl}
-                alt={parceiro.nome}
-                className="h-full w-full object-cover rounded-t-xl transition-transform duration-500 group-hover:scale-105"
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center rounded-t-xl bg-linear-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900">
-                <svg
-                  className="h-16 w-16 text-slate-400 dark:text-slate-500"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-            )}
-          </div>
-
-          <div className="pointer-events-none absolute inset-0 rounded-t-xl ring-0 ring-primary/0 transition-all duration-300 group-hover:ring-4 group-hover:ring-primary/60" />
-        </div>
-
-        <CardContent className="flex flex-1 flex-col gap-1 p-4">
-          <h3 className="text-lg font-semibold tracking-tight line-clamp-1">
-            {parceiro.nome}
-          </h3>
-
-          {parceiro.descricao && (
-            <p className="text-sm text-muted-foreground line-clamp-2">
-              {parceiro.descricao}
-            </p>
-          )}
-
-          {parceiro.url_site && (
-            <p className="mt-1 text-xs font-medium text-primary/80 group-hover:text-primary">
-              {(() => {
-                try {
-                  return new URL(parceiro.url_site).hostname
-                } catch {
-                  return parceiro.url_site
-                }
-              })()}
-            </p>
-          )}
-        </CardContent>
-      </div>
-    </Card>
-  )
-
-  if (parceiro.url_site) {
-    return (
-      <a
-        href={parceiro.url_site}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="block"
-      >
-        {content}
-      </a>
-    )
-  }
-
-  return content
-}
-
-export default function AboutPage() {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL
-  const storageUrl =
-    process.env.NEXT_PUBLIC_STORAGE_URL
-
-  const [ong, setOng] = useState<Ong | null>(null)
-  const [loadingOng, setLoadingOng] = useState(true)
-  const [errorOng, setErrorOng] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (!apiBase) return
-
-    const fetchOng = async () => {
-      try {
-        setLoadingOng(true)
-        setErrorOng(null)
-
-        const res = await fetch(`${apiBase}/ongs/1`)
-        if (!res.ok) {
-          throw new Error(`Erro ao buscar ONG: ${res.statusText}`)
-        }
-
-        const data: Ong = await res.json()
-        setOng(data)
-      } catch (err: any) {
-        setErrorOng(err.message ?? "Erro ao carregar dados da ONG")
-      } finally {
-        setLoadingOng(false)
-      }
+async function fetchLares(): Promise<LarTemporario[]> {
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/lares-temporarios`, {
+      cache: "no-store",
+    });
+    if (!res.ok) {
+      throw new Error("Falha ao buscar lares temporários");
     }
+    const lares = await res.json();
 
-    fetchOng()
-  }, [apiBase])
+    return lares.map((lar: any) => ({
+      id: lar.id,
+      nome: lar.nome_responsavel || lar.nome || "Responsável",
+      endereco: `${lar.endereco || lar.logradouro || ""} - ${lar.bairro || ""} - ${lar.cep || ""} - ${lar.cidade || ""} ${lar.estado || ""}`,
+      imagemUrl: lar.imagem_url || null,
+    }));
+  } catch (error) {
+    console.error(error);
+    return [];
+  }
+}
 
-  const imagemOngUrl =
-    ong?.imagem && !ong.imagem.startsWith("http")
-      ? `${storageUrl}/${ong.imagem}`
-      : ong?.imagem ?? null
-
-  const enderecoFormatado =
-    ong &&
-      (ong.logradouro ||
-        ong.numero ||
-        ong.bairro ||
-        ong.cidade ||
-        ong.uf ||
-        ong.cep)
-      ? [
-        [ong.logradouro, ong.numero].filter(Boolean).join(", "),
-        [ong.bairro, ong.cidade].filter(Boolean).join(" - "),
-        ong.uf,
-        ong.cep && `CEP: ${ong.cep}`,
-      ]
-        .filter(Boolean)
-        .join(" | ")
-      : null
+export default async function AboutPage() {
+  const lares = await fetchLares();
 
   return (
-    <main className="min-h-screen bg-background flex flex-col items-center px-4 py-10">
-      <div className="max-w-3xl w-full">
-        <section className="mb-12 flex flex-col md:flex-row items-center gap-8">
-          <div className="w-full md:w-1/3 rounded-lg overflow-hidden border border-gray-300 dark:border-gray-700">
-            {loadingOng ? (
-              <div className="w-full h-48 flex items-center justify-center text-sm text-muted-foreground">
-                Carregando...
-              </div>
-            ) : imagemOngUrl ? (
+    <>
+      <Navbar />
+      <main className="min-h-screen bg-background flex flex-col items-center px-4 py-10">
+        {/* Container centralizado e com largura máxima */}
+        <div className="max-w-3xl w-full">
+          {/* Seção Quem Somos */}
+          <section className="mb-12 flex flex-col md:flex-row items-center gap-8">
+            <div className="w-full md:w-1/3 rounded-lg overflow-hidden border border-gray-300 dark:border-gray-700">
               <img
-                src={imagemOngUrl}
-                alt={ong?.nome ?? "ONG"}
+                src="https://ilfattoalimentare.it/wp-content/uploads/2020/12/AdobeStock_211878265.jpeg"
+                alt="Quem Somos"
                 className="w-full h-auto object-cover rounded-lg"
               />
-            ) : (
-              <div className="w-full h-48 flex items-center justify-center text-sm text-muted-foreground">
-                Sem imagem da ONG
-              </div>
+            </div>
+            <p className="w-full md:w-2/3 text-lg leading-relaxed text-gray-700 dark:text-gray-300 flex flex-col justify-center space-y-2">
+              <span>Página destinada à adoção responsável</span>
+              <span>🚫 Não recolhemos animais</span>
+              <span>⚠️ Projeto Independente</span>
+              <span>🐾 Adote e mude uma vida 😸</span>
+              <span>📍 Umuarama/PR</span>
+              <span>CNPJ 61.706.437/0001-30</span>
+            </p>
+          </section>
+
+          <Separator className="my-8" />
+
+          {/* Título Lares Temporários */}
+          <h2 className="text-2xl font-semibold mb-6 text-center">Lares Temporários</h2>
+
+          {/* Lista vertical dos lares */}
+          <section className="flex flex-col gap-4">
+            {lares.length === 0 && (
+              <p className="text-center text-gray-500 dark:text-gray-400">
+                Nenhum lar temporário encontrado.
+              </p>
             )}
-          </div>
-
-          <div className="w-full md:w-2/3 text-lg leading-relaxed text-gray-700 dark:text-gray-300 flex flex-col justify-center space-y-2">
-            {loadingOng && (
-              <span className="text-sm text-muted-foreground">
-                Carregando informações da ONG...
-              </span>
-            )}
-
-            {errorOng && (
-              <span className="text-sm text-destructive">{errorOng}</span>
-            )}
-
-            {ong && (
-              <>
-                <span className="font-semibold text-xl">{ong.nome}</span>
-
-                {ong.descricao && <span>{ong.descricao}</span>}
-
-                {enderecoFormatado && (
-                  <span className="text-sm text-muted-foreground">
-                    {enderecoFormatado}
-                  </span>
-                )}
-
-                {ong.cnpj && (
-                  <span className="text-sm text-muted-foreground">
-                    CNPJ {ong.cnpj}
-                  </span>
-                )}
-
-                {ong.contatos && ong.contatos.length > 0 && (
-                  <div className="pt-2 space-y-1 text-sm">
-                    {ong.contatos.map((c, index) => (
-                      <div key={c.id ?? index}>
-                        <strong className="capitalize">{c.tipo}:</strong>{" "}
-                        {c.link ? (
-                          <a
-                            href={c.link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-primary hover:underline"
-                          >
-                            {c.contato}
-                          </a>
-                        ) : (
-                          c.contato
-                        )}
-                        {c.descricao && (
-                          <span className="text-xs text-muted-foreground ml-1">
-                            ({c.descricao})
-                          </span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        </section>
-
-        <Separator className="my-12" />
-
-        <h2 className="text-2xl font-semibold mb-6 text-center">
-          Galeria de Imagens da Ong
-        </h2>
-
-        {ong?.imagens && ong.imagens.length > 0 ? (
-          <div className="w-full rounded-lg overflow-hidden">
-            <ImageCarousel
-              images={ong.imagens}
-              alt={ong.nome}
-              className="w-full h-64 md:h-80 lg:h-96"
-              showArrows
-              showIndicators
-              autoPlay
-              autoPlayInterval={4500}
-              variant="default"
-            />
-          </div>
-        ) : (
-          <div className="w-full h-56 rounded-lg bg-muted/40 flex items-center justify-center">
-            <p className="text-muted-foreground">Nenhuma imagem cadastrada</p>
-          </div>
-        )}
-
-        <Separator className="my-12" />
-
-        <h2 className="text-2xl font-semibold mb-6 text-center">
-          Parceiros
-        </h2>
-
-        <LoadMoreList
-          url={`${apiBase}/parceiros`}
-          step={6}
-          renderItem={(p: Parceiro) => <ParceiroCard parceiro={p} />}
-        />
-
-        <Separator className="my-8" />
-
-        <h2 className="text-2xl font-semibold mb-6 text-center">
-          Lares Temporários
-        </h2>
-        <section className="flex flex-col gap-4">
-
-          <LoadMoreList
-            url={`${apiBase}/lares-temporarios`}
-            step={4}
-            className="space-y-4"
-            renderItem={(lar: LarTemporario) => (
-              <Card className="flex flex-col md:flex-row items-center md:items-start md:space-x-4 p-4 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm">
-                <div className="rounded-lg overflow-hidden w-full md:w-48 h-48 mb-4 md:mb-0">
-                  <ImageCarousel
-                    images={lar.imagens}
-                    alt={lar.nome}
-                    variant="minimal"
-                    showArrows
-                  />
-                </div>
-
-                <CardContent className="pt-0 md:pt-5 w-full">
-                  <CardTitle className="text-xl font-bold mb-2">
-                    {lar.nome}
-                  </CardTitle>
-
-                  <div className="text-sm font-medium">
-                    {lar.endereco.logradouro}, {lar.endereco.bairro},{" "}
-                    {lar.endereco.cidade} - {lar.endereco.uf}
-                  </div>
-
-                  <div className="text-sm font-medium mb-1">
-                    CEP: {lar.endereco.cep}
-                  </div>
-
-                  <div className="text-md text-secondary font-semibold mb-1">
-                    Ativo há {calcularIdade(lar.updated_at)}
-                  </div>
-
-                  <div className="text-md font-thin">
-                    Lar de {lar.animais.filter(a => a.situacao !== "adotado").length} animais atualmente
-                  </div>
-
-                  <div className="text-md font-thin">
-                    Já passaram mais de {lar.animais.filter(a => a.situacao === "adotado").length} animais neste lar
-                  </div>
+            {lares.map((lar) => (
+              <Card key={lar.id} className="flex items-center space-x-4 p-4 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm">
+                <Avatar className="w-16 h-16 bg-gray-200 dark:bg-gray-700">
+                  {lar.imagemUrl ? (
+                    <AvatarImage src={lar.imagemUrl} alt={lar.nome} />
+                  ) : (
+                    <AvatarFallback>LT</AvatarFallback>
+                  )}
+                </Avatar>
+                <CardContent className="p-0">
+                  <CardTitle className="text-lg font-bold">{lar.nome}</CardTitle>
+                  <CardDescription className="text-sm text-gray-600 dark:text-gray-400">
+                    {lar.endereco}
+                  </CardDescription>
                 </CardContent>
               </Card>
-            )}
-          />
-
-        </section>
-      </div>
-    </main>
-  )
+            ))}
+          </section>
+        </div>
+      </main>
+    </>
+  );
 }

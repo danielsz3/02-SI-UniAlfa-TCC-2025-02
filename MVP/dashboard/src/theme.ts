@@ -5,175 +5,43 @@ import { type TranslationMessages, defaultTheme } from 'react-admin';
 // --- Imports de Tradução ---
 import ptBrMessages from 'ra-language-pt-br';
 import polyglotI18nProvider from 'ra-i18n-polyglot';
-import { ptBR as corePtBR } from '@mui/material/locale';
-import { ptBR as pickersPtBR } from '@mui/x-date-pickers/locales';
+import { ptBR as corePtBR } from '@mui/material/locale';       // <-- ADICIONADO
+import { ptBR as pickersPtBR } from '@mui/x-date-pickers/locales'; // <-- ADICIONADO
 
 // --- Configuração de Idioma (i18n) ---
 const messages: { [key: string]: TranslationMessages } = {
     'pt-br': ptBrMessages,
 };
 
-export const i18nProvider = polyglotI18nProvider(
-    locale => messages[locale],
-    'pt-br',
-    { allowMissing: true, warn: () => { } }
-);
+export const i18nProvider = polyglotI18nProvider(locale => messages[locale], 'pt-br');
 
-// --- Definição da Paleta (Baseada nas tuas Variáveis CSS) ---
-const colors = {
-    primary: '#0367A6',         // --primary
-    primaryHover: '#025A90',    // --primary-hover
-    secondary: '#049DBF',       // --secondary
-    secondaryHover: '#038EAD',  // --secondary-hover
-    background: '#F2F1F0',      // --background
-    paper: '#ffffff',           // --card
-    text: '#000000',            // --foreground
-    error: '#E63946',           // --destructive
-    border: '#d9d9d9',          // --border
-    sidebar: '#F2F1F0',         // --sidebar
-};
 
 // --- Configuração do Tema ---
 const baseTheme = deepmerge(defaultTheme, {
-    palette: {
-        primary: {
-            main: colors.primary,
-            dark: colors.primaryHover,
-            contrastText: '#ffffff', // --primary-foreground
-        },
-        secondary: {
-            main: colors.secondary,
-            dark: colors.secondaryHover,
-            contrastText: '#ffffff', // --secondary-foreground
-        },
-        error: {
-            main: colors.error,
-        },
-        background: {
-            default: colors.background,
-            paper: colors.paper,
-        },
-        text: {
-            primary: colors.text,
-        },
-        // Ajustes de contraste automático do MUI
-        contrastThreshold: 3,
-        tonalOffset: 0.2,
-    },
 
     components: {
-        MuiCssBaseline: {
-            styleOverrides: {
-                // Scrollbars personalizadas com a nova paleta
-                '*::-webkit-scrollbar': {
-                    width: '8px',
-                    height: '8px',
-                },
-                '*::-webkit-scrollbar-track': {
-                    background: colors.background,
-                    borderRadius: '4px',
-                },
-                '*::-webkit-scrollbar-thumb': {
-                    background: colors.primary, // Atualizado para Primary
-                    borderRadius: '4px',
-                    border: `2px solid ${colors.background}`,
-                },
-                '*::-webkit-scrollbar-thumb:hover': {
-                    background: colors.primaryHover, // Atualizado para Primary Hover
-                },
-
-                '*': {
-                    scrollbarWidth: 'thin',
-                    scrollbarColor: `${colors.primary} ${colors.background}`,
-                },
-
-                body: {
-                    backgroundColor: colors.background,
-                    scrollbarWidth: 'thin',
-                    scrollbarColor: `${colors.primary} ${colors.background}`,
-                    '&::-webkit-scrollbar': {
-                        width: '8px',
-                        height: '8px',
-                    },
-                    '&::-webkit-scrollbar-track': {
-                        background: colors.background,
-                        borderRadius: '4px',
-                    },
-                    '&::-webkit-scrollbar-thumb': {
-                        background: colors.primary,
-                        borderRadius: '4px',
-                        border: `2px solid ${colors.background}`,
-                    },
-                    '&::-webkit-scrollbar-thumb:hover': {
-                        background: colors.primaryHover,
-                    },
-                }
-            },
-        },
-
         MuiTextField: {
             defaultProps: {
-                variant: 'outlined',
+                variant: 'outlined' as const,
             },
         },
         RaLayout: {
             styleOverrides: {
                 root: {
-                    width: '98vw', // Geralmente 100% ou 100vw é melhor que 98vw para evitar scroll horizontal
-                    backgroundColor: colors.background,
-                    '& .RaLayout-content': {
-                        backgroundColor: colors.background,
-                    },
-                    "& .RaList-actions": {
-                        backgroundColor: colors.background,
-                    },
-                    '[class*="RaTopToolbar"]': {
-                        backgroundColor: colors.background,
-                    }
+                    width: '98vw',
                 }
             }
         },
-        MuiTopToolbar: {
-            styleOverrides: {
-                root: {
-                    backgroundColor: colors.background,
-                },
-            },
-        },
-        // Estilo do Menu Lateral (Sidebar Links)
         RaMenuItemLink: {
             styleOverrides: {
                 root: {
-                    borderLeft: '3px solid transparent',
-                    color: colors.text,
-
-                    // Ícone Normal
-                    '& .RaMenuItemLink-icon': {
-                        color: colors.text,
-                    },
-
-                    // Estado Ativo (Selecionado)
+                    borderLeft: '3px solid #fff',
                     '&.RaMenuItemLink-active': {
-                        borderLeft: `5px solid ${colors.primary}`,
-                        color: colors.primary,
-                        backgroundColor: 'rgba(3, 103, 166, 0.08)',
-
-                        // Ícone Ativo
-                        '& .RaMenuItemLink-icon': {
-                            color: colors.primary,
-                        }
+                        borderLeft: '5px solid #337ab7',
                     },
-
-                    // Estado Hover (Passar o mouse)
                     '&:hover': {
-                        color: colors.primary,
-                        fontWeight: 500,
-                        backgroundColor: 'rgba(0, 0, 0, 0.04)',
-
-                        // Ícone Hover
-                        '& .RaMenuItemLink-icon': {
-                            color: colors.primary,
-                        }
+                        color: '#337ab7',
+                        fontWeight: 500
                     }
                 },
             },
@@ -182,14 +50,11 @@ const baseTheme = deepmerge(defaultTheme, {
             styleOverrides: {
                 root: {
                     '&:hover': {
-                        color: colors.primary,
-                        backgroundColor: colors.background,
-                    },
-                    '&.Mui-selected': {
-                        color: colors.primary,
+                        color: '#337ab7',
+                        backgroundColor: '#f0f0f0',
                     },
                     '&.Mui-selected:hover': {
-                        color: colors.primaryHover,
+                        color: '#23527c',
                     }
                 }
             }
@@ -197,21 +62,21 @@ const baseTheme = deepmerge(defaultTheme, {
         MuiAppBar: {
             styleOverrides: {
                 colorSecondary: {
-                    color: '#ffffff',
-                    backgroundColor: colors.primary, // Atualizado para Primary
+                    color: '#fff',
+                    backgroundColor: '#337ab7',
                 },
             },
             defaultProps: {
-                elevation: 1, // Reduzi levemente a elevação para combinar com o design mais "flat" moderno
+                elevation: 2,
             },
         },
         MuiLinearProgress: {
             styleOverrides: {
                 root: {
-                    backgroundColor: colors.background,
+                    backgroundColor: '#f5f5f5',
                 },
                 bar: {
-                    backgroundColor: colors.primary,
+                    backgroundColor: '#337ab7',
                 }
             },
         },
@@ -222,14 +87,18 @@ const baseTheme = deepmerge(defaultTheme, {
                 },
             },
         },
-        // Adicional: Estilização dos Cards para bater com a variável --card
-        MuiPaper: {
-            styleOverrides: {
-                root: {
-                    backgroundImage: 'none', // Remove gradientes padrão do modo dark se ativado acidentalmente
-                },
-            }
-        }
+    },
+    palette: {
+        primary: {
+            main: '#337ab7',
+        },
+        secondary: {
+            main: '#23527c',
+            color: '#fff',
+        },
+        error: { main: '#c7483fff' },
+        contrastThreshold: 3,
+        tonalOffset: 0.2,
     },
 });
 

@@ -28,6 +28,7 @@ class Endereco extends Model
         'uf'
     ];
 
+    // Relacionamentos
     public function usuario()
     {
         return $this->belongsTo(Usuario::class, 'id_usuario', 'id');

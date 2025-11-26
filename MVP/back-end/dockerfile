@@ -1,64 +1,41 @@
 # --- Estágio 1: Builder ---
-# Usamos a mesma versão base para garantir compatibilidade
-FROM php:8.2-apache AS builder
+FROM php:8.2-fpm AS builder
 
-# Instala dependências do sistema necessárias para o Composer e extensões
+# ... (seu estágio de build continua o mesmo) ...
 RUN apt-get update && apt-get install -y \
     git unzip curl libpng-dev libonig-dev libxml2-dev \
     && apt-get clean && rm -rf /var/lib/apt/lists/* \
     && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
 
-# Instala o Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
-
-# Define o diretório de trabalho
 WORKDIR /var/www
-
-# Copia apenas os arquivos de dependência primeiro (para aproveitar o cache do Docker)
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --no-scripts --optimize-autoloader
-
-# Copia o restante do código
 COPY . .
 
 # --- Estágio 2: Imagem Final ---
-FROM php:8.2-apache
+FROM php:8.2-fpm
 
-# Define a variável para a pasta public do Laravel
-ENV APACHE_DOCUMENT_ROOT=/var/www/public
-
-# Instala dependências de execução e o netcat (para o entrypoint)
+# Instala dependências, INCLUINDO o netcat para o entrypoint funcionar
 RUN apt-get update && apt-get install -y \
       libpng-dev libonig-dev libxml2-dev netcat-openbsd \
     && apt-get clean && rm -rf /var/lib/apt/lists/* \
     && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
 
-# Habilita o mod_rewrite do Apache (Necessário para rotas do Laravel)
-RUN a2enmod rewrite
-
-# Ajusta a configuração do Apache para apontar para /var/www/public
-RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
-RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
-
-# --- AJUSTE PARA CLOUD RUN: Muda Apache da porta 80 para 8080 ---
-RUN sed -i 's/Listen 80/Listen 8080/' /etc/apache2/ports.conf \
-    && sed -i 's/:80>/:8080>/' /etc/apache2/sites-available/000-default.conf
-
-# Define o diretório de trabalho
 WORKDIR /var/www
-
-# Copia os arquivos do estágio de build
 COPY --from=builder /var/www /var/www
 
-# ----------------- ENTRYPOINT -----------------
+# ----------------- ALTERAÇÕES PARA O ENTRYPOINT -----------------
+# Copia o script para uma pasta de executáveis dentro da imagem
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+
+# Dá permissão de execução para o script
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
+# Define o script como o ponto de entrada do contêiner
 ENTRYPOINT ["entrypoint.sh"]
-# ----------------------------------------------
+# -----------------------------------------------------------------
 
-# Cloud Run espera que o container escute na porta 8080
-EXPOSE 8080
-
-# Inicia o Apache em primeiro plano
-CMD ["apache2-foreground"]
+# O comando padrão que o entrypoint vai executar no final (o "$@")
+EXPOSE 9000
+CMD ["php-fpm"]

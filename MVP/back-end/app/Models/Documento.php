@@ -17,9 +17,8 @@ class Documento extends Model
         'titulo',
         'categoria',
         'descricao',
-        'arquivo',
-        'tipo',
-        'tamanho',
-        'nome_original',
+        'arquivo',   // caminho relativo no storage (ex: documentos/abc123.pdf)
+        'tipo',      // mime-type
+        'tamanho',   // bytes
     ];
 }

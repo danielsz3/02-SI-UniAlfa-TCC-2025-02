@@ -12,14 +12,13 @@ class ImagemLarTemporario extends Model
 
     protected $table = 'imagens_lar_temporario';
     protected $primaryKey = 'id';
-
+  
 
     protected $fillable = [
         'id_lar_temporario',
         'caminho',
         'width',
         'height',
-        'nome_original'
     ];
 
     public function larTemporario()

@@ -11,18 +11,22 @@ class ImagemOng extends Model
     use HasFactory, SoftDeletes;
 
     protected $table = 'imagens_ongs';
+
+    // Se sua migration não define PK diferente, o padrão 'id' é usado
     protected $primaryKey = 'id';
 
     protected $fillable = [
-        'ong_id',
+        'id_ong',
         'caminho',
         'width',
         'height',
-        'nome_original'
     ];
 
+    /**
+     * Relação inversa com ONG
+     */
     public function ong()
     {
-        return $this->belongsTo(Ong::class, 'ong_id', 'id');
+        return $this->belongsTo(Ong::class, 'id_ong', 'id_ong');
     }
 }

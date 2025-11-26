@@ -15,7 +15,7 @@ class ImagemPost extends Model
     protected $primaryKey = 'id';
 
 
-    protected $fillable = ['post_id', 'caminho', 'width', 'height', 'nome_original'];
+    protected $fillable = ['post_id', 'caminho', 'width', 'height'];
 
     public function post()
     {

@@ -7,12 +7,13 @@ use App\Traits\SearchIndex;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Log;
 
 class IntegracaoController extends Controller
 {
     use SearchIndex;
-
+    /**
+     * Display a listing of the resource.
+     */
     public function index(Request $request): JsonResponse
     {
         return $this->SearchIndex(
@@ -23,17 +24,41 @@ class IntegracaoController extends Controller
         );
     }
 
-    public function show(string $id)
+    /**
+     * Show the form for creating a new resource.
+     */
+    public function create()
     {
-        $integracao = Integracao::find($id);
-
-        if (!$integracao) {
-            return response()->json(['error' => 'Serviço não encontrado'], 404);
-        }
-
-        return response()->json($integracao);
+        //
     }
 
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Request $request)
+    {
+        
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(string $id)
+    {
+        //
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(string $id)
+    {
+        //
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
     public function update(Request $request, string $id)
     {
         $validator = Validator::make($request->all(), [
@@ -49,30 +74,27 @@ class IntegracaoController extends Controller
         }
 
         try {
-            $integracao = Integracao::find($id);
+            $data = [
+                'service'      => $request->service,
+                'username'     => $request->username,
+                'access_token' => $request->access_token,
+                'user_id'      => $request->user_id,
+                'status'       => $request->status,
+            ];
 
-            if (! $integracao) {
-                return response()->json(['error' => 'Serviço não encontrado'], 404);
-            }
+            $integracao = Integracao::update($data);
 
-            $data = $request->only([
-                'service',
-                'username',
-                'access_token',
-                'user_id',
-                'status'
-            ]);
-
-            $integracao->update($data);
-
-            return response()->json($integracao, 200);
+            return response()->json($integracao, 201);
         } catch (\Exception $e) {
-            Log::error('Erro ao atualizar integração: ' . $e->getMessage(), [
-                'id' => $id,
-                'trace' => $e->getTraceAsString(),
-            ]);
-
             return response()->json(['error' => 'Não foi possível editar a integração'], 500);
         }
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(string $id)
+    {
+        //
     }
 }

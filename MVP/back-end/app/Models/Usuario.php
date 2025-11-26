@@ -3,16 +3,16 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Auth\Passwords\CanResetPassword;
-use App\Notifications\ResetPasswordNotification;
+
 
 class Usuario extends Authenticatable implements JWTSubject
 {
-    use HasFactory, Notifiable, SoftDeletes, CanResetPassword;
+    use HasFactory, Notifiable, SoftDeletes;
 
     protected $table = 'usuarios';
     protected $primaryKey = 'id';
@@ -25,10 +25,12 @@ class Usuario extends Authenticatable implements JWTSubject
         'data_nascimento',
         'telefone',
         'role',
-        'imagem',
     ];
 
-    protected $hidden = ['password', 'remember_token'];
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
 
     protected $casts = [
         'data_nascimento' => 'date',
@@ -56,12 +58,6 @@ class Usuario extends Authenticatable implements JWTSubject
 
     public function preferencias()
     {
-        return $this->hasOne(PreferenciaUsuario::class, 'usuario_id', 'id');
-    }
-
-    public function sendPasswordResetNotification($token): void
-    {
-        $url = config('services.frontend.url') . '/reset-password?token=' . $token . '&email=' . $this->email;
-        $this->notify(new ResetPasswordNotification($url));
+        return $this->hasOne(PreferenciaUsuario::class, 'usuario_id');
     }
 }

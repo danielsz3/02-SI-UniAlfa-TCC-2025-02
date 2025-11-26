@@ -23,5 +23,3 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 storage\logs
-!resources/views/vendor/
-!resources/views/vendor/**

@@ -26,7 +26,7 @@ return [
         ],
         'api' => [
             'driver' => 'jwt',
-            'provider' => 'usuarios', 
+            'provider' => 'usuarios', // Aponta para o novo provedor 'usuarios'
         ],
     ],
 
@@ -37,14 +37,19 @@ return [
     */
 
     'providers' => [
-        'usuarios' => [
+        'usuarios' => [ // Novo provedor para seu modelo Usuario
             'driver' => 'eloquent',
-            'model' => App\Models\Usuario::class, 
+            'model' => App\Models\Usuario::class, // Modelo correto
         ],
         'users' => [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', App\Models\User::class),
         ],
+
+        // 'users' => [
+        //     'driver' => 'database',
+        //     'table' => 'users',
+        // ],
     ],
 
     /*
@@ -54,16 +59,16 @@ return [
     */
 
     'passwords' => [
-        'usuarios' => [
+        'usuarios' => [ // Adicionado o provedor para 'usuarios'
             'provider' => 'usuarios',
             'table' => env('AUTH_PASSWORD_RESET_TOKEN_TABLE', 'password_reset_tokens'),
-            'expire' => 10,
+            'expire' => 60,
             'throttle' => 60,
         ],
         'users' => [
             'provider' => 'users',
             'table' => env('AUTH_PASSWORD_RESET_TOKEN_TABLE', 'password_reset_tokens'),
-            'expire' => 10,
+            'expire' => 60,
             'throttle' => 60,
         ],
     ],

@@ -1,34 +1,5 @@
-import { Button, DeleteWithConfirmButton, Edit, ImageField, ImageInput, SaveButton, SimpleForm, TextInput, required, useRedirect } from 'react-admin';
+import { Edit, ImageField, ImageInput, SimpleForm, TextInput, required } from 'react-admin';
 import { FilePlaceholder } from '../FilePlaceHolder';
-import { CustomToolbar } from '../CustomToolbar';
-import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
-
-const ParceiroToolbar = () => {
-    const redirect = useRedirect();
-
-    const handleBack = () => redirect('list', 'parceiros');
-
-    return (
-        <CustomToolbar
-            leftButtons={[
-                <SaveButton
-                    type='button'
-                />,
-            ]}
-            rightButtons={[
-                <Button
-                    label="Voltar"
-                    startIcon={<ArrowBackIosNewIcon />}
-                    onClick={handleBack}
-                />,
-                <DeleteWithConfirmButton
-                    confirmTitle="Tem certeza?"
-                    confirmContent="Deseja realmente excluir o parceiro(a)?"
-                />,
-            ]}
-        />
-    );
-};
 
 const ParceiroEdit = () => (
     <Edit
@@ -36,9 +7,7 @@ const ParceiroEdit = () => (
         sx={{ width: '100%', maxWidth: 600, margin: '0 auto' }}
         redirect="list"
     >
-        <SimpleForm
-            toolbar={<ParceiroToolbar />}
-        >
+        <SimpleForm>
             <TextInput
                 source="nome"
                 label="Nome"
@@ -60,13 +29,14 @@ const ParceiroEdit = () => (
             <ImageInput
                 source="imagem"
                 label="Imagem"
-                accept={{ 'image/*': ['.png', '.jpg', '.jpeg', '.webp'] }}
+                accept={{ 'image/*': ['.png', '.jpg', '.jpeg', '.gif'] }}
                 maxSize={10_500_000}
                 validate={required('Pelo menos uma imagem é obrigatória')}
                 placeholder={
                     <FilePlaceholder
                         maxSize={10_500_000}
-                        accept={['.png', '.jpg', '.jpeg', '.webp']}
+                        accept={['.png', '.jpg', '.jpeg', '.gif']}
+                        multiple
                     />
                 }
                 sx={{

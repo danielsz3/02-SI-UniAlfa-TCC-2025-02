@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Evento;
 use App\Models\ImagemEvento;
-use App\Traits\ManagerGallery;
 use App\Traits\SearchIndex;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -17,14 +16,6 @@ use Illuminate\Support\Arr;
 class EventoController extends Controller
 {
     use SearchIndex;
-    use ManagerGallery;
-
-    protected $campoImagemCapa = 'imagem';
-    protected $campoGaleria = 'imagens';
-    protected $storagePath = 'eventos';
-    protected $modeloRelacaoGaleria = ImagemEvento::class;
-    protected $foreignKeyGaleria = 'evento_id';
-
     public function index(Request $request): JsonResponse
     {
         try {
@@ -35,8 +26,8 @@ class EventoController extends Controller
                 ['titulo']
             );
         } catch (\Exception $e) {
-            Log::error('Erro ao listar eventos: ' . $e->getMessage(), ['exception' => $e]);
-            return response()->json(['error' => 'Não foi possível carregar os eventos'], 500);
+            Log::error('Erro ao listar documentos: ' . $e->getMessage(), ['exception' => $e]);
+            return response()->json(['error' => 'Não foi possível carregar os documentos'], 500);
         }
     }
 
@@ -44,38 +35,38 @@ class EventoController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'titulo' => 'required|string|max:255',
-            'data_inicio' => 'required|date|after_or_equal:today',
+            'data_inicio' => 'required|date|after:now',
             'data_fim' => 'required|date|after_or_equal:data_inicio',
             'local' => 'required|string|max:255',
             'descricao' => 'nullable|string|max:1000',
-            'imagem' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240',
+            'imagem_capa' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
             'imagens' => 'nullable|array|max:10',
-            'imagens.*' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240',
+            'imagens.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:10240',
         ], [
             'titulo.required' => 'O título do evento é obrigatório.',
             'titulo.max' => 'O título deve ter no máximo 255 caracteres.',
 
             'data_inicio.required' => 'A data de início é obrigatória.',
             'data_inicio.date' => 'A data de início deve ser uma data válida.',
-            'data_inicio.after_or_equal' => 'A data de início deve ser hoje ou uma data futura.',
+            'data_inicio.after' => 'A data de início deve ser uma data futura.',
 
-            'data_fim.required' => 'A data de encerramento é obrigatória.',
-            'data_fim.date' => 'A data de encerramento deve ser uma data válida.',
-            'data_fim.after_or_equal' => 'A data de encerramento deve ser igual ou posterior à data de início.',
+            'data_fim.required' => 'A data de fim é obrigatória.',
+            'data_fim.date' => 'A data de fim deve ser uma data válida.',
+            'data_fim.after_or_equal' => 'A data de fim deve ser igual ou posterior à data de início.',
 
             'local.required' => 'O local do evento é obrigatório.',
             'local.max' => 'O local deve ter no máximo 255 caracteres.',
 
             'descricao.max' => 'A descrição deve ter no máximo 1000 caracteres.',
 
-            'imagem.image' => 'A imagem de capa deve ser uma imagem válida.',
-            'imagem.mimes' => 'A imagem de capa deve ser do tipo jpeg, png, jpg ou webp.',
-            'imagem.max' => 'A imagem de capa deve ter no máximo 10MB.',
+            'imagem_capa.image' => 'A imagem de capa deve ser uma imagem válida.',
+            'imagem_capa.mimes' => 'A imagem de capa deve ser do tipo jpeg, png, jpg, gif ou webp.',
+            'imagem_capa.max' => 'A imagem de capa deve ter no máximo 10MB.',
 
             'imagens.array' => 'As imagens devem ser enviadas como um array.',
             'imagens.max' => 'Você pode enviar no máximo 10 imagens.',
             'imagens.*.image' => 'Cada imagem deve ser um arquivo de imagem válido.',
-            'imagens.*.mimes' => 'As imagens devem ser do tipo jpeg, png, jpg ou webp.',
+            'imagens.*.mimes' => 'As imagens devem ser do tipo jpeg, png, jpg, gif ou webp.',
             'imagens.*.max' => 'Cada imagem deve ter no máximo 10MB.',
         ]);
 
@@ -83,16 +74,11 @@ class EventoController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        if ($request->hasFile('imagens') && count($request->file('imagens')) > 10) {
-            return response()->json([
-                'errors' => ['imagens' => ['Você pode enviar no máximo 10 imagens.']]
-            ], 422);
-        }
-
         try {
             return DB::transaction(function () use ($request) {
                 $data = $request->only(['titulo', 'data_inicio', 'data_fim', 'local', 'descricao']);
 
+                // Upload imagem capa
                 if ($request->hasFile('imagem')) {
                     $path = $request->file('imagem')->store('eventos', 'public');
                     $data['imagem'] = $path;
@@ -100,15 +86,14 @@ class EventoController extends Controller
 
                 $evento = Evento::create($data);
 
+                // Upload imagens adicionais
                 if ($request->hasFile('imagens')) {
                     foreach ($request->file('imagens') as $file) {
-                        $nomeOriginal = $file->getClientOriginalName();
                         $path = $file->store('eventos', 'public');
                         [$width, $height] = getimagesize($file->getRealPath()) ?: [null, null];
                         ImagemEvento::create([
                             'evento_id' => $evento->id,
                             'caminho' => $path,
-                            'nome_original' => $nomeOriginal,
                             'width' => $width,
                             'height' => $height,
                         ]);
@@ -119,7 +104,7 @@ class EventoController extends Controller
             });
         } catch (\Exception $e) {
             Log::error('Erro ao criar evento: ' . $e->getMessage(), [
-                'request_data' => $request->except(['imagem', 'imagens']),
+                'request_data' => $request->except(['imagem_capa', 'imagens']),
                 'exception' => $e
             ]);
 
@@ -149,119 +134,135 @@ class EventoController extends Controller
             return response()->json(['error' => 'Evento não encontrado'], 404);
         }
 
-        if ($request->has('imagens') && is_array($request->input('imagens'))) {
-            $decodedImagens = [];
-            foreach ($request->input('imagens') as $imagem) {
-                if (is_string($imagem)) {
-                    $decodedItem = json_decode($imagem, true);
-                    if (json_last_error() === JSON_ERROR_NONE) {
-                        $decodedImagens[] = $decodedItem;
-                    }
-                } elseif (is_array($imagem)) {
-                    $decodedImagens[] = $imagem;
-                }
-            }
-            $request->merge(['imagens' => $decodedImagens]);
-        }
-
         $rules = [
             'titulo' => 'sometimes|required|string|max:255',
-            'data_inicio' => 'sometimes|required|date|after_or_equal:today',
+            'data_inicio' => 'sometimes|required|date|after:now',
             'data_fim' => 'sometimes|required|date|after_or_equal:data_inicio',
             'local' => 'sometimes|required|string|max:255',
             'descricao' => 'nullable|string|max:1000',
-            'imagem' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240',
+            'imagem_capa' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
             'imagens' => 'nullable|array|max:10',
-            'imagens.*.src' => 'required|string',
         ];
 
-        $messages = [
+        // Só valida como file se houver arquivos enviados
+        if ($request->hasFile('imagens')) {
+            $rules['imagens.*'] = 'file|image|mimes:jpeg,png,jpg,gif|max:10240';
+        }
+
+        $validator = Validator::make($request->all(), $rules, [
             'titulo.required' => 'O título do evento é obrigatório.',
             'titulo.max' => 'O título deve ter no máximo 255 caracteres.',
 
             'data_inicio.required' => 'A data de início é obrigatória.',
             'data_inicio.date' => 'A data de início deve ser uma data válida.',
-            'data_inicio.after_or_equal' => 'A data de início deve ser hoje ou uma data futura.',
+            'data_inicio.after' => 'A data de início deve ser uma data futura.',
 
-            'data_fim.required' => 'A data de encerramento é obrigatória.',
-            'data_fim.date' => 'A data de encerramento deve ser uma data válida.',
-            'data_fim.after_or_equal' => 'A data de encerramento deve ser igual ou posterior à data de início.',
+            'data_fim.required' => 'A data de fim é obrigatória.',
+            'data_fim.date' => 'A data de fim deve ser uma data válida.',
+            'data_fim.after_or_equal' => 'A data de fim deve ser igual ou posterior à data de início.',
 
             'local.required' => 'O local do evento é obrigatório.',
             'local.max' => 'O local deve ter no máximo 255 caracteres.',
 
             'descricao.max' => 'A descrição deve ter no máximo 1000 caracteres.',
 
-            'imagem.image' => 'A imagem de capa deve ser uma imagem válida.',
-            'imagem.mimes' => 'A imagem de capa deve ser do tipo jpeg, png, jpg ou webp.',
-            'imagem.max' => 'A imagem de capa deve ter no máximo 10MB.',
+            'imagem_capa.image' => 'A imagem de capa deve ser uma imagem válida.',
+            'imagem_capa.mimes' => 'A imagem de capa deve ser do tipo jpeg, png, jpg, gif ou webp.',
+            'imagem_capa.max' => 'A imagem de capa deve ter no máximo 10MB.',
 
             'imagens.array' => 'As imagens devem ser enviadas como um array.',
             'imagens.max' => 'Você pode enviar no máximo 10 imagens.',
             'imagens.*.image' => 'Cada imagem deve ser um arquivo de imagem válido.',
-            'imagens.*.mimes' => 'As imagens devem ser do tipo jpeg, png, jpg ou webp.',
+            'imagens.*.mimes' => 'As imagens devem ser do tipo jpeg, png, jpg, gif ou webp.',
             'imagens.*.max' => 'Cada imagem deve ter no máximo 10MB.',
-        ];
+        ]);
 
-        $validator = Validator::make($request->all(), $rules, $messages);
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        if ($request->hasFile('imagens')) {
-            $totalImagens = count($request->file('imagens'));
-            $imagensExistentes = ImagemEvento::where('evento_id', $evento->id)->count();
-
-            if (($totalImagens + $imagensExistentes) > 10) {
-                return response()->json([
-                    'errors' => ['imagens' => ['O total de imagens não pode exceder 10.']]
-                ], 422);
-            }
-        }
-
-        $imgRules = [];
-        if ($request->hasFile('imagens')) {
-            $imgRules['imagens.*'] = 'image|mimes:jpeg,png,jpg,webp|max:10240';
-        }
-        if ($request->hasFile('imagem')) {
-            $imgRules['imagem'] = 'image|mimes:jpeg,png,jpg,webp|max:10240';
-        }
-        if (!empty($imgRules)) {
-            $imgValidator = Validator::make($request->all(), $imgRules);
-            if ($imgValidator->fails()) {
-                return response()->json(['errors' => $imgValidator->errors()], 422);
-            }
-        }
-
         try {
             return DB::transaction(function () use ($request, $evento) {
+                $data = $request->only(['titulo', 'data_inicio', 'data_fim', 'local', 'descricao']);
 
-                $fillable = $evento->getFillable();
-                $data = [];
-                foreach ($fillable as $field) {
-                    if ($request->has($field) && $field !== 'imagem' && $field !== 'imagens') {
-                        $data[$field] = $request->input($field);
+                // Atualizar imagem capa
+                if ($request->hasFile('imagem')) {
+                    // Deletar imagem capa antiga
+                    if ($evento->imagem_capa) {
+                        $oldPath = str_replace('/storage/', '', $evento->imagem);
+                        if (Storage::disk('public')->exists($oldPath)) {
+                            Storage::disk('public')->delete($oldPath);
+                        }
                     }
+                    $path = $request->file('imagem')->store('eventos', 'public');
+                    $data['imagem'] = $path;
                 }
 
-                if ($request->has($this->campoImagemCapa) || $request->hasFile('imagem')) {
-                    $data['imagem'] = $this->processarCapaParaUpdate($request, $evento);
-                }
-
-                if (!empty($data)) {
-                    $evento->update($data);
-                }
+                $evento->update($data);
 
                 if ($request->has('imagens') || $request->hasFile('imagens')) {
-                    $this->sincronizarGaleria($request, $evento);
-                }
+                    // 🔹 1. Capturar arquivos novos
+                    $arquivosNovos = [];
+                    if ($request->hasFile('imagens')) {
+                        $arquivosNovos = Arr::wrap($request->file('imagens'));
+                    }
 
+                    // 🔹 2. Processar imagens mantidas
+                    $imagensMantidas = [];
+                    $imagensInput = $request->input('imagens', []);
+
+                    if (is_array($imagensInput)) {
+                        foreach ($imagensInput as $item) {
+                            // Se for string JSON, decodifica
+                            if (is_string($item)) {
+                                $decoded = json_decode($item, true);
+                                if ($decoded && isset($decoded['src'])) {
+                                    $imagensMantidas[] = basename(parse_url($decoded['src'], PHP_URL_PATH));
+                                }
+                            }
+                            // Se já vier como array com 'src'
+                            elseif (is_array($item) && isset($item['src'])) {
+                                $imagensMantidas[] = basename(parse_url($item['src'], PHP_URL_PATH));
+                            }
+                        }
+                    }
+
+                    // 🔹 3. Buscar imagens atuais do banco
+                    $imagensAtuais = ImagemEvento::where('evento_id', $evento->id)->get();
+
+                    // 🔹 4. Excluir as removidas
+                    foreach ($imagensAtuais as $imagem) {
+                        $arquivoAtual = basename($imagem->caminho);
+
+                        if (!in_array($arquivoAtual, $imagensMantidas)) {
+                            if (Storage::disk('public')->exists($imagem->caminho)) {
+                                Storage::disk('public')->delete($imagem->caminho);
+                            }
+                            $imagem->delete();
+                        }
+                    }
+
+                    // 🔹 5. Salvar novas imagens
+                    foreach ($arquivosNovos as $file) {
+                        if ($file instanceof \Illuminate\Http\UploadedFile && $file->isValid()) {
+                            $path = $file->store('eventos', 'public');
+                            [$width, $height] = @getimagesize($file->getRealPath()) ?: [null, null];
+
+                            ImagemEvento::create([
+                                'evento_id' => $evento->id,
+                                'caminho' => $path,
+                                'width' => $width,
+                                'height' => $height,
+                            ]);
+                        }
+                    }
+                }
                 return response()->json($evento->fresh('imagens'), 200);
             });
         } catch (\Exception $e) {
             Log::error('Erro ao atualizar evento: ' . $e->getMessage(), [
-                'evento_id' => $evento->id,
-                'request_data' => $request->except(['imagem', 'imagens']),
+                'evento_id' => $id,
+                'request_data' => $request->except(['imagem_capa', 'imagens']),
                 'exception' => $e
             ]);
 
@@ -281,9 +282,9 @@ class EventoController extends Controller
         }
 
         try {
-
-            if ($evento->imagem) {
-                $oldPath = str_replace('/storage/', '', $evento->imagem);
+            // Deletar imagens do storage antes de deletar o evento
+            if ($evento->imagem_capa) {
+                $oldPath = str_replace('/storage/', '', $evento->imagem_capa);
                 if (Storage::disk('public')->exists($oldPath)) {
                     Storage::disk('public')->delete($oldPath);
                 }
@@ -307,6 +308,34 @@ class EventoController extends Controller
 
             return response()->json([
                 'error' => 'Não foi possível deletar o evento',
+                'message' => config('app.debug') ? $e->getMessage() : 'Erro interno do servidor'
+            ], 500);
+        }
+    }
+
+    public function restore($id): JsonResponse
+    {
+        $evento = Evento::withTrashed()->find($id);
+
+        if (!$evento) {
+            return response()->json(['error' => 'Evento não encontrado'], 404);
+        }
+
+        if (!$evento->trashed()) {
+            return response()->json(['error' => 'Evento já está ativo'], 400);
+        }
+
+        try {
+            $evento->restore();
+            return response()->json($evento->load('imagens'), 200);
+        } catch (\Exception $e) {
+            Log::error('Erro ao restaurar evento: ' . $e->getMessage(), [
+                'evento_id' => $id,
+                'exception' => $e
+            ]);
+
+            return response()->json([
+                'error' => 'Não foi possível restaurar o evento',
                 'message' => config('app.debug') ? $e->getMessage() : 'Erro interno do servidor'
             ], 500);
         }

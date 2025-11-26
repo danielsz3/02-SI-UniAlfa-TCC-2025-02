@@ -7,30 +7,22 @@ import { ptBR } from 'date-fns/locale/pt-BR';
 type CustomDatePickerProps = InputProps & {
     label: string;
     future?: boolean;
-    past?: boolean;
-    helperText?: string;
 };
 
-const CustomDatePicker = ({ source, label,helperText, ...props }: CustomDatePickerProps) => {
+const CustomDatePicker: React.FC<CustomDatePickerProps> = ({ source, label, ...props }) => {
     const { field, fieldState } = useInput({ source, ...props });
 
-    const cleanMessage = (msg?: any) => {
-        if (typeof msg === 'string') {
-            return msg.replace(/^@@react-admin@@/, '').replace(/"/g, '');
-        }
-        return msg;
-    };
+    const cleanMessage = (msg?: string) =>
+        msg ? msg.replace(/^@@react-admin@@/, '').replace(/"/g, '') : undefined;
 
     return (
         <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
             <DatePicker
-                {...field}
                 label={label}
-                disablePast={!props.past}
                 disableFuture={!props.future}
                 value={field.value ? new Date(field.value) : null}
                 onChange={field.onChange}
-                sx={{ mb: helperText != '' ? 2 : 0 }}
+                sx={{ mb: 0}}
                 slotProps={{
                     toolbar: {
                         toolbarFormat: "EEE, d 'de' MMM",
@@ -38,7 +30,7 @@ const CustomDatePicker = ({ source, label,helperText, ...props }: CustomDatePick
                     textField: {
                         fullWidth: true,
                         error: !!fieldState.error,
-                        helperText: cleanMessage(fieldState.error?.message) || helperText || " ",
+                        helperText: cleanMessage(fieldState.error?.message) || " ",
                         size: 'small',
                     },
 

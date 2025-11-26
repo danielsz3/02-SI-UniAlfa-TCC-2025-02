@@ -1,46 +1,6 @@
-import { Button, DeleteWithConfirmButton, Edit, NumberInput, SaveButton, SelectInput, SimpleForm, TextInput, required, useRedirect } from 'react-admin';
+import { Edit, NumberInput, RadioButtonGroupInput, SelectInput, SimpleForm, TextInput, minValue, required } from 'react-admin';
 import CustomDateTimePicker from '../datepicker/customDateTimePicker';
 import Grid from '@mui/material/Grid';
-import { CustomToolbar } from '../CustomToolbar';
-import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
-
-const validateValor = (value: number) => {
-    if (!value) {
-        return 'O valor é obrigatório';
-    }
-    if (value <= 0) {
-        return 'O valor deve ser maior que zero';
-    }
-    return undefined;
-};
-
-const TransacaoToolbar = () => {
-    const redirect = useRedirect();
-
-    const handleBack = () => redirect('list', 'transacoes');
-
-    return (
-        <CustomToolbar
-            key={"record"}
-            leftButtons={[
-                <SaveButton
-                    type='button'
-                />
-            ]}
-            rightButtons={[
-                <Button
-                    label="Voltar"
-                    startIcon={<ArrowBackIosNewIcon />}
-                    onClick={handleBack}
-                />,
-                <DeleteWithConfirmButton
-                    confirmTitle="Tem certeza?"
-                    confirmContent="Tem certeza que deseja excluir essa transação?"
-                />
-            ]}
-        />
-    );
-};
 
 const TransacaoEdit = () => (
     <Edit
@@ -48,12 +8,10 @@ const TransacaoEdit = () => (
         sx={{ width: '100%', maxWidth: 600, margin: '0 auto' }}
         redirect="list"
     >
-        <SimpleForm
-            toolbar={<TransacaoToolbar />}
-        >
-            <Grid container spacing={1} columns={2}>
+        <SimpleForm>
+            <Grid container spacing={2} columns={2}>
                 <Grid size={{ xs: 1 }}>
-                    <SelectInput
+                    <RadioButtonGroupInput
                         label="Tipo"
                         source="tipo"
                         choices={[
@@ -67,7 +25,10 @@ const TransacaoEdit = () => (
                     <NumberInput
                         source="valor"
                         label="Valor R$"
-                        validate={[validateValor]}
+                        validate={[
+                            required('O valor é obrigatório'),
+                            minValue('O valor deve ser maior que zero', 0)
+                        ]}
                     />
                 </Grid>
                 <Grid size={{ xs: 1 }}>

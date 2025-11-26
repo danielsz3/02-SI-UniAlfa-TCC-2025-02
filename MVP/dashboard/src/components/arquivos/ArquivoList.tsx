@@ -2,7 +2,6 @@ import {
     List,
     TextInput,
     useListContext,
-    DateInput
 } from 'react-admin';
 import { Link } from 'react-router-dom';
 import { Grid, Card, CardContent, Typography, Box, CardActions, IconButton } from '@mui/material';
@@ -16,7 +15,6 @@ import {
 import React from 'react';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import EditSquareIcon from '@mui/icons-material/EditSquare';
-import CustomDatePicker from '../datepicker/customDatePicker';
 
 // --- Variáveis de Estilo ---
 
@@ -26,7 +24,6 @@ const fileTypeStyles = {
     doc: { icon: DocIcon, color: 'primary.main', bgColor: '#e8f0fe' }, // Azul claro
     docx: { icon: DocIcon, color: 'primary.main', bgColor: '#e8f0fe' },
     xls: { icon: DataIcon, color: 'success.main', bgColor: '#e8fef4' }, // Verde claro
-    csv: { icon: DataIcon, color: 'success.main', bgColor: '#e8fef4' }, // Verde claro
     xlsx: { icon: DataIcon, color: 'success.main', bgColor: '#e8fef4' },
     txt: { icon: TextIcon, color: 'text.secondary', bgColor: '#f5f5f5' }, // Cinza claro
     default: { icon: GenericFileIcon, color: 'text.disabled', bgColor: '#eeeeee' }, // Cinza bem claro
@@ -37,19 +34,6 @@ const fileTypeStyles = {
 // Filtros para a busca na lista
 const filters = [
     <TextInput label="Título" source="titulo" size="small" alwaysOn />,
-    <TextInput label="Categoria" source="categoria" size="small" />,
-    <CustomDatePicker
-        label="Criado a partir de"
-        source="created_at_from"
-        alwaysOn
-        past
-    />,
-    <CustomDatePicker
-        label="Criado até"
-        source="created_at_to"
-        alwaysOn
-        past
-    />,
 ];
 
 /**
@@ -61,9 +45,9 @@ const getIconAndBackgroundForFileType = (filename: string | { src: string }): { 
     const defaultStyle = fileTypeStyles.default;
     let style = defaultStyle;
 
-    const extension = typeof filename === 'string'
-        ? filename.split('.').pop()?.toLowerCase()
-        : filename.src.split('.').pop()?.toLowerCase();
+    const extension = typeof filename === 'string' 
+    ? filename.split('.').pop()?.toLowerCase() 
+    : filename.src.split('.').pop()?.toLowerCase();
 
     style = fileTypeStyles[extension as keyof typeof fileTypeStyles] || defaultStyle;
 
@@ -107,7 +91,7 @@ const ArquivoGrid = () => {
                 const { icon, bgColor } = getIconAndBackgroundForFileType(record?.arquivo);
 
                 return (
-                    <Grid key={record.id} size={{ xs: 12, xl: 3, lg: 4, md: 6, sm: 6 }}>
+                    <Grid key={record.id} size={{ xs: 12, md: 4, sm: 6, lg: 3 }}>
                         <Card
                             raised
                             sx={{
@@ -177,7 +161,6 @@ export const ArquivoList = () => (
     <List
         filters={filters}
         title="Documentos"
-        sort={{ field: 'created_at', order: 'DESC' }}
         // Estilos para remover a sombra padrão da lista do React-Admin
         sx={{
             '& .RaList-content': {

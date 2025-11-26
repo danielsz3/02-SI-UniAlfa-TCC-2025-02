@@ -16,7 +16,7 @@ class Parceiro extends Model
     protected $fillable = [
         'nome',
         'url_site',
-        'imagem',
+        'imagem',   
         'descricao',
     ];
 }

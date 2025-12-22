@@ -21,7 +21,7 @@ class AnimalSeeder extends Seeder
         $tempoNecessarioOptions = ['pouco_tempo', 'tempo_moderado', 'muito_tempo'];
         $ambienteIdealOptions = ['area_pequena', 'area_media', 'area_externa'];
 
-        $tipoImagemOptions = ['animais/animal-01.jpg', 'animais/animal-02.jpg'];
+        $tipoImagemOptions = ['animais/animal-01.jpg', 'animais/animal-02.jpg', 'animais/animal-03.jpg', 'animais/animal-04.jpg', 'animais/animal-05.jpg'];
 
         for ($i = 0; $i < 500; $i++) {
             DB::table('animais')->insert([

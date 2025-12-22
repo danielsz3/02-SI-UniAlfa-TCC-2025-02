@@ -63,8 +63,8 @@ const filters = [
             { id: 'transferencia', name: 'Transferência' },
         ]}
     />,
-    <CustomDatePicker label="Criado a partir de" source="data_at_from" past future />,
-    <CustomDatePicker label="Criado até" source="data_at_to" past future />,
+    <CustomDatePicker label="Criado a partir de" source="data_from" past future />,
+    <CustomDatePicker label="Criado até" source="data_to" past future />,
 ];
 
 // Paginação customizada
